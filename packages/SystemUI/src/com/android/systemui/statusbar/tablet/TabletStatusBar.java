@@ -37,6 +37,7 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.res.Configuration;
 import android.content.res.Resources;
+import android.database.ContentObserver;
 import android.inputmethodservice.InputMethodService;
 import android.graphics.PixelFormat;
 import android.graphics.Point;
@@ -49,6 +50,7 @@ import android.os.IBinder;
 import android.os.Message;
 import android.os.RemoteException;
 import android.os.ServiceManager;
+import android.os.storage.StorageManager;
 import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.Slog;
@@ -109,6 +111,7 @@ public class TabletStatusBar extends StatusBar implements
     public static final int MSG_OPEN_COMPAT_MODE_PANEL = 1050;
     public static final int MSG_CLOSE_COMPAT_MODE_PANEL = 1051;
     public static final int MSG_STOP_TICKER = 2000;
+    public static final int MSG_HIDE_SOFTBUTTONS = 3000;
 
     // Fitts' Law assistance for LatinIME; see policy.EventHole
     private static final boolean FAKE_SPACE_BAR = true;
@@ -147,6 +150,8 @@ public class TabletStatusBar extends StatusBar implements
     View mHomeButton;
     View mMenuButton;
     View mRecentButton;
+
+    boolean mHideMenuButton;
 
     ViewGroup mFeedbackIconArea; // notification icons, IME icon, compat icon
     InputMethodButton mInputMethodSwitchButton;
@@ -196,6 +201,8 @@ public class TabletStatusBar extends StatusBar implements
     private int mSystemUiVisibility = 0;
     // used to notify status bar for suppressing notification LED
     private boolean mPanelSlightlyVisible;
+
+    private StorageManager mStorageManager;
 
     public Context getContext() { return mContext; }
 
@@ -397,6 +404,14 @@ public class TabletStatusBar extends StatusBar implements
     @Override
     public void start() {
         super.start(); // will add the main bar view
+
+        // storage
+        mStorageManager = (StorageManager) mContext.getSystemService(Context.STORAGE_SERVICE);
+        mStorageManager.registerListener(
+                new com.android.systemui.usb.StorageNotification(mContext));
+
+        SettingsObserver observer = new SettingsObserver(mHandler);
+        observer.observe(mContext);
     }
 
     @Override
@@ -601,6 +616,8 @@ public class TabletStatusBar extends StatusBar implements
         // set the initial view visibility
         setAreThereNotifications();
 
+        setNavigationVisibility(0);
+
         // Add the windows
         addPanelWindows();
         mRecentButton.setOnTouchListener(mRecentsPanel);
@@ -786,6 +803,9 @@ public class TabletStatusBar extends StatusBar implements
                     break;
                 case MSG_STOP_TICKER:
                     mTicker.halt();
+                    break;
+                case MSG_HIDE_SOFTBUTTONS:
+                    setNavigationVisibility(0);
                     break;
             }
         }
@@ -1011,9 +1031,18 @@ public class TabletStatusBar extends StatusBar implements
         boolean disableRecent = ((visibility & StatusBarManager.DISABLE_RECENT) != 0);
         boolean disableBack = ((visibility & StatusBarManager.DISABLE_BACK) != 0);
 
-        mBackButton.setVisibility(disableBack ? View.INVISIBLE : View.VISIBLE);
-        mHomeButton.setVisibility(disableHome ? View.INVISIBLE : View.VISIBLE);
-        mRecentButton.setVisibility(disableRecent ? View.INVISIBLE : View.VISIBLE);
+        boolean hideHome = (Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.HIDE_SOFT_HOME_BUTTON, 0) == 1);
+        boolean hideRecent = (Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.HIDE_SOFT_RECENT_BUTTON, 0) == 1);
+        boolean hideBack = (Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.HIDE_SOFT_BACK_BUTTON, 0) == 1);
+        mHideMenuButton = (Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.HIDE_SOFT_MENU_BUTTON, 0) == 1);
+
+        mBackButton.setVisibility(hideBack ? View.GONE : (disableBack ? View.INVISIBLE : View.VISIBLE));
+        mHomeButton.setVisibility(hideHome ? View.GONE : (disableHome ? View.INVISIBLE : View.VISIBLE));
+        mRecentButton.setVisibility(hideRecent ? View.GONE : (disableRecent ? View.INVISIBLE : View.VISIBLE));
 
         mInputMethodSwitchButton.setScreenLocked(
                 (visibility & StatusBarManager.DISABLE_SYSTEM_INFO) != 0);
@@ -1140,7 +1169,7 @@ public class TabletStatusBar extends StatusBar implements
         if (DEBUG) {
             Slog.d(TAG, (showMenu?"showing":"hiding") + " the MENU button");
         }
-        mMenuButton.setVisibility(showMenu ? View.VISIBLE : View.GONE);
+        if (!mHideMenuButton) mMenuButton.setVisibility(showMenu ? View.VISIBLE : View.GONE);
 
         // See above re: lights-out policy for legacy apps.
         if (showMenu) setLightsOn(true);
@@ -1923,6 +1952,33 @@ public class TabletStatusBar extends StatusBar implements
         pw.println(Integer.toHexString(mDisabled));
         pw.println("mNetworkController:");
         mNetworkController.dump(fd, pw, args);
+    }
+
+    private static class SettingsObserver extends ContentObserver {
+        private Handler mHandler;
+
+        SettingsObserver(Handler handler) {
+            super(handler);
+            mHandler = handler;
+        }
+
+        void observe(Context context) {
+            ContentResolver resolver = context.getContentResolver();
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.HIDE_SOFT_RECENT_BUTTON), false, this);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.HIDE_SOFT_HOME_BUTTON), false, this);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.HIDE_SOFT_BACK_BUTTON), false, this);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.HIDE_SOFT_MENU_BUTTON), false, this);
+        }
+
+        @Override
+        public void onChange(boolean selfChange) {
+            mHandler.removeMessages(MSG_HIDE_SOFTBUTTONS);
+            mHandler.sendEmptyMessage(MSG_HIDE_SOFTBUTTONS);
+        }
     }
 }
 

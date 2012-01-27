@@ -2187,6 +2187,30 @@ public final class Settings {
         public static final String MENU_UNLOCK_SCREEN = "menu_unlock_screen";
 
         /**
+         * Whether to hide the soft home.  The value is boolean (1 or 0).
+         * @hide
+         */
+        public static final String HIDE_SOFT_HOME_BUTTON = "hide_soft_home_button";
+
+        /**
+         * Whether to hide the soft recent button.  The value is boolean (1 or 0).
+         * @hide
+         */
+        public static final String HIDE_SOFT_RECENT_BUTTON = "hide_soft_recent_button";
+
+        /**
+         * Whether to hide the soft back button.  The value is boolean (1 or 0).
+         * @hide
+         */
+        public static final String HIDE_SOFT_BACK_BUTTON = "hide_soft_back_button";
+
+        /**
+         * Whether to hide the soft menu button.  The value is boolean (1 or 0).
+         * @hide
+         */
+        public static final String HIDE_SOFT_MENU_BUTTON = "hide_soft_menu_button";
+
+        /**
          * Settings to backup. This is here so that it's in the same place as the settings
          * keys and easy to update.
          *
