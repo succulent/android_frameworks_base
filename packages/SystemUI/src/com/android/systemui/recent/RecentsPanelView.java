@@ -43,6 +43,7 @@ import android.view.animation.AnimationUtils;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.BaseAdapter;
+import android.widget.FrameLayout;
 import android.widget.HorizontalScrollView;
 import android.widget.ImageView;
 import android.widget.ImageView.ScaleType;
@@ -79,6 +80,7 @@ public class RecentsPanelView extends RelativeLayout implements OnItemClickListe
     private boolean mRecentTasksDirty = true;
     private TaskDescriptionAdapter mListAdapter;
     private int mThumbnailWidth;
+    private int mThumbnailHeight;
     private boolean mFitThumbnailToXY;
 
     public void setRecentTasksLoader(RecentTasksLoader loader) {
@@ -132,6 +134,7 @@ public class RecentsPanelView extends RelativeLayout implements OnItemClickListe
                 holder.thumbnailView = convertView.findViewById(R.id.app_thumbnail);
                 holder.thumbnailViewImage = (ImageView) convertView.findViewById(
                         R.id.app_thumbnail_image);
+
                 // If we set the default thumbnail now, we avoid an onLayout when we update
                 // the thumbnail later (if they both have the same dimensions)
                 updateThumbnail(holder, mRecentTasksLoader.getDefaultThumbnail(), false, false);
@@ -327,6 +330,7 @@ public class RecentsPanelView extends RelativeLayout implements OnItemClickListe
     public void updateValuesFromResources() {
         final Resources res = mContext.getResources();
         mThumbnailWidth = Math.round(res.getDimension(R.dimen.status_bar_recents_thumbnail_width));
+        mThumbnailHeight = Math.round(res.getDimension(R.dimen.status_bar_recents_thumbnail_height));
         mFitThumbnailToXY = res.getBoolean(R.bool.config_recents_thumbnail_image_fits_to_xy);
     }
 
@@ -402,6 +406,13 @@ public class RecentsPanelView extends RelativeLayout implements OnItemClickListe
             // Should remove the default image in the frame
             // that this now covers, to improve scrolling speed.
             // That can't be done until the anim is complete though.
+            boolean largeThumbnail = Settings.System.getInt(mContext.getContentResolver(),
+                    Settings.System.LARGE_RECENT_THUMBNAILS, 0) == 1;
+            if (largeThumbnail) {
+                int width = mThumbnailWidth * 2;
+                int height = mThumbnailHeight * 2;
+                h.thumbnailViewImage.setLayoutParams(new FrameLayout.LayoutParams(width, height));
+            }
             h.thumbnailViewImage.setImageBitmap(thumbnail);
 
             // scale the image to fill the full width of the ImageView. do this only if
@@ -413,6 +424,9 @@ public class RecentsPanelView extends RelativeLayout implements OnItemClickListe
                     h.thumbnailViewImage.setScaleType(ScaleType.FIT_XY);
                 } else {
                     Matrix scaleMatrix = new Matrix();
+                    if (largeThumbnail) {
+                        mThumbnailWidth = mThumbnailWidth * 2;
+                    }
                     float scale = mThumbnailWidth / (float) thumbnail.getWidth();
                     scaleMatrix.setScale(scale, scale);
                     h.thumbnailViewImage.setScaleType(ScaleType.MATRIX);

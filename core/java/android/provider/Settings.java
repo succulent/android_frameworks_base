@@ -2211,6 +2211,12 @@ public final class Settings {
         public static final String HIDE_SOFT_MENU_BUTTON = "hide_soft_menu_button";
 
         /**
+         * Whether to show larger thumbnails in recent items.  The value is boolean (1 or 0).
+         * @hide
+         */
+        public static final String LARGE_RECENT_THUMBNAILS = "large_recent_thumbnails";
+
+        /**
          * Settings to backup. This is here so that it's in the same place as the settings
          * keys and easy to update.
          *

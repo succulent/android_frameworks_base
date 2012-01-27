@@ -37,6 +37,7 @@ import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.Process;
 import android.os.SystemClock;
+import android.provider.Settings;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.LruCache;
@@ -89,6 +90,13 @@ public class RecentTasksLoader {
         int width = (int) res.getDimensionPixelSize(com.android.internal.R.dimen.thumbnail_width);
         int height = (int) res.getDimensionPixelSize(com.android.internal.R.dimen.thumbnail_height);
         int color = res.getColor(R.drawable.status_bar_recents_app_thumbnail_background);
+
+        boolean largeThumbnail = Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.LARGE_RECENT_THUMBNAILS, 0) == 1;
+        if (largeThumbnail) {
+            width = width * 2;
+            height = height * 2;
+        }
 
         mDefaultThumbnailBackground = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
         Canvas c = new Canvas(mDefaultThumbnailBackground);
