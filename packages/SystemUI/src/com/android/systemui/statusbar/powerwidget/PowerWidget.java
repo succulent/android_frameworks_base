@@ -63,7 +63,9 @@ public class PowerWidget extends FrameLayout {
                                         1.0f                                    // weight = 1
                                         );
 
-    private static final int LAYOUT_SCROLL_BUTTON_THRESHOLD = 6;
+    private static final int LAYOUT_SCROLL_BUTTON_THRESHOLD = 4;
+
+    private static final int LAYOUT_SCROLL_BUTTON_WIDTH = 184;
 
     private Context mContext;
     private LayoutInflater mInflater;
@@ -141,7 +143,8 @@ public class PowerWidget extends FrameLayout {
             // we need our horizontal scroll view to wrap the linear layout
             mScrollView = new HorizontalScrollView(mContext);
             // make the fading edge the size of a button (makes it more noticible that we can scroll
-            mScrollView.setFadingEdgeLength(mContext.getResources().getDisplayMetrics().widthPixels / LAYOUT_SCROLL_BUTTON_THRESHOLD);
+            //mScrollView.setFadingEdgeLength(mContext.getResources().getDisplayMetrics().widthPixels / LAYOUT_SCROLL_BUTTON_THRESHOLD);
+            mScrollView.setFadingEdgeLength(LAYOUT_SCROLL_BUTTON_WIDTH / LAYOUT_SCROLL_BUTTON_THRESHOLD);
             mScrollView.setScrollBarStyle(View.SCROLLBARS_INSIDE_INSET);
             mScrollView.setOverScrollMode(View.OVER_SCROLL_NEVER);
             // set the padding on the linear layout to the size of our scrollbar, so we don't have them overlap
@@ -195,7 +198,8 @@ public class PowerWidget extends FrameLayout {
 
     private void updateButtonLayoutWidth() {
         // use our context to set a valid button width
-        BUTTON_LAYOUT_PARAMS.width = mContext.getResources().getDisplayMetrics().widthPixels / LAYOUT_SCROLL_BUTTON_THRESHOLD;
+        //BUTTON_LAYOUT_PARAMS.width = mContext.getResources().getDisplayMetrics().widthPixels / LAYOUT_SCROLL_BUTTON_THRESHOLD;
+        BUTTON_LAYOUT_PARAMS.width = LAYOUT_SCROLL_BUTTON_WIDTH / LAYOUT_SCROLL_BUTTON_THRESHOLD;
     }
 
     private void updateVisibility() {

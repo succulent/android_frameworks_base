@@ -23,6 +23,7 @@ import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Rect;
+import android.os.Handler;
 import android.provider.Settings;
 import android.util.AttributeSet;
 import android.util.Slog;
@@ -35,6 +36,9 @@ import android.view.animation.AccelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
 import android.view.animation.Interpolator;
 import android.widget.RelativeLayout;
+import android.widget.TextView;
+
+import com.android.systemui.statusbar.powerwidget.PowerWidget;
 
 import com.android.systemui.R;
 
@@ -58,8 +62,14 @@ public class NotificationPanel extends RelativeLayout implements StatusBarPanel,
     ViewGroup mContentParent;
     TabletStatusBar mBar;
     View mClearButton;
+    TextView mNetworkText;
     static Interpolator sAccelerateInterpolator = new AccelerateInterpolator();
     static Interpolator sDecelerateInterpolator = new DecelerateInterpolator();
+
+    // the power widget
+    PowerWidget mPowerWidget;
+    Handler mHandler = new Handler();
+    boolean mDisplayPowerWidget;
 
     // amount to slide mContentParent down by when mContentFrame is missing
     float mContentFrameMissingTranslation;
@@ -100,6 +110,35 @@ public class NotificationPanel extends RelativeLayout implements StatusBarPanel,
         // the "X" that appears in place of the clock when the panel is showing notifications
         mClearButton = findViewById(R.id.clear_all_button);
         mClearButton.setOnClickListener(mClearButtonListener);
+
+        mDisplayPowerWidget = Settings.System.getInt(mContext.getContentResolver(),
+                   Settings.System.EXPANDED_VIEW_WIDGET, 1) == 1;
+
+        if (mDisplayPowerWidget) {
+            mSettingsButton.setVisibility(View.GONE);
+            mNotificationButton.setVisibility(View.GONE);
+        }
+
+        mPowerWidget = (PowerWidget) findViewById(R.id.exp_power_stat);
+        mPowerWidget.setupSettingsObserver(mHandler);
+        mPowerWidget.setGlobalButtonOnClickListener(new View.OnClickListener() {
+                    public void onClick(View v) {
+                        if(Settings.System.getInt(mContext.getContentResolver(),
+                                Settings.System.EXPANDED_HIDE_ONCHANGE, 0) == 1) {
+                            mBar.animateCollapse();
+                        }
+                    }
+                });
+        mPowerWidget.setGlobalButtonOnLongClickListener(new View.OnLongClickListener() {
+            public boolean onLongClick(View v) {
+                mBar.animateCollapse();
+                return true;
+            }
+        });
+
+        mPowerWidget.setupWidget();
+
+        mNetworkText = (TextView) findViewById(R.id.network_text);
 
         mShowing = false;
 
@@ -146,6 +185,10 @@ public class NotificationPanel extends RelativeLayout implements StatusBarPanel,
             mShowing = show;
             setVisibility(show ? View.VISIBLE : View.GONE);
         }
+
+        if (show) {
+            mNetworkText.setSelected(true);
+        }
     }
 
     /**
@@ -180,6 +223,7 @@ public class NotificationPanel extends RelativeLayout implements StatusBarPanel,
             mNotificationScroller.setAlpha(1f);
             mNotificationScroller.scrollTo(0, 0);
             updatePanelModeButtons();
+            mPowerWidget.updateWidget();
         }
     }
 
@@ -326,9 +370,11 @@ public class NotificationPanel extends RelativeLayout implements StatusBarPanel,
     }
 
     public void updatePanelModeButtons() {
-        final boolean settingsVisible = (mSettingsView != null);
-        mSettingsButton.setVisibility(!settingsVisible ? View.VISIBLE : View.INVISIBLE);
-        mNotificationButton.setVisibility(settingsVisible ? View.VISIBLE : View.INVISIBLE);
+        if (!mDisplayPowerWidget) {
+            final boolean settingsVisible = (mSettingsView != null);
+            mSettingsButton.setVisibility(!settingsVisible ? View.VISIBLE : View.INVISIBLE);
+            mNotificationButton.setVisibility(settingsVisible ? View.VISIBLE : View.INVISIBLE);
+        }
     }
 
     public boolean isInContentArea(int x, int y) {
