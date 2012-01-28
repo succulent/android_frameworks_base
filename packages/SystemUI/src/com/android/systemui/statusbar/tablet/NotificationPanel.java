@@ -123,6 +123,7 @@ public class NotificationPanel extends RelativeLayout implements StatusBarPanel,
         mPowerWidget.setupSettingsObserver(mHandler);
         mPowerWidget.setGlobalButtonOnClickListener(new View.OnClickListener() {
                     public void onClick(View v) {
+                        vibrate();
                         if(Settings.System.getInt(mContext.getContentResolver(),
                                 Settings.System.EXPANDED_HIDE_ONCHANGE, 0) == 1) {
                             mBar.animateCollapse();
@@ -131,6 +132,7 @@ public class NotificationPanel extends RelativeLayout implements StatusBarPanel,
                 });
         mPowerWidget.setGlobalButtonOnLongClickListener(new View.OnLongClickListener() {
             public boolean onLongClick(View v) {
+                vibrate();
                 mBar.animateCollapse();
                 return true;
             }
@@ -495,6 +497,23 @@ public class NotificationPanel extends RelativeLayout implements StatusBarPanel,
         }
 
         public void onAnimationStart(Animator animation) {
+        }
+    }
+
+    void vibrate() {
+        boolean hapticFeedbackEnabled;
+        int expandedHapticFeedback = Settings.System.getInt(getContext().getContentResolver(),
+                Settings.System.EXPANDED_HAPTIC_FEEDBACK, 2);
+        if (expandedHapticFeedback == 2) {
+            hapticFeedbackEnabled = (Settings.System.getInt(getContext().getContentResolver(),
+                    Settings.System.HAPTIC_FEEDBACK_ENABLED, 1) == 1);
+        } else {
+            hapticFeedbackEnabled = (expandedHapticFeedback == 1);
+        }
+        if (hapticFeedbackEnabled) {
+            android.os.Vibrator vib = (android.os.Vibrator)mContext.getSystemService(
+                    Context.VIBRATOR_SERVICE);
+            vib.vibrate(100);
         }
     }
 }
