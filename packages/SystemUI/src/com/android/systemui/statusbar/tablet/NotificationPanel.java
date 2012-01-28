@@ -21,7 +21,9 @@ import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Rect;
+import android.provider.Settings;
 import android.util.AttributeSet;
 import android.util.Slog;
 import android.view.LayoutInflater;
@@ -88,6 +90,7 @@ public class NotificationPanel extends RelativeLayout implements StatusBarPanel,
         mTitleArea.setPanel(this);
 
         mSettingsButton = findViewById(R.id.settings_button);
+        mSettingsButton.setOnClickListener(mSettingsButtonListener);
         mNotificationButton = findViewById(R.id.notification_button);
 
         mNotificationScroller = findViewById(R.id.notification_scroller);
@@ -106,6 +109,14 @@ public class NotificationPanel extends RelativeLayout implements StatusBarPanel,
     private View.OnClickListener mClearButtonListener = new View.OnClickListener() {
         public void onClick(View v) {
             mBar.clearAll();
+        }
+    };
+
+    private View.OnClickListener mSettingsButtonListener = new View.OnClickListener() {
+        public void onClick(View v) {
+            getContext().startActivity(new Intent(Settings.ACTION_SETTINGS)
+                    .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+            mBar.animateCollapse();
         }
     };
 

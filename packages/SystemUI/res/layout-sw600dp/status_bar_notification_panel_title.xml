@@ -122,7 +122,7 @@
         android:layout_alignBaseline="@id/icons"
         android:layout_alignParentRight="true"
         android:paddingRight="16dp"
-        android:src="@drawable/ic_sysbar_quicksettings"
+        android:src="@drawable/ic_notify_quicksettings"
         android:baseline="21dp"
         android:contentDescription="@string/accessibility_settings_button"
         />
