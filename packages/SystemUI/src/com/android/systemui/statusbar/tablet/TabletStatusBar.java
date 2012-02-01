@@ -111,7 +111,7 @@ public class TabletStatusBar extends StatusBar implements
     public static final int MSG_OPEN_COMPAT_MODE_PANEL = 1050;
     public static final int MSG_CLOSE_COMPAT_MODE_PANEL = 1051;
     public static final int MSG_STOP_TICKER = 2000;
-    public static final int MSG_HIDE_SOFTBUTTONS = 3000;
+    public static final int MSG_HIDE_ITEMS = 3000;
 
     // Fitts' Law assistance for LatinIME; see policy.EventHole
     private static final boolean FAKE_SPACE_BAR = true;
@@ -804,7 +804,7 @@ public class TabletStatusBar extends StatusBar implements
                 case MSG_STOP_TICKER:
                     mTicker.halt();
                     break;
-                case MSG_HIDE_SOFTBUTTONS:
+                case MSG_HIDE_ITEMS:
                     setNavigationVisibility(0);
                     break;
             }
@@ -958,14 +958,11 @@ public class TabletStatusBar extends StatusBar implements
     }
 
     public void showClock(boolean show) {
-        ContentResolver resolver = mContext.getContentResolver();
-
+        mShowClock = show;
         View clock = mBarContents.findViewById(R.id.clock);
         View network_text = mBarContents.findViewById(R.id.network_text);
-        mShowClock = (Settings.System.getInt(resolver,
-                Settings.System.STATUS_BAR_CLOCK, 1) == 1);
         if (clock != null) {
-            clock.setVisibility(show ? (mShowClock ? View.VISIBLE : View.GONE) : View.GONE);
+            clock.setVisibility(show ? View.VISIBLE : View.GONE);
         }
         if (network_text != null) {
             network_text.setVisibility((!show) ? View.VISIBLE : View.GONE);
@@ -1031,13 +1028,15 @@ public class TabletStatusBar extends StatusBar implements
         boolean disableRecent = ((visibility & StatusBarManager.DISABLE_RECENT) != 0);
         boolean disableBack = ((visibility & StatusBarManager.DISABLE_BACK) != 0);
 
-        boolean hideHome = (Settings.System.getInt(mContext.getContentResolver(),
+        ContentResolver resolver = mContext.getContentResolver();
+
+        boolean hideHome = (Settings.System.getInt(resolver,
                 Settings.System.HIDE_SOFT_HOME_BUTTON, 0) == 1);
-        boolean hideRecent = (Settings.System.getInt(mContext.getContentResolver(),
+        boolean hideRecent = (Settings.System.getInt(resolver,
                 Settings.System.HIDE_SOFT_RECENT_BUTTON, 0) == 1);
-        boolean hideBack = (Settings.System.getInt(mContext.getContentResolver(),
+        boolean hideBack = (Settings.System.getInt(resolver,
                 Settings.System.HIDE_SOFT_BACK_BUTTON, 0) == 1);
-        mHideMenuButton = (Settings.System.getInt(mContext.getContentResolver(),
+        mHideMenuButton = (Settings.System.getInt(resolver,
                 Settings.System.HIDE_SOFT_MENU_BUTTON, 0) == 1);
 
         mBackButton.setVisibility(hideBack ? View.GONE : (disableBack ? View.INVISIBLE : View.VISIBLE));
@@ -1046,6 +1045,14 @@ public class TabletStatusBar extends StatusBar implements
 
         mInputMethodSwitchButton.setScreenLocked(
                 (visibility & StatusBarManager.DISABLE_SYSTEM_INFO) != 0);
+
+        mShowClock = (Settings.System.getInt(resolver,
+                Settings.System.STATUS_BAR_CLOCK, 1) == 1);
+
+        View clock = mBarContents.findViewById(R.id.clock);
+        if (clock != null) {
+            clock.setVisibility(mShowClock ? View.VISIBLE : View.GONE);
+        }
     }
 
     private boolean hasTicker(Notification n) {
@@ -1972,12 +1979,14 @@ public class TabletStatusBar extends StatusBar implements
                     Settings.System.HIDE_SOFT_BACK_BUTTON), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.HIDE_SOFT_MENU_BUTTON), false, this);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.STATUS_BAR_CLOCK), false, this);
         }
 
         @Override
         public void onChange(boolean selfChange) {
-            mHandler.removeMessages(MSG_HIDE_SOFTBUTTONS);
-            mHandler.sendEmptyMessage(MSG_HIDE_SOFTBUTTONS);
+            mHandler.removeMessages(MSG_HIDE_ITEMS);
+            mHandler.sendEmptyMessage(MSG_HIDE_ITEMS);
         }
     }
 }
