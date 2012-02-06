@@ -79,7 +79,7 @@ static void android_os_Power_reboot(JNIEnv *env, jobject clazz, jstring reason)
         android_reboot(ANDROID_RB_RESTART, 0, 0);
     } else {
         const char *chars = env->GetStringUTFChars(reason, NULL);
-        android_reboot(ANDROID_RB_RESTART2, 0, (char *) chars);
+        android_reboot(ANDROID_RB_RESTART2, 2, (char *) chars);
         env->ReleaseStringUTFChars(reason, chars);  // In case it fails.
     }
     jniThrowIOException(env, errno);
