@@ -206,8 +206,6 @@ public class TabletStatusBar extends StatusBar implements
 
     public Context getContext() { return mContext; }
 
-    private StorageManager mStorageManager;
-
     protected void addPanelWindows() {
         final Context context = mContext;
         final Resources res = mContext.getResources();
@@ -411,11 +409,6 @@ public class TabletStatusBar extends StatusBar implements
     @Override
     public void start() {
         super.start(); // will add the main bar view
-
-        // storage
-        mStorageManager = (StorageManager) mContext.getSystemService(Context.STORAGE_SERVICE);
-        mStorageManager.registerListener(
-                new com.android.systemui.usb.StorageNotification(mContext));
 
         SettingsObserver observer = new SettingsObserver(mHandler);
         observer.observe(mContext);
