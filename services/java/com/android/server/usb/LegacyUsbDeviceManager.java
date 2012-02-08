@@ -446,11 +446,6 @@ public class LegacyUsbDeviceManager extends UsbDeviceManager {
                 if (functions == null) {
                     functions = mDefaultFunctions;
                 }
-                if (mAdbEnabled) {
-                    functions = addFunction(functions, UsbManager.USB_FUNCTION_ADB);
-                } else {
-                    functions = removeFunction(functions, UsbManager.USB_FUNCTION_ADB);
-                }
                 if (!mCurrentFunctions.equals(functions)) {
                     if (!setUsbConfig("none")) {
                         Slog.e(TAG, "Failed to disable USB");
@@ -460,6 +455,9 @@ public class LegacyUsbDeviceManager extends UsbDeviceManager {
                     }
                     if (setUsbConfig(functions)) {
                         mCurrentFunctions = functions;
+                        updateUsbState();
+                        mAdbEnabled = containsFunction(functions, UsbManager.USB_FUNCTION_ADB);
+                        updateAdbNotification();
                     } else {
                         Slog.e(TAG, "Failed to switch USB config to " + functions);
                         // revert to previous configuration if we fail
