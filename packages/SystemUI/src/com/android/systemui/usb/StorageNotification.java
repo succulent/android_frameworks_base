@@ -33,7 +33,7 @@ import android.util.Slog;
 public class StorageNotification extends StorageEventListener {
     private static final String TAG = "StorageNotification";
 
-    private static final boolean POP_UMS_ACTIVITY_ON_CONNECT = true;
+    private static final boolean POP_UMS_ACTIVITY_ON_CONNECT = false;
 
     /**
      * Binder context for this service
@@ -109,7 +109,13 @@ public class StorageNotification extends StorageEventListener {
              */
             connected = false;
         }
-        updateUsbMassStorageNotification(connected);
+
+        boolean autoMount = (Settings.Secure.getInt(mContext.getContentResolver(),
+                Settings.Secure.MOUNT_UMS_AUTOSTART, 0) == 1);
+        if (autoMount && connected) {
+            mStorageManager.enableUsbMassStorage();
+        }
+        else updateUsbMassStorageNotification(connected);
     }
 
     /*
