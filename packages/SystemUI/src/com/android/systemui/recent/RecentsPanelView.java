@@ -72,7 +72,7 @@ public class RecentsPanelView extends RelativeLayout implements OnItemClickListe
 
     private boolean mShowing;
     private Choreographer mChoreo;
-    private View mRecentsDismissButton;
+    public View mRecentsDismissButton;
 
     private RecentTasksLoader mRecentTasksLoader;
     private ArrayList<TaskDescription> mRecentTaskDescriptions;

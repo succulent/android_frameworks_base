@@ -2223,6 +2223,18 @@ public final class Settings {
         public static final String LARGE_RECENT_THUMBNAILS = "large_recent_thumbnails";
 
         /**
+         * Whether to show the soft tablet buttons on the right.  The value is boolean (1 or 0).
+         * @hide
+         */
+        public static final String RIGHT_SOFT_BUTTONS = "right_soft_buttons";
+
+        /**
+         * Whether to show notification peeks.  The value is boolean (1 or 0).
+         * @hide
+         */
+        public static final String SHOW_NOTIFICATION_PEEK = "show_notification_peek";
+
+        /**
          * Settings to backup. This is here so that it's in the same place as the settings
          * keys and easy to update.
          *
