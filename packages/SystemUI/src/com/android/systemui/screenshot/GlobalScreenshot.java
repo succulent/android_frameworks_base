@@ -40,6 +40,7 @@ import android.os.AsyncTask;
 import android.os.Environment;
 import android.os.Process;
 import android.provider.MediaStore;
+import android.provider.Settings;
 import android.util.DisplayMetrics;
 import android.view.Display;
 import android.view.LayoutInflater;
@@ -76,7 +77,7 @@ class SaveImageInBackgroundData {
 class SaveImageInBackgroundTask extends AsyncTask<SaveImageInBackgroundData, Void,
         SaveImageInBackgroundData> {
     private static final String SCREENSHOTS_DIR_NAME = "Screenshots";
-    private static final String SCREENSHOT_FILE_NAME_TEMPLATE = "Screenshot_%s.png";
+    private static final String SCREENSHOT_FILE_NAME_TEMPLATE = "Screenshot_%s.";
     private static final String SCREENSHOT_FILE_PATH_TEMPLATE = "%s/%s/%s";
 
     private int mNotificationId;
@@ -85,6 +86,7 @@ class SaveImageInBackgroundTask extends AsyncTask<SaveImageInBackgroundData, Voi
     private String mImageFileName;
     private String mImageFilePath;
     private long mImageTime;
+    private boolean mUseJpeg;
 
     // WORKAROUND: We want the same notification across screenshots that we update so that we don't
     // spam a user's notification drawer.  However, we only show the ticker for the saving state
@@ -97,12 +99,16 @@ class SaveImageInBackgroundTask extends AsyncTask<SaveImageInBackgroundData, Voi
             NotificationManager nManager, int nId) {
         Resources r = context.getResources();
 
+        mUseJpeg = Settings.System.getInt(context.getContentResolver(),
+                Settings.System.JPEG_SCREENSHOTS, 0) == 1;
+
         // Prepare all the output metadata
         mImageTime = System.currentTimeMillis();
         String imageDate = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss").format(new Date(mImageTime));
         String imageDir = Environment.getExternalStoragePublicDirectory(
                 Environment.DIRECTORY_PICTURES).getAbsolutePath();
-        mImageFileName = String.format(SCREENSHOT_FILE_NAME_TEMPLATE, imageDate);
+        mImageFileName = String.format(SCREENSHOT_FILE_NAME_TEMPLATE + (mUseJpeg ? "jpg" : "png"),
+                imageDate);
         mImageFilePath = String.format(SCREENSHOT_FILE_PATH_TEMPLATE, imageDir,
                 SCREENSHOTS_DIR_NAME, mImageFileName);
 
@@ -162,11 +168,13 @@ class SaveImageInBackgroundTask extends AsyncTask<SaveImageInBackgroundData, Voi
             values.put(MediaStore.Images.ImageColumns.DATE_TAKEN, mImageTime);
             values.put(MediaStore.Images.ImageColumns.DATE_ADDED, mImageTime);
             values.put(MediaStore.Images.ImageColumns.DATE_MODIFIED, mImageTime);
-            values.put(MediaStore.Images.ImageColumns.MIME_TYPE, "image/png");
+            if (mUseJpeg) values.put(MediaStore.Images.ImageColumns.MIME_TYPE, "image/jpeg");
+            else values.put(MediaStore.Images.ImageColumns.MIME_TYPE, "image/png");
             Uri uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
 
             OutputStream out = resolver.openOutputStream(uri);
-            image.compress(Bitmap.CompressFormat.PNG, 100, out);
+            image.compress(mUseJpeg ? Bitmap.CompressFormat.JPEG : Bitmap.CompressFormat.PNG,
+                    100, out);
             out.flush();
             out.close();
 
@@ -197,7 +205,7 @@ class SaveImageInBackgroundTask extends AsyncTask<SaveImageInBackgroundData, Voi
 
             // Create the intent to show the screenshot in gallery
             Intent launchIntent = new Intent(Intent.ACTION_VIEW);
-            launchIntent.setDataAndType(params.imageUri, "image/png");
+            launchIntent.setDataAndType(params.imageUri, mUseJpeg ? "image/jpeg" : "image/png");
             launchIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
             mNotificationBuilder
