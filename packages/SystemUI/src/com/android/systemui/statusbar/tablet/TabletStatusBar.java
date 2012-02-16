@@ -53,7 +53,9 @@ import android.os.ServiceManager;
 import android.os.storage.StorageManager;
 import android.provider.Settings;
 import android.text.TextUtils;
+import android.util.DisplayMetrics;
 import android.util.Slog;
+import android.util.TypedValue;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.Display;
 import android.view.Gravity;
@@ -675,6 +677,42 @@ public class TabletStatusBar extends StatusBar implements
             dot1Params.addRule(RelativeLayout.LEFT_OF, tempDot2.getId());
             dot1Params.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
             tempDot1.setLayoutParams(dot1Params);
+
+            RelativeLayout.LayoutParams scrimParams = new RelativeLayout.LayoutParams(RelativeLayout
+                    .LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.MATCH_PARENT);
+            scrimParams.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+            scrimParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
+            mRecentsPanel.mRecentsScrim.setLayoutParams(scrimParams);
+
+            mRecentsPanel.mRecentsScrim.setBackgroundResource(
+                    R.drawable.recents_bg_protect_tile_flipped);
+
+            DisplayMetrics dm = mContext.getResources().getDisplayMetrics();
+            int titleWidth = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
+                    478f, dm);
+            int titleHeight = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
+                    224f, dm);
+            int frameMargin = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
+                    178f, dm);
+
+            RelativeLayout.LayoutParams frameParams = new RelativeLayout.LayoutParams(titleWidth,
+                    RelativeLayout.LayoutParams.WRAP_CONTENT);
+            frameParams.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
+            frameParams.addRule(RelativeLayout.ALIGN_PARENT_TOP);
+            frameParams.setMargins(0, frameMargin, 0, 0);
+            mNotificationPanel.mContentFrame.setLayoutParams(frameParams);
+
+            mNotificationPanel.mContentFrame.setBackgroundResource(
+                    R.drawable.notify_panel_notify_bg_flipped);
+
+            RelativeLayout.LayoutParams titleParams = new RelativeLayout.LayoutParams(titleWidth,
+                    titleHeight);
+            titleParams.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
+            titleParams.addRule(RelativeLayout.ALIGN_PARENT_TOP);
+            mNotificationPanel.mTitleArea.setLayoutParams(titleParams);
+
+            mNotificationPanel.mTitleArea.setBackgroundResource(
+                    R.drawable.notify_panel_clock_bg_flipped);
 
             mHandler.sendEmptyMessage(MSG_OPEN_RECENTS_PANEL);
             mHandler.sendEmptyMessage(MSG_CLOSE_RECENTS_PANEL);

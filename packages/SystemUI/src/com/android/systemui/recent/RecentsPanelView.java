@@ -66,7 +66,7 @@ public class RecentsPanelView extends RelativeLayout implements OnItemClickListe
     static final boolean DEBUG = TabletStatusBar.DEBUG || PhoneStatusBar.DEBUG || false;
     private Context mContext;
     private StatusBar mBar;
-    private View mRecentsScrim;
+    public View mRecentsScrim;
     private View mRecentsNoApps;
     private ViewGroup mRecentsContainer;
 
