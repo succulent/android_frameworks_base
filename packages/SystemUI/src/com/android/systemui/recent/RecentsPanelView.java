@@ -68,7 +68,7 @@ public class RecentsPanelView extends RelativeLayout implements OnItemClickListe
     private StatusBar mBar;
     public View mRecentsScrim;
     private View mRecentsNoApps;
-    private ViewGroup mRecentsContainer;
+    public ViewGroup mRecentsContainer;
 
     private boolean mShowing;
     private Choreographer mChoreo;
@@ -129,7 +129,11 @@ public class RecentsPanelView extends RelativeLayout implements OnItemClickListe
         public View getView(int position, View convertView, ViewGroup parent) {
             ViewHolder holder;
             if (convertView == null) {
-                convertView = mInflater.inflate(R.layout.status_bar_recent_item, parent, false);
+                boolean rightButtons = (Settings.System.getInt(mContext.getContentResolver(),
+                        Settings.System.RIGHT_SOFT_BUTTONS, 0) == 1);
+                convertView = mInflater.inflate((rightButtons ?
+                        R.layout.status_bar_recent_item_flipped : R.layout.status_bar_recent_item),
+                        parent, false);
                 holder = new ViewHolder();
                 holder.thumbnailView = convertView.findViewById(R.id.app_thumbnail);
                 holder.thumbnailViewImage = (ImageView) convertView.findViewById(

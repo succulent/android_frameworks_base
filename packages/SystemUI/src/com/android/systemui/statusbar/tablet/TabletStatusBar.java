@@ -70,6 +70,7 @@ import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.view.WindowManagerImpl;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
@@ -713,6 +714,22 @@ public class TabletStatusBar extends StatusBar implements
 
             mNotificationPanel.mTitleArea.setBackgroundResource(
                     R.drawable.notify_panel_clock_bg_flipped);
+
+            ViewGroup.MarginLayoutParams recentParams = new ViewGroup.MarginLayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            recentParams.setMargins(mContext.getResources().getDimensionPixelSize(
+                    R.dimen.status_bar_recents_right_glow_margin), 0, 0, 0);
+            FrameLayout.LayoutParams recentFrameParams = new FrameLayout.LayoutParams(recentParams);
+            recentFrameParams.gravity = Gravity.BOTTOM | Gravity.RIGHT;
+            mRecentsPanel.mRecentsContainer.setLayoutParams(recentFrameParams);
+
+            TextView noRecentApps = (TextView)mRecentsPanel.findViewById(R.id.recents_no_apps_text);
+            FrameLayout.LayoutParams noRecentParams = new FrameLayout.LayoutParams(
+                    RelativeLayout.LayoutParams.WRAP_CONTENT,
+                    RelativeLayout.LayoutParams.WRAP_CONTENT);
+            noRecentParams.gravity = Gravity.BOTTOM | Gravity.RIGHT;
+            noRecentApps.setLayoutParams(noRecentParams);
+            noRecentApps.setGravity(Gravity.RIGHT);
 
             mHandler.sendEmptyMessage(MSG_OPEN_RECENTS_PANEL);
             mHandler.sendEmptyMessage(MSG_CLOSE_RECENTS_PANEL);
