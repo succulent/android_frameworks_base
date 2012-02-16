@@ -1132,6 +1132,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
              attrs.flags ^= WindowManager.LayoutParams.FLAG_FULLSCREEN;
          }
     
+    }
     void readLidState() {
         try {
             int sw = mWindowManager.getSwitchState(SW_LID);
@@ -1641,6 +1642,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
  		    */
  		    if(win.isDialog()){
  		       win.removeWindowState();
+ 		       }
                     mHomePressed = true;
                 } else if ((event.getFlags() & KeyEvent.FLAG_LONG_PRESS) != 0) {
                     if (!keyguardOn) {

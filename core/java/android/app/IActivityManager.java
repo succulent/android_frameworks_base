@@ -686,5 +686,4 @@ public interface IActivityManager extends IInterface {
       * Cornerstone specific transactions
       */
      int SET_CORNERSTONE_FOCUSED_APP_TRANSACTION = IBinder.FIRST_CALL_TRANSACTION+145;
- }
 }
