@@ -457,6 +457,17 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
     ShortcutManager mShortcutManager;
     PowerManager.WakeLock mBroadcastWakeLock;
+    
+     /**
+      * Author: Onskreen
+      * Date: 14/04/2011
+      *
+      * In the case of virtual keyboard, these Window shifting flags are used.
+      * Including the windows which are shifted currently and the amount the window
+      * was shifted. This policy tracks how much and when to shift the windows
+      */
+     ArrayList<WindowState> mWindowsShifted = new ArrayList<WindowState>();
+     int mWindowShiftAmount;
 
     final KeyCharacterMap.FallbackAction mFallbackAction = new KeyCharacterMap.FallbackAction();
 
@@ -1111,6 +1122,16 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         }
     }
     
+         /**
+          * Author: Onskreen
+          * Date: 24/02/2011
+          *
+          * Removes the FULLSCREEN flag from the app to render it within CS panel.
+          */
+         if ((attrs.flags & WindowManager.LayoutParams.FLAG_FULLSCREEN) != 0) {
+             attrs.flags ^= WindowManager.LayoutParams.FLAG_FULLSCREEN;
+         }
+    
     void readLidState() {
         try {
             int sw = mWindowManager.getSwitchState(SW_LID);
@@ -1611,6 +1632,15 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
             if (down) {
                 if (repeatCount == 0) {
+ 		   /**
+ 		    * Author: Onskreen
+ 		    * Date: 31/05/2011
+ 		    *
+ 		    * If the dialog is present, first kill/dismiss the dialog
+ 		    * and then launch the HOME app or recent app dialog.
+ 		    */
+ 		    if(win.isDialog()){
+ 		       win.removeWindowState();
                     mHomePressed = true;
                 } else if ((event.getFlags() & KeyEvent.FLAG_LONG_PRESS) != 0) {
                     if (!keyguardOn) {
@@ -2218,8 +2248,20 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                         vf.top = mCurTop;
                         vf.right = mCurRight;
                         vf.bottom = mCurBottom;
-                    } else {
-                        vf.set(cf);
+                        
+ 						/**
+ 						 * Author: Onskreen
+ 						 * Date: 18/01/2011
+ 						 *
+ 						 * Adjusts the size of pf, df, cf, vf rects.
+ 						 */
+ 						if (attrs.type != TYPE_STATUS_BAR_PANEL
+ 			                            || attrs.type != TYPE_STATUS_BAR_SUB_PANEL) {
+ 							setWindowInFrame(win, attrs, pf, df, cf, vf);
+ 						}
+                      } else {
+                          vf.set(cf);
+ 						setWindowInFrame(win, attrs, pf, df, cf, vf);
                     }
                 }
             } else if ((fl & FLAG_LAYOUT_IN_SCREEN) != 0) {
@@ -2276,6 +2318,13 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 } else {
                     vf.set(cf);
                 }
+                 /**
+                  * Author: Onskreen
+                  * Date: 25/05/2011
+                  *
+                  * Check added to render well the QuickContactActivity and other similar apps
+                  * in main panel or either of cs panels.
+                  */
             } else if (attached != null) {
                 if (DEBUG_LAYOUT)
                     Log.v(TAG, "layoutWindowLw(" + attrs.getTitle() + "): attached to " + attached);
@@ -2339,6 +2388,14 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         
         win.computeFrameLw(pf, df, cf, vf);
         
+         /**
+          * Author: Onskreen
+          * Date: 14/04/2011
+          *
+          * This logic ensures that the appropriate rects (mContent* and mCurr*)
+          * are modified accordingly when the input method window is visible. These
+          * rects are used when the Window has SOFT_INPUT_ADJUST_RESIZE set
+          */
         // Dock windows carve out the bottom of the screen, so normal windows
         // can't appear underneath them.
         if (attrs.type == TYPE_INPUT_METHOD && !win.getGivenInsetsPendingLw()) {
@@ -2358,6 +2415,177 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         }
     }
 
+     /**
+      * Author: Onskreen
+      * Date: 18/01/2011
+      *
+      * Sets the parent, display, content and visible Rects to the size of WindoState.mFrame rect.
+      */
+     private void setWindowInFrame(WindowState win, WindowManager.LayoutParams attrs, Rect pf, Rect df, Rect cf, Rect vf){
+ 		if(attrs != null){
+             if(attrs.packageName != null) {
+ 				Rect desiredRect = win.getFrameLw();
+ 				//Default is to layout directly in the desired rectangle
+				pf.left = df.left = vf.left = cf.left = desiredRect.left;
+ 				pf.right = df.right = vf.right = cf.right = desiredRect.right;
+ 				pf.top = df.top = vf.top = cf.top= desiredRect.top;
+ 				pf.bottom = df.bottom = desiredRect.bottom;
+ 
+ 	          //Only manipulate focused windows
+ 	            if(win.isFocused()) {
+ 	                /**
+ 	                 * Author: Onskreen
+ 	                 * Date: 16/06/2011
+ 	                 *
+ 	                 * Moved the obstructed cs window logic to setObstructedWindowInFrame
+ 	                 * method.
+ 	                 */
+ 	                setObstructedWindowInFrame(win, attrs, pf, df, cf, vf, desiredRect);
+ 	            } else {
+ 					//In case window was shifted somehow and then lost focus, make sure it reshifts
+ 					//where it belongs.
+ 					if(mWindowsShifted.size() == 0){
+						if(mWindowsShifted.contains(win)) {
+ 							if (DEBUG_LAYOUT) Log.v(TAG, "\tAction: Shift down " + mWindowShiftAmount + " pixels");
+                            //mWindowsShifted.remove(win);
+                            mWindowsShifted.clear();
+ 
+                            int modifiedTop = pf.top + mWindowShiftAmount;
+                            pf.top = df.top = cf.top = vf.top = modifiedTop;
+                            vf.bottom = cf.bottom = desiredRect.bottom + modifiedTop;
+ 						} else {
+ 							//set the bottom normally
+ 							vf.bottom = cf.bottom = desiredRect.bottom;
+ 						}
+ 		            } else if (mWindowsShifted.contains(win)) {
+ 						if (DEBUG_LAYOUT) Log.v(TAG, "\tAction: Shift down " + mWindowShiftAmount + " pixels");
+ 						mWindowsShifted.remove(win);
+ 						int modifiedTop = pf.top + mWindowShiftAmount;
+ 						pf.top = df.top = cf.top = vf.top = modifiedTop;
+ 						vf.bottom = cf.bottom = pf.bottom = df.bottom = desiredRect.bottom + modifiedTop;
+ 					} else {
+ 	                    WindowState w = (WindowState) mWindowsShifted.get(0);
+ 	                    if(w != null) {
+ 	                        IBinder token = win.getToken();
+ 	                        boolean isWF = w.isInCornerstonePanelWindowPanel(token);
+ 	                        if(isWF) {
+ 	                            setObstructedWindowInFrame(win, attrs, pf, df, cf, vf, desiredRect);
+ 	                        } else {
+ 	                            //set the bottom normally
+ 	                            vf.bottom = cf.bottom = desiredRect.bottom;
+ 	                        }
+ 	                    } else {
+ 	                           //set the bottom normally
+ 	                           vf.bottom = cf.bottom = desiredRect.bottom;
+ 	                    }
+ 	                }
+ 	            }
+ 
+                if (DEBUG_LAYOUT) {
+ 					Log.v(TAG, "Final Rects for Window: " + win);
+ 					Log.v(TAG, "pf: " + pf);
+ 					Log.v(TAG, "df: " + df);
+					Log.v(TAG, "cf: " + cf);
+ 					Log.v(TAG, "vf: " + vf);
+                }
+             }
+ 		}
+     }
+ 
+     /**
+      * Author: Onskreen
+ 	 * Date: 05/04/2011
+     *
+      * This is a shortcut to tell if the IME is visible on the screen without referencing the mFrame of the WindowState
+      * as that value may get shifted while being layed out. Previously we were using the interesection of the mFrame with
+      * the mContentBottom.
+      */
+     private boolean isKeyboardVisible() {
+ 		if(mContentBottom != mRestrictedScreenHeight) {
+ 			return true;
+ 		} else {
+ 			return false;
+ 		}
+     }
+ 
+     /**
+      * Author: Onskreen
+      * Date: 16/06/2011
+      *
+      * Utility method for setting the layout rects for obstructed cs window.
+      */
+     private void setObstructedWindowInFrame(WindowState win, WindowManager.LayoutParams attrs, Rect pf, Rect df, Rect cf, Rect vf, Rect desiredRect){
+         /**
+          * Author: Onskreen
+          * Date: 05/04/2011
+          *
+          * Having the SOFT_INPUT_ADJUST_RESIZE flag set indicates that the windowstate should be
+          * manipulated in the presence of the keyboard. For Cornerstone, those panels that are
+          * unduly obstructed by the presence of the keyboard are also manipulated regardless
+          * of the flag.
+          */
+        if(((attrs.softInputMode & SOFT_INPUT_MASK_ADJUST) == SOFT_INPUT_ADJUST_RESIZE) ||
+                win.isObstructedByKeyboard()) {
+            //Indicates the V Keyboard is on the screen, if mContentBottom has been reset
+            //and our desired rect will overlap it
+ //           if(desiredRect.bottom > mContentBottom) {
+ 			if(isKeyboardVisible()) {
+                //If the entire rect is off the screen, it indicates it is not actually visible. This can
+                //be the case for a cornerstone panel when the cornerstone is RUNNING_CLOSED.
+                if(desiredRect.top > mUnrestrictedScreenHeight ||                   //Orientation: Portrait, CS State: Closed
+                        desiredRect.left > mUnrestrictedScreenWidth)   {           //Orientation: Landscape, CS State: Closed
+                    if (DEBUG_LAYOUT) Log.v(TAG, "\tAction: Ignore, win is not visible anyway");
+                    cf.bottom = desiredRect.bottom;
+                    vf.bottom = desiredRect.bottom;
+                } else if(win.isObstructedByKeyboard()) {
+                    //Try to shift the window up on the screen to be fully visible
+ 
+                    //Window already shifted
+                    if(mWindowsShifted.contains(win)) {
+                        if (DEBUG_LAYOUT) Log.v(TAG, "\tAction: Win already shifted");
+ 
+                        if(pf.bottom!=mContentBottom) {
+                            int modifiedTop = desiredRect.top - mWindowShiftAmount;
+                            pf.top = df.top = cf.top = vf.top = modifiedTop;
+                            pf.bottom = df.bottom = mContentBottom;
+                            cf.bottom = mContentBottom;
+                            vf.bottom = mCurBottom;
+                        }
+                    } else {
+                        mWindowsShifted.add(win);
+                        mWindowShiftAmount = desiredRect.bottom - mContentBottom;
+                        if (DEBUG_LAYOUT) Log.v(TAG, "\tAction: Shift up " + mWindowShiftAmount + " pixels");
+                        int modifiedTop = desiredRect.top - mWindowShiftAmount;
+                        pf.top = df.top = cf.top = vf.top = modifiedTop;
+                        pf.bottom = df.bottom = mContentBottom;
+                        cf.bottom = mContentBottom;
+                        vf.bottom = mCurBottom;
+                    }
+                } else {
+                    //Squeeze the window in the visible area above the keyboard
+                    if (DEBUG_LAYOUT) Log.v(TAG, "\tAction: Squeeze into visible rect above keyboard");
+                    cf.bottom = mContentBottom;
+                    vf.bottom = mCurBottom;
+                }
+            } else {
+                //Layout as regular
+                if (DEBUG_LAYOUT) Log.v(TAG, "IME: Not Visible\tTask: Unshift Win: " + win);
+                if(mWindowsShifted.contains(win)) {
+                   if (DEBUG_LAYOUT) Log.v(TAG, "\tAction: Shift down " + mWindowShiftAmount + " pixels");
+                   mWindowsShifted.clear();
+                  pf.top = df.top = cf.top = vf.top = desiredRect.top + mWindowShiftAmount;
+                   vf.bottom = cf.bottom = desiredRect.bottom+ mWindowShiftAmount;
+                   pf.bottom = df.bottom = desiredRect.bottom+ mWindowShiftAmount;
+                } else {
+                    if (DEBUG_LAYOUT) Log.v(TAG, "\tAction: Ignore, not currently shifted");
+                    vf.bottom = cf.bottom = desiredRect.bottom;
+                    pf.bottom = df.bottom = desiredRect.bottom;
+                }
+            }
+        }
+     }
+ 
+
     /** {@inheritDoc} */
     public int finishLayoutLw() {
         return 0;
@@ -2372,7 +2600,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         mAllowLockscreenWhenOn = false;
         mDismissKeyguard = false;
     }
-
+    
     /** {@inheritDoc} */
     public void animatingWindowLw(WindowState win,
                                 WindowManager.LayoutParams attrs) {
@@ -2427,6 +2655,16 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                             + " lp.flags=0x" + Integer.toHexString(lp.flags));
                 }
                 topIsFullscreen = (lp.flags & WindowManager.LayoutParams.FLAG_FULLSCREEN) != 0;
+                
+                 /**
+                  * Author: Onskreen
+                  * Date: 24/02/2011
+                  *
+                  * Never hide the status bar to ensure that app always renders within
+                  * the CS panel.
+                  */
+                 topIsFullscreen = false;
+
                 // The subtle difference between the window for mTopFullscreenOpaqueWindowState
                 // and mTopIsFullscreen is that that mTopIsFullscreen is set only if the window
                 // has the FLAG_FULLSCREEN set.  Not sure if there is another way that to be the

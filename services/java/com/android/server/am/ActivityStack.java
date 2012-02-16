@@ -18,7 +18,9 @@ package com.android.server.am;
 
 import com.android.internal.app.HeavyWeightSwitcherActivity;
 import com.android.internal.os.BatteryStatsImpl;
+import com.android.server.AttributeCache;
 import com.android.server.am.ActivityManagerService.PendingActivityLaunch;
+import com.android.server.wm.WindowManagerService;
 
 import android.app.Activity;
 import android.app.ActivityManager;
@@ -58,9 +60,9 @@ import android.os.IBinder;
 import android.os.Message;
 import android.os.ParcelFileDescriptor;
 import android.os.PowerManager;
+import android.os.Process;
 import android.os.RemoteException;
 import android.os.SystemClock;
-import android.provider.Settings;
 import android.util.EventLog;
 import android.util.Log;
 import android.util.Slog;
@@ -74,6 +76,16 @@ import java.util.List;
 
 /**
  * State and management of a single stack of activities.
+ */
+
+/**
+ * Onskreen-Cornerstone
+ * Version: 0.1
+ * Date 1.27.2011
+ *
+ * Since ActivityStack is now used for both cornerstone and main stacks separately,
+ * logic is expanded in many places to test for now mCornerstoneStack in addition
+ * to mMainStack.
  */
 final class ActivityStack {
     static final String TAG = ActivityManagerService.TAG;
@@ -139,6 +151,40 @@ final class ActivityStack {
     final ActivityManagerService mService;
     final boolean mMainStack;
     
+    /**
+     * Author: Onskreen
+     * Date: 24/01/2011
+     *
+     * Cornerstone Specific Flags
+     */
+    final boolean mCornerstoneStack;			//Indicates stack is the cornerstone
+    final boolean mCornerstonePanelStack;		//Indicates stack is cornerstone panel
+    final int mCornerstonePanelIndex;			//Index of cornerstone panel. Only valid for cs panel stacks
+    String mStackName; 							//Convenience for debug statements
+
+    /**
+     * Author: Onskreen
+     * Date: 23/02/2011
+     *
+     * Flag indicating that stack is being paused completely. Used when cornerstone panel
+     * is not visible at all so all Activities can be paused and remain not visible.
+     */
+    boolean mStackPaused = false;
+
+    /**
+     * Author: Onskreen
+     * Date: 30/12/2011
+     *
+     * The last ActivityRecord that was tried to change. Used to ensure we don't end up
+     * in any infinite config update loops due to a WindowPanel config difference. We track
+     * the last activity updated because of purely WP changes, and how it was changed
+     * so that we don't try to repeat this config change.
+     *
+     * This is a hack until the config update process is smoother.
+     */
+    ActivityRecord mLastActivityConfigUpdated;
+    int mLastActivityConfigUpdateChangeFlags;
+
     final Context mContext;
     
     /**
@@ -354,7 +400,9 @@ final class ActivityStack {
         }
     };
     
-    ActivityStack(ActivityManagerService service, Context context, boolean mainStack) {
+    ActivityStack(ActivityManagerService service, Context context, boolean mainStack,
+		boolean cornerstonePanelStack,
+		int cornerstonePanelIndex) {
         mService = service;
         mContext = context;
         mMainStack = mainStack;
@@ -363,8 +411,34 @@ final class ActivityStack {
         mGoingToSleep = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "ActivityManager-Sleep");
         mLaunchingActivity = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "ActivityManager-Launch");
         mLaunchingActivity.setReferenceCounted(false);
+
+        /**
+         * Author: Onskreen
+         * Date: 24/01/2011
+         *
+         * Set cornerstone flags and indexs appropriately
+         */
+        //Cornerstone Stack
+        if(!mMainStack && !cornerstonePanelStack) {
+			mStackName = "Cornerstone_Stack";
+			mCornerstoneStack = true;
+			mCornerstonePanelStack = false;
+			mCornerstonePanelIndex = -1;
+        } else if(!mMainStack && cornerstonePanelStack) {
+			//Cornerstone Panel Stack
+			mStackName = "CornerstonePanel_Stack:" + cornerstonePanelIndex;
+			mCornerstoneStack = false;
+			mCornerstonePanelStack = true;
+			mCornerstonePanelIndex = cornerstonePanelIndex;
+        } else {
+			//Main Panel Stack
+			mStackName = "Main_Stack";
+			mCornerstoneStack = false;
+			mCornerstonePanelStack = false;
+			mCornerstonePanelIndex = -1;
+        }
     }
-    
+
     final ActivityRecord topRunningActivityLocked(ActivityRecord notTop) {
         int i = mHistory.size()-1;
         while (i >= 0) {
@@ -519,6 +593,14 @@ final class ActivityStack {
         r.startFreezingScreenLocked(app, 0);
         mService.mWindowManager.setAppVisibility(r.appToken, true);
 
+		/**
+		 * Author: Onskreen
+		 * Date: 26/12/2011
+		 *
+		 * Determine the WindowPanel specific config.
+		 */
+        Configuration wpConfig = mService.mWindowManager.computeWindowPanelConfiguration(getWindowPanel());
+
         // Have the window manager re-evaluate the orientation of
         // the screen based on the new activity order.  Note that
         // as a result of this, it can call back into the activity
@@ -526,7 +608,8 @@ final class ActivityStack {
         // because the activity is not currently running so we are
         // just restarting it anyway.
         if (checkConfig) {
-            Configuration config = mService.mWindowManager.updateOrientationFromAppTokens(
+
+			Configuration config = mService.mWindowManager.updateOrientationFromAppTokens(
                     mService.mConfiguration,
                     r.mayFreezeScreenLocked(app) ? r.appToken : null);
             mService.updateConfigurationLocked(config, r, false, false);
@@ -590,13 +673,20 @@ final class ActivityStack {
                     profileFd = null;
                 }
             }
+			/**
+			 * Author: Onskreen
+			 * Date: 26/12/2011
+			 *
+			 * Starting the activity with the wp specific activity instead of the default
+			 * AMS.mConfiguration.
+			 */
             app.thread.scheduleLaunchActivity(new Intent(r.intent), r.appToken,
                     System.identityHashCode(r), r.info,
-                    new Configuration(mService.mConfiguration),
+                    new Configuration(wpConfig/**mService.mConfiguration**/),
                     r.compat, r.icicle, results, newIntents, !andResume,
                     mService.isNextTransitionForward(), profileFile, profileFd,
                     profileAutoStop);
-            
+
             if ((app.info.flags&ApplicationInfo.FLAG_CANT_SAVE_STATE) != 0) {
                 // This may be a heavy-weight process!  Note that the package
                 // manager will ensure that only activity can run in the main
@@ -616,7 +706,7 @@ final class ActivityStack {
                     mService.mHandler.sendMessage(msg);
                 }
             }
-            
+
         } catch (RemoteException e) {
             if (r.launchFailed) {
                 // This is the second time we failed -- finish activity
@@ -677,7 +767,7 @@ final class ActivityStack {
         if (mMainStack) {
             mService.startSetupActivityLocked();
         }
-        
+
         return true;
     }
 
@@ -686,7 +776,7 @@ final class ActivityStack {
         // Is this activity's application already running?
         ProcessRecord app = mService.getProcessRecordLocked(r.processName,
                 r.info.applicationInfo.uid);
-        
+
         if (r.launchTime == 0) {
             r.launchTime = SystemClock.uptimeMillis();
             if (mInitialStartTime == 0) {
@@ -695,10 +785,23 @@ final class ActivityStack {
         } else if (mInitialStartTime == 0) {
             mInitialStartTime = SystemClock.uptimeMillis();
         }
-        
+
         if (app != null && app.thread != null) {
             try {
                 app.addPackage(r.info.packageName);
+
+                /**
+                 * Author: Onskreen
+                 * Date: 07/01/2012
+                 *
+                 * In cases where the Process was already started (perhaps at launch), we need to be sure the
+                 * activity gets launched with the config of the WindowPanel and not the config that was
+                 * sent to the ProcessRecord at its launch.
+                 */
+                if(checkConfig) {
+					mService.forceConfigurationLocked(this, app);
+                }
+
                 realStartActivityLocked(r, app, andResume, checkConfig);
                 return;
             } catch (RemoteException e) {
@@ -713,7 +816,7 @@ final class ActivityStack {
         mService.startProcessLocked(r.processName, r.info.applicationInfo, true, 0,
                 "activity", r.intent.getComponent(), false);
     }
-    
+
     void stopIfSleepingLocked() {
         if (mService.isSleeping()) {
             if (!mGoingToSleep.isHeld()) {
@@ -805,12 +908,12 @@ final class ActivityStack {
             mService.notifyAll();
         }
     }
-    
+
     public final Bitmap screenshotActivities(ActivityRecord who) {
         if (who.noDisplay) {
             return null;
         }
-        
+
         Resources res = mService.mContext.getResources();
         int w = mThumbnailWidth;
         int h = mThumbnailHeight;
@@ -822,18 +925,21 @@ final class ActivityStack {
         }
 
         if (w > 0) {
-            boolean largeThumbnail = Settings.System.getInt(mContext.getContentResolver(),
-                    Settings.System.LARGE_RECENT_THUMBNAILS, 0) == 1;
-            if (largeThumbnail) {
-                w = w * 2;
-                h = h * 2;
-            }
             return mService.mWindowManager.screenshotApplications(who.appToken, w, h);
         }
         return null;
     }
 
-    private final void startPausingLocked(boolean userLeaving, boolean uiSleeping) {
+   /**
+    * Author: Onskreen
+    * Date: 23/02/2011
+    *
+    * Made public so that AMS can make call to pause top activity and pause all activities
+    * in the stack when the stack is not visible to the user but activities should be paused
+    * and available to reopen in their previous state.
+    */
+    public final void startPausingLocked(boolean userLeaving, boolean uiSleeping) {
+    //private final void startPausingLocked(boolean userLeaving, boolean uiSleeping) {
         if (mPausingActivity != null) {
             RuntimeException e = new RuntimeException();
             Slog.e(TAG, "Trying to pause when pause is already pending for "
@@ -856,7 +962,7 @@ final class ActivityStack {
         prev.updateThumbnail(screenshotActivities(prev), null);
 
         mService.updateCpuStats();
-        
+
         if (prev.app != null && prev.app.thread != null) {
             if (DEBUG_PAUSE) Slog.v(TAG, "Enqueueing pending pause: " + prev);
             try {
@@ -865,7 +971,14 @@ final class ActivityStack {
                         prev.shortComponentName);
                 prev.app.thread.schedulePauseActivity(prev.appToken, prev.finishing,
                         userLeaving, prev.configChangeFlags);
-                if (mMainStack) {
+                if (mMainStack || mCornerstoneStack || mCornerstonePanelStack) {
+					/**
+					 * Author: Onskreen
+					 * Date: 23/02/2011
+					 *
+					 * Security Exception Warning. Triggered by AMS.setCornerstoneState() which must have cleared
+					 * it's identity before executing.
+					 */
                     mService.updateUsageStats(prev, false);
                 }
             } catch (Exception e) {
@@ -882,6 +995,13 @@ final class ActivityStack {
         // If we are not going to sleep, we want to ensure the device is
         // awake until the next activity is started.
         if (!mService.mSleeping && !mService.mShuttingDown) {
+			/**
+			 * Author: Onskreen
+			 * Date: 23/02/2011
+			 *
+			 * Security Exception Warning. Triggered by AMS.setCornerstoneState() which must have cleared
+			 * it's identity before executing.
+			 */
             mLaunchingActivity.acquire();
             if (!mHandler.hasMessages(LAUNCH_TIMEOUT_MSG)) {
                 // To be safe, don't allow the wake lock to be held for too long.
@@ -889,7 +1009,6 @@ final class ActivityStack {
                 mHandler.sendMessageDelayed(msg, LAUNCH_TIMEOUT);
             }
         }
-
 
         if (mPausingActivity != null) {
             // Have the window manager pause its key dispatching until the new
@@ -916,7 +1035,105 @@ final class ActivityStack {
             resumeTopActivityLocked(null);
         }
     }
-    
+
+    /**
+     * Author: Onskreen
+     * Date: 03/05/2011
+     *
+     * Trying to pause specific activity with no side effects. This is used in cases where the
+     * resuming/pausing of activities is not in a one to one relationship as the ActivityStack
+     * originally expected. It is basically a replica of startPausingLocked with
+     * any side effects or assumptions about which activity will be paused removed.
+     *
+     * This will fail in cases where multiple Activities are to be paused at once. In that case,
+     * the second call to this method will not execute because the previous one will still
+     * be pausing. Haven't found test case for that yet, but pretty sure it exists
+     */
+    public final void startSpecificPausingLocked(ActivityRecord toPause, boolean userLeaving, boolean uiSleeping) {
+        if (mPausingActivity != null) {
+            RuntimeException e = new RuntimeException();
+            Slog.e(TAG, "Trying to pause when pause is already pending for "
+                  + mPausingActivity, e);
+        }
+
+        if (DEBUG_PAUSE) Slog.v(TAG, "Start pausing: " + toPause);
+        mPausingActivity = toPause;
+        mLastPausedActivity = toPause;
+        toPause.state = ActivityState.PAUSING;
+        toPause.task.touchActiveTime();
+
+        mService.updateCpuStats();
+
+        if (toPause.app != null && toPause.app.thread != null) {
+            if (DEBUG_PAUSE) Slog.v(TAG, "Enqueueing pending pause: " + toPause);
+            try {
+                EventLog.writeEvent(EventLogTags.AM_PAUSE_ACTIVITY,
+                        System.identityHashCode(toPause),
+                        toPause.shortComponentName);
+                toPause.app.thread.schedulePauseActivity(toPause.appToken, toPause.finishing, userLeaving,
+					toPause.configChangeFlags);
+                if (mMainStack || mCornerstoneStack || mCornerstonePanelStack) {
+					/**
+					 * Author: Onskreen
+					 * Date: 23/02/2011
+					 *
+					 * Security Exception Warning. Triggered by AMS.setCornerstoneState() which must have cleared
+					 * it's identity before executing.
+					 */
+                    mService.updateUsageStats(toPause, false);
+                }
+            } catch (Exception e) {
+                // Ignore exception, if process died other code will cleanup.
+                Slog.w(TAG, "Exception thrown during pause", e);
+                mPausingActivity = null;
+                mLastPausedActivity = null;
+            }
+        } else {
+            mPausingActivity = null;
+            mLastPausedActivity = null;
+        }
+
+        // If we are not going to sleep, we want to ensure the device is
+        // awake until the next activity is started.
+        if (!mService.mSleeping && !mService.mShuttingDown) {
+			/**
+			 * Author: Onskreen
+			 * Date: 23/02/2011
+			 *
+			 * Security Exception Warning. Triggered by AMS.setCornerstoneState() which must have cleared
+			 * it's identity before executing.
+			 */
+            mLaunchingActivity.acquire();
+            if (!mHandler.hasMessages(LAUNCH_TIMEOUT_MSG)) {
+                // To be safe, don't allow the wake lock to be held for too long.
+                Message msg = mHandler.obtainMessage(LAUNCH_TIMEOUT_MSG);
+                mHandler.sendMessageDelayed(msg, LAUNCH_TIMEOUT);
+            }
+        }
+
+
+        if (mPausingActivity != null) {
+            // Have the window manager pause its key dispatching until the new
+            // activity has started.  If we're pausing the activity just because
+            // the screen is being turned off and the UI is sleeping, don't interrupt
+            // key dispatch; the same activity will pick it up again on wakeup.
+            if (!uiSleeping) {
+				toPause.pauseKeyDispatchingLocked();
+            } else {
+                if (DEBUG_PAUSE) Slog.v(TAG, "Key dispatch not paused for screen off");
+            }
+
+            // Schedule a pause timeout in case the app doesn't respond.
+            // We don't give it much time because this directly impacts the
+            // responsiveness seen by the user.
+            Message msg = mHandler.obtainMessage(PAUSE_TIMEOUT_MSG);
+            msg.obj = toPause;
+            mHandler.sendMessageDelayed(msg, PAUSE_TIMEOUT);
+            if (DEBUG_PAUSE) Slog.v(TAG, "Waiting for pause to complete...");
+        }
+    }
+
+
     final void activityPaused(IBinder token, boolean timeout) {
         if (DEBUG_PAUSE) Slog.v(
             TAG, "Activity paused: token=" + token + ", timeout=" + timeout);
@@ -983,7 +1200,21 @@ final class ActivityStack {
         if (prev != null) {
             if (prev.finishing) {
                 if (DEBUG_PAUSE) Slog.v(TAG, "Executing finish of activity: " + prev);
-                prev = finishCurrentActivityLocked(prev, FINISH_AFTER_VISIBLE);
+                /*
+                 * Onscreen-Cornerstone
+                 * Version: 0.84
+                 * Date: 08.11.2011
+                 *
+                 * When cornerstone is exiting, we must kill the activities in the specific stack.
+                 * As we don't want to resume any previous activity in the stack, we should call the
+                 * finishCurrentActivityLocked with FINISH_IMMEDIATELY mode.
+                 */
+                 if(mService.mActivityStackExiting) {
+                     mStackPaused = false;
+                     prev = finishCurrentActivityLocked(prev, FINISH_IMMEDIATELY);
+                 } else {
+                     prev = finishCurrentActivityLocked(prev, FINISH_AFTER_VISIBLE);
+                 }
             } else if (prev.app != null) {
                 if (DEBUG_PAUSE) Slog.v(TAG, "Enqueueing pending stop: " + prev);
                 if (prev.waitingVisible) {
@@ -1024,7 +1255,7 @@ final class ActivityStack {
         } else {
             checkReadyForSleepLocked();
         }
-        
+
         if (prev != null) {
             prev.resumeKeyDispatchingLocked();
         }
@@ -1076,12 +1307,12 @@ final class ActivityStack {
             mHandler.sendMessage(msg);
         }
 
-        if (mMainStack) {
+        if (mMainStack || mCornerstoneStack || mCornerstonePanelStack) {
             mService.reportResumedActivityLocked(next);
         }
-        
+
         next.clearThumbnail();
-        if (mMainStack) {
+        if (mMainStack || mCornerstoneStack || mCornerstonePanelStack) {
             mService.setFocusedActivityLocked(next);
         }
         next.resumeKeyDispatchingLocked();
@@ -1111,6 +1342,10 @@ final class ActivityStack {
                 TAG, "ensureActivitiesVisible behind " + top
                 + " configChanges=0x" + Integer.toHexString(configChanges));
 
+        if(mMainStack || mCornerstoneStack || mCornerstonePanelStack) {
+            if (DEBUG_VISBILITY) {
+				Slog.v(TAG, "Stack: " + mStackName);
+            }
         // If the top activity is not fullscreen, then we need to
         // make sure any activities under it are now visible.
         final int count = mHistory.size();
@@ -1128,16 +1363,16 @@ final class ActivityStack {
             if (r.finishing) {
                 continue;
             }
-            
+
             final boolean doThisProcess = onlyThisProcess == null
                     || onlyThisProcess.equals(r.processName);
-            
+
             // First: if this is not the current activity being started, make
             // sure it matches the current configuration.
             if (r != starting && doThisProcess) {
                 ensureActivityConfigurationLocked(r, 0);
             }
-            
+
             if (r.app == null || r.app.thread == null) {
                 if (onlyThisProcess == null
                         || onlyThisProcess.equals(r.processName)) {
@@ -1244,6 +1479,7 @@ final class ActivityStack {
             }
             i--;
         }
+        }
     }
 
     /**
@@ -1267,8 +1503,36 @@ final class ActivityStack {
      * nothing happened.
      */
     final boolean resumeTopActivityLocked(ActivityRecord prev) {
-        // Find the first activity that is not finishing.
-        ActivityRecord next = topRunningActivityLocked(null);
+		/**
+		 * Author: Onskreen
+		 * Date: 23/02/2011
+		 *
+		 * If the entire stack is paused, ignore requests to resume top activity. Centralizing
+		 * this logic allows less changes throughout the class while enabling us to stop all actvities
+		 */
+		if(mStackPaused) {
+            if (DEBUG_SWITCH) {
+                Log.v(TAG, "Stack: " + mStackName);
+                Log.v(TAG, "\tIgnoring request to resume top activity as stack is paused");
+              }
+			return false;
+		}
+
+
+		/**
+		 * Author: Onskreen
+		 * Date: 31/01/2011
+		 *
+		 * Determining task to be resumed based on panel. In cornerstone, the task to be
+		 * resumed may or may not be the top activity and the activity to be paused may or may not
+		 * be mResumedActivity. This is because tasks below the bottom one may be the one we
+		 * are dealing with.
+		 */
+		ActivityRecord next = null;
+		if(mMainStack || mCornerstonePanelStack || mCornerstoneStack) {
+            // Find the first activity that is not finishing.
+			next = topRunningActivityLocked(null);
+		}
 
         // Remember how we'll process this pause/resume situation, and ensure
         // that the state is reset however we wind up proceeding.
@@ -1280,6 +1544,45 @@ final class ActivityStack {
             // Launcher...
             if (mMainStack) {
                 return mService.startHomeActivityLocked();
+            /**
+             * Author: Onskreen
+             * Date: 16/07/2011
+             *
+             * When cornerstone is exiting, we shouldn't allow launching
+             * Cornerstone Launcher to start in either of panels.
+             */
+            } else if(mCornerstonePanelStack && !mService.mActivityStackExiting) {
+				/**
+				 * Author: Onskreen
+				 * Date: 03/05/2011
+				 *
+				 * No more activities, startup the Cornerstone Launcher
+				 */
+				if(DEBUG_SWITCH) {
+					Log.w(TAG, "No activity records in: " + mStackName);
+					Log.w(TAG, "Starting Cornerstone Launcher in this Panel");
+				}
+				return mService.startCornerstoneLauncherLocked(mCornerstonePanelIndex);
+			} else if(mCornerstoneStack) {
+				/**
+				 * Author: Onskreen
+				 * Date: 03/05/2011
+				 *
+				 * If the CS itself is not resumed something bad happened
+				 */
+				if(DEBUG_SWITCH) {
+					Log.e(TAG, "No activity records in: " + mStackName);
+				}
+				return false;
+			/**
+             * Author: Onskreen
+             * Date: 16/07/2011
+             *
+             * Just return false when cornerstone is exiting and resumeTopActivityLocked
+             * method getting triggered by other methods.
+             */
+            } else {
+                return false;
             }
         }
 
@@ -1304,7 +1607,7 @@ final class ActivityStack {
             mNoAnimActivities.clear();
             return false;
         }
-        
+
         // The activity may be waiting for stop, but that is no longer
         // appropriate for it.
         mStoppingActivities.remove(next);
@@ -1312,7 +1615,12 @@ final class ActivityStack {
         next.sleeping = false;
         mWaitingVisibleActivities.remove(next);
 
-        if (DEBUG_SWITCH) Slog.v(TAG, "Resuming " + next);
+        if (DEBUG_SWITCH) {
+            Slog.v(TAG, "Stack: " + mStackName + " Resuming " + next);
+            Slog.v(TAG, "\tprev: " + prev);
+            Slog.v(TAG, "\tmResumedActivity: " + mResumedActivity);
+            Slog.v(TAG, "\tmPausingActivity: " + mPausingActivity);
+          }
 
         // If we are currently pausing an activity, then don't do anything
         // until that is done.
@@ -1349,7 +1657,7 @@ final class ActivityStack {
                 mLastStartedActivity = next;
             }
         }
-        
+
         // We need to start pausing the current activity so the top one
         // can be resumed...
         if (mResumedActivity != null) {
@@ -1454,7 +1762,7 @@ final class ActivityStack {
             ActivityState lastState = next.state;
 
             mService.updateCpuStats();
-            
+
             if (DEBUG_STATES) Slog.v(TAG, "Moving to RESUMED: " + next + " (in existing)");
             next.state = ActivityState.RESUMED;
             mResumedActivity = next;
@@ -1468,15 +1776,29 @@ final class ActivityStack {
             // Have the window manager re-evaluate the orientation of
             // the screen based on the new activity order.
             boolean updated = false;
-            if (mMainStack) {
+            if (mMainStack || mCornerstoneStack || mCornerstonePanelStack) {
                 synchronized (mService) {
-                    Configuration config = mService.mWindowManager.updateOrientationFromAppTokens(
-                            mService.mConfiguration,
-                            next.mayFreezeScreenLocked(next.app) ? next.appToken : null);
-                    if (config != null) {
-                        next.frozenBeforeDestroy = true;
-                    }
-                    updated = mService.updateConfigurationLocked(config, next, false, false);
+					/**
+					* Author: Onskreen
+					* Date : 26/12/2011
+					*/
+					WindowManagerService.WP_Panel conf = WindowManagerService.WP_Panel.UNDEFINED;
+					if(mMainStack) {
+						conf = WindowManagerService.WP_Panel.MAIN_PANEL;
+					} else if(mCornerstonePanelStack && mCornerstonePanelIndex == 0) {
+						conf = WindowManagerService.WP_Panel.CS_APP_0;
+					} else if(mCornerstonePanelStack && mCornerstonePanelIndex == 1) {
+						conf = WindowManagerService.WP_Panel.CS_APP_1;
+					} else if(mCornerstoneStack) {
+						conf = WindowManagerService.WP_Panel.CORNERSTONE;
+					}
+					Configuration config = mService.mWindowManager.updateOrientationFromAppTokens(
+						mService.mConfiguration,
+						next.mayFreezeScreenLocked(next.app) ? next.appToken : null);
+					if (config != null) {
+						next.frozenBeforeDestroy = true;
+					}
+					updated = mService.updateConfigurationLocked(config, next, false, false);
                 }
             }
             if (!updated) {
@@ -1493,7 +1815,7 @@ final class ActivityStack {
                     // Do over!
                     mHandler.sendEmptyMessage(RESUME_TOP_ACTIVITY_MSG);
                 }
-                if (mMainStack) {
+                if (mMainStack || mCornerstoneStack || mCornerstonePanelStack) {
                     mService.setFocusedActivityLocked(next);
                 }
                 ensureActivitiesVisibleLocked(null, 0);
@@ -1501,7 +1823,7 @@ final class ActivityStack {
                 mNoAnimActivities.clear();
                 return true;
             }
-            
+
             try {
                 // Deliver all pending results.
                 ArrayList a = next.results;
@@ -1522,13 +1844,13 @@ final class ActivityStack {
                 EventLog.writeEvent(EventLogTags.AM_RESUME_ACTIVITY,
                         System.identityHashCode(next),
                         next.task.taskId, next.shortComponentName);
-                
+
                 next.sleeping = false;
                 showAskCompatModeDialogLocked(next);
                 next.app.pendingUiClean = true;
                 next.app.thread.scheduleResumeActivity(next.appToken,
                         mService.isNextTransitionForward());
-                
+
                 checkReadyForSleepLocked();
 
             } catch (Exception e) {
@@ -1625,8 +1947,19 @@ final class ActivityStack {
                         }
                         mHistory.add(addPos, r);
                         r.putInHistory();
+                        //mService.mWindowManager.addAppToken(addPos, r.appToken, r.task.taskId,
+                        //        r.info.screenOrientation, r.fullscreen);
+                        /**
+                         * Author: Onskreen
+                         * Date: 24/01/2011
+                         *
+                         * Udpated to use new overloaded version
+                         */
                         mService.mWindowManager.addAppToken(addPos, r.appToken, r.task.taskId,
-                                r.info.screenOrientation, r.fullscreen);
+                                r.info.screenOrientation, r.fullscreen,
+                                mMainStack,
+                                mService.isCornerstone(r),
+                                mCornerstonePanelIndex);
                         if (VALIDATE_TOKENS) {
                             validateAppTokensLocked();
                         }
@@ -1691,8 +2024,19 @@ final class ActivityStack {
                         : WindowManagerPolicy.TRANSIT_ACTIVITY_OPEN, keepCurTransition);
                 mNoAnimActivities.remove(r);
             }
+            //mService.mWindowManager.addAppToken(
+            //        addPos, r.appToken, r.task.taskId, r.info.screenOrientation, r.fullscreen);
+			/**
+             * Author: Onskreen
+             * Date: 24/01/2011
+             *
+             * Updated to use new overloaded version
+             */
             mService.mWindowManager.addAppToken(
-                    addPos, r.appToken, r.task.taskId, r.info.screenOrientation, r.fullscreen);
+                    addPos, r.appToken, r.task.taskId, r.info.screenOrientation, r.fullscreen,
+                    mMainStack,
+                    mService.isCornerstone(r),
+                    mCornerstonePanelIndex);
             boolean doShow = true;
             if (newTask) {
                 // Even though this activity is starting fresh, we still need
@@ -1729,8 +2073,20 @@ final class ActivityStack {
         } else {
             // If this is the first activity, don't do any fancy animations,
             // because there is nothing for it to animate on top of.
-            mService.mWindowManager.addAppToken(addPos, r.appToken, r.task.taskId,
-                    r.info.screenOrientation, r.fullscreen);
+            //mService.mWindowManager.addAppToken(addPos, r.appToken, r.task.taskId,
+            //        r.info.screenOrientation, r.fullscreen);
+			/**
+             * Author: Onskreen
+             * Date: 24/01/2011
+             *
+             * Updated to use new overloaded version
+             */
+             //Log.i(TAG, "First Activity in the stack");
+             mService.mWindowManager.addAppToken(addPos, r.appToken, r.task.taskId,
+                   r.info.screenOrientation, r.fullscreen,
+                   mMainStack,
+                   mService.isCornerstone(r),
+                   mCornerstonePanelIndex);
         }
         if (VALIDATE_TOKENS) {
             validateAppTokensLocked();
@@ -1791,14 +2147,14 @@ final class ActivityStack {
                 replyChainEnd = -1;
                 continue;
             }
-        
+
             final int flags = target.info.flags;
             
             final boolean finishOnTaskLaunch =
                 (flags&ActivityInfo.FLAG_FINISH_ON_TASK_LAUNCH) != 0;
             final boolean allowTaskReparenting =
                 (flags&ActivityInfo.FLAG_ALLOW_TASK_REPARENTING) != 0;
-            
+
             if (target.task == task) {
                 // We are inside of the task being reset...  we'll either
                 // finish this activity, push it out for another task,
@@ -2023,7 +2379,7 @@ final class ActivityStack {
                         }
                     }
                     replyChainEnd = -1;
-                    
+
                     // Now we've moved it in to place...  but what if this is
                     // a singleTop activity and we have put it on top of another
                     // instance of the same activity?  Then we drop the instance
@@ -2054,10 +2410,10 @@ final class ActivityStack {
             target = below;
             targetI = i;
         }
-        
+
         return taskTop;
     }
-    
+
     /**
      * Perform clear operation as requested by
      * {@link Intent#FLAG_ACTIVITY_CLEAR_TOP}: search from the top of the
@@ -2072,7 +2428,7 @@ final class ActivityStack {
     private final ActivityRecord performClearTaskLocked(int taskId,
             ActivityRecord newR, int launchFlags) {
         int i = mHistory.size();
-        
+
         // First find the requested task.
         while (i > 0) {
             i--;
@@ -2082,7 +2438,7 @@ final class ActivityStack {
                 break;
             }
         }
-        
+
         // Now clear it.
         while (i > 0) {
             i--;
@@ -2110,7 +2466,7 @@ final class ActivityStack {
                         i--;
                     }
                 }
-                
+
                 // Finally, if this is a normal launch mode (that is, not
                 // expecting onNewIntent()), then we will finish the current
                 // instance of the activity so a new fresh one can be started.
@@ -2125,7 +2481,7 @@ final class ActivityStack {
                         return null;
                     }
                 }
-                
+
                 return ret;
             }
         }
@@ -2335,7 +2691,7 @@ final class ActivityStack {
             throw new SecurityException(msg);
         }
 
-        if (mMainStack) {
+        if (mMainStack || mCornerstoneStack || mCornerstonePanelStack) {
             if (mService.mController != null) {
                 boolean abort = false;
                 try {
@@ -2347,7 +2703,7 @@ final class ActivityStack {
                 } catch (RemoteException e) {
                     mService.mController = null;
                 }
-    
+
                 if (abort) {
                     if (resultRecord != null) {
                         sendActivityResultLocked(-1,
@@ -2361,15 +2717,22 @@ final class ActivityStack {
                 }
             }
         }
-        
+
+		/**
+		 * Author: Onskreen
+		 * Date: 26/12/2011
+		 *
+		 * Starting the activity with the WP specific config instead of default one.
+		 */
+        Configuration wpConfig = mService.mWindowManager.computeWindowPanelConfiguration(getWindowPanel());
         ActivityRecord r = new ActivityRecord(mService, this, callerApp, callingUid,
-                intent, resolvedType, aInfo, mService.mConfiguration,
+                intent, resolvedType, aInfo, wpConfig /** mService.mConfiguration **/,
                 resultRecord, resultWho, requestCode, componentSpecified);
         if (outActivity != null) {
             outActivity[0] = r;
         }
 
-        if (mMainStack) {
+        if (mMainStack || mCornerstoneStack || mCornerstonePanelStack) {
             if (mResumedActivity == null
                     || mResumedActivity.info.applicationInfo.uid != callingUid) {
                 if (!mService.checkAppSwitchAllowedLocked(callingPid, callingUid, "Activity start")) {
@@ -2384,7 +2747,7 @@ final class ActivityStack {
                     return START_SWITCHES_CANCELED;
                 }
             }
-        
+
             if (mService.mDidAppSwitch) {
                 // This is the second allowed switch since we stopped switches,
                 // so now just generally allow switches.  Use case: user presses
@@ -2395,10 +2758,10 @@ final class ActivityStack {
             } else {
                 mService.mDidAppSwitch = true;
             }
-         
+
             mService.doPendingActivityLaunchesLocked(false);
         }
-        
+
         err = startActivityUncheckedLocked(r, sourceRecord,
                 grantedUriPermissions, grantedMode, onlyIfNeeded, true);
         if (mDismissKeyguardOnNextActivity && mPausingActivity == null) {
@@ -2411,7 +2774,7 @@ final class ActivityStack {
         }
         return err;
     }
-  
+
     final void moveHomeToFrontFromLaunchLocked(int launchFlags) {
         if ((launchFlags &
                 (Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_TASK_ON_HOME))
@@ -2427,22 +2790,22 @@ final class ActivityStack {
             int grantedMode, boolean onlyIfNeeded, boolean doResume) {
         final Intent intent = r.intent;
         final int callingUid = r.launchedFromUid;
-        
+
         int launchFlags = intent.getFlags();
-        
+
         // We'll invoke onUserLeaving before onPause only if the launching
         // activity did not explicitly state that this is an automated launch.
         mUserLeaving = (launchFlags&Intent.FLAG_ACTIVITY_NO_USER_ACTION) == 0;
         if (DEBUG_USER_LEAVING) Slog.v(TAG,
                 "startActivity() => mUserLeaving=" + mUserLeaving);
-        
+
         // If the caller has asked not to resume at this point, we make note
         // of this in the record so that we can skip it when trying to find
         // the top running activity.
         if (!doResume) {
             r.delayedResume = true;
         }
-        
+
         ActivityRecord notTop = (launchFlags&Intent.FLAG_ACTIVITY_PREVIOUS_IS_TOP)
                 != 0 ? r : null;
 
@@ -2707,8 +3070,9 @@ final class ActivityStack {
                 r.setTask(reuseTask, reuseTask, true);
             }
             newTask = true;
-            moveHomeToFrontFromLaunchLocked(launchFlags);
-            
+            if(mMainStack) {
+				moveHomeToFrontFromLaunchLocked(launchFlags);
+            }
         } else if (sourceRecord != null) {
             if (!addingToTask &&
                     (launchFlags&Intent.FLAG_ACTIVITY_CLEAR_TOP) != 0) {
@@ -2843,6 +3207,20 @@ final class ActivityStack {
         ActivityInfo aInfo = resolveActivity(intent, resolvedType, debug,
                 profileFile, profileFd, autoStopProfiler);
 
+        /**
+         * Author: Onskreen
+         * Date: 07/01/2012
+         *
+         * Check if Cornerstone is ok with this activity launching. Inform the
+         * caller appropriately if we can't proceed.
+         */
+        boolean okToProceed = mService.isActivityPermittedToStart(aInfo, this);
+        if(!okToProceed) {
+			//This isn't a success, but is not a failure of the calling activity,
+			// so return success and let things proceed.
+			return IActivityManager.START_SUCCESS;
+        }
+
         synchronized (mService) {
             int callingPid;
             if (callingUid >= 0) {
@@ -2853,15 +3231,15 @@ final class ActivityStack {
             } else {
                 callingPid = callingUid = -1;
             }
-            
+
             mConfigWillChange = config != null
                     && mService.mConfiguration.diff(config) != 0;
             if (DEBUG_CONFIGURATION) Slog.v(TAG,
                     "Starting activity when config will change = " + mConfigWillChange);
-            
+
             final long origId = Binder.clearCallingIdentity();
-            
-            if (mMainStack && aInfo != null &&
+
+            if ((mMainStack || mCornerstoneStack || mCornerstonePanelStack) && aInfo != null &&
                     (aInfo.applicationInfo.flags&ApplicationInfo.FLAG_CANT_SAVE_STATE) != 0) {
                 // This may be a heavy-weight process!  Check to see if we already
                 // have another, different heavy-weight process running.
@@ -2883,13 +3261,13 @@ final class ActivityStack {
                                 return START_PERMISSION_DENIED;
                             }
                         }
-                        
+
                         IIntentSender target = mService.getIntentSenderLocked(
                                 IActivityManager.INTENT_SENDER_ACTIVITY, "android",
                                 realCallingUid, null, null, 0, new Intent[] { intent },
                                 new String[] { resolvedType }, PendingIntent.FLAG_CANCEL_CURRENT
                                 | PendingIntent.FLAG_ONE_SHOT);
-                        
+
                         Intent newIntent = new Intent();
                         if (requestCode >= 0) {
                             // Caller is requesting a result.
@@ -2928,13 +3306,13 @@ final class ActivityStack {
                     }
                 }
             }
-            
+
             int res = startActivityLocked(caller, intent, resolvedType,
                     grantedUriPermissions, grantedMode, aInfo,
                     resultTo, resultWho, requestCode, callingPid, callingUid,
                     onlyIfNeeded, componentSpecified, null);
-            
-            if (mConfigWillChange && mMainStack) {
+
+            if (mConfigWillChange && (mMainStack || mCornerstoneStack || mCornerstonePanelStack)) {
                 // If the caller also wants to switch to a new configuration,
                 // do so now.  This allows a clean switch, as we are waiting
                 // for the current activity to pause (so we will not destroy
@@ -2945,10 +3323,22 @@ final class ActivityStack {
                 if (DEBUG_CONFIGURATION) Slog.v(TAG,
                         "Updating to new configuration after starting activity.");
                 mService.updateConfigurationLocked(config, null, false, false);
+            } else {
+				/**
+				 * Author: Onskreen
+				 * Date: 07/01/2012
+				 *
+				 * It is possible the process this activity will be added to was re-config'd so we have
+				 * to be sure that this activity has the correct config before launching. In essence, this
+				 * is the same as just setting mConfigWillChange to true, but forcing on the specific stack
+				 * if it wasn't considered to be true.
+				 *
+				 */
+				mService.forceConfigurationLocked(this, mService.mWindowManager.mCornerstoneState);
             }
-            
+
             Binder.restoreCallingIdentity(origId);
-            
+
             if (outResult != null) {
                 outResult.result = res;
                 if (res == IActivityManager.START_SUCCESS) {
@@ -2978,11 +3368,11 @@ final class ActivityStack {
                     }
                 }
             }
-            
+
             return res;
         }
     }
-    
+
     final int startActivities(IApplicationThread caller, int callingUid,
             Intent[] intents, String[] resolvedTypes, IBinder resultTo) {
         if (intents == null) {
@@ -3030,7 +3420,7 @@ final class ActivityStack {
                     ActivityInfo aInfo = resolveActivity(intent, resolvedTypes[i], false,
                             null, null, false);
 
-                    if (mMainStack && aInfo != null && (aInfo.applicationInfo.flags
+                    if ((mMainStack || mCornerstoneStack || mCornerstonePanelStack) && aInfo != null && (aInfo.applicationInfo.flags
                             & ApplicationInfo.FLAG_CANT_SAVE_STATE) != 0) {
                         throw new IllegalArgumentException(
                                 "FLAG_CANT_SAVE_STATE not supported here");
@@ -3066,7 +3456,7 @@ final class ActivityStack {
         }
         mService.notifyAll();
     }
-    
+
     void reportActivityVisibleLocked(ActivityRecord r) {
         for (int i=mWaitingActivityVisible.size()-1; i>=0; i--) {
             WaitResult w = mWaitingActivityVisible.get(i);
@@ -3120,7 +3510,7 @@ final class ActivityStack {
                         "no-history");
             }
         } else if (r.app != null && r.app.thread != null) {
-            if (mMainStack) {
+            if (mMainStack || mCornerstoneStack || mCornerstonePanelStack) {
                 if (mService.mFocusedActivity == r) {
                     mService.setFocusedActivityLocked(topRunningActivityLocked(null));
                 }
@@ -3155,7 +3545,7 @@ final class ActivityStack {
             }
         }
     }
-    
+
     final ArrayList<ActivityRecord> processStoppingActivitiesLocked(
             boolean remove) {
         int N = mStoppingActivities.size();
@@ -3235,7 +3625,7 @@ final class ActivityStack {
                 if (fromTimeout) {
                     reportActivityLaunchedLocked(fromTimeout, r, -1, -1);
                 }
-                
+
                 // This is a hack to semi-deal with a race condition
                 // in the client where it can be constructed with a
                 // newer configuration from when we asked it to launch.
@@ -3244,7 +3634,7 @@ final class ActivityStack {
                 if (config != null) {
                     r.configuration = config;
                 }
-                
+
                 // No longer need to keep the device awake.
                 if (mResumedActivity == r && mLaunchingActivity.isHeld()) {
                     mHandler.removeMessages(LAUNCH_TIMEOUT_MSG);
@@ -3266,13 +3656,13 @@ final class ActivityStack {
                 ensureActivitiesVisibleLocked(null, 0);
 
                 //Slog.i(TAG, "IDLE: mBooted=" + mBooted + ", fromTimeout=" + fromTimeout);
-                if (mMainStack) {
+                if (mMainStack || mCornerstoneStack || mCornerstonePanelStack) {
                     if (!mService.mBooted) {
                         mService.mBooted = true;
                         enableScreen = true;
                     }
                 }
-                
+
             } else if (fromTimeout) {
                 reportActivityLaunchedLocked(fromTimeout, null, -1, -1);
             }
@@ -3289,7 +3679,7 @@ final class ActivityStack {
                 mService.mCancelledThumbnails.clear();
             }
 
-            if (mMainStack) {
+            if (mMainStack || mCornerstoneStack || mCornerstonePanelStack) {
                 booting = mService.mBooting;
                 mService.mBooting = false;
             }
@@ -3365,6 +3755,46 @@ final class ActivityStack {
         }
         ActivityRecord r = mHistory.get(index);
 
+        // Is this the last activity left?
+        boolean lastActivity = true;
+        for (int i=mHistory.size()-1; i>=0; i--) {
+            ActivityRecord p = mHistory.get(i);
+            if (!p.finishing && p != r) {
+                lastActivity = false;
+                break;
+            }
+        }
+
+         // If this is the last activity, but it is the home activity, then
+        // just don't finish it.
+        if (lastActivity) {
+            /**
+             * Author: Onskreen
+             * Date: 04/02/2011
+             *
+             * In the case of the cornerstone panel, the back key should not be able to finish the last
+             * activity in the last task or there would be no activities visible behind it.
+             */
+			if(!mMainStack && !mService.mActivityStackExiting) {
+				return false;
+			} else {
+				/**
+                * Author: Onskreen
+                * Date: 29/12/2011
+                *
+                * Identifies the HOME app by checking the category
+                * as well as matching the AMS.mHomeProcess. Any HOME
+                * app must pass this test else it's not considered as
+                * HOME app and should be killed immediately as requested
+                * by the framework.
+                */
+               if (r.intent.hasCategory(Intent.CATEGORY_HOME)
+                       && r.app != mService.mHomeProcess) {
+					return false;
+               }
+			}
+        }
+
         finishActivityLocked(r, index, resultCode, resultData, reason);
         return true;
     }
@@ -3401,7 +3831,7 @@ final class ActivityStack {
         }
 
         r.pauseKeyDispatchingLocked();
-        if (mMainStack) {
+        if (mMainStack || mCornerstoneStack || mCornerstonePanelStack) {
             if (mService.mFocusedActivity == r) {
                 mService.setFocusedActivityLocked(topRunningActivityLocked(null));
             }
@@ -3431,7 +3861,7 @@ final class ActivityStack {
         r.pendingResults = null;
         r.newIntents = null;
         r.icicle = null;
-        
+
         if (mService.mPendingThumbnails.size() > 0) {
             // There are clients waiting to receive thumbnails so, in case
             // this is an activity that someone is waiting for, add it
@@ -3447,10 +3877,10 @@ final class ActivityStack {
             mService.mWindowManager.prepareAppTransition(endTask
                     ? WindowManagerPolicy.TRANSIT_TASK_CLOSE
                     : WindowManagerPolicy.TRANSIT_ACTIVITY_CLOSE, false);
-    
+
             // Tell window manager to prepare for this one to be removed.
             mService.mWindowManager.setAppVisibility(r.appToken, false);
-                
+
             if (mPausingActivity == null) {
                 if (DEBUG_PAUSE) Slog.v(TAG, "Finish needs to pause: " + r);
                 if (DEBUG_USER_LEAVING) Slog.v(TAG, "finish() => pause with userLeaving=false");
@@ -3461,8 +3891,23 @@ final class ActivityStack {
             // If the activity is PAUSING, we will complete the finish once
             // it is done pausing; else we can just directly finish it here.
             if (DEBUG_PAUSE) Slog.v(TAG, "Finish not pausing: " + r);
-            return finishCurrentActivityLocked(r, index,
-                    FINISH_AFTER_PAUSE) == null;
+            /*
+             * Onscreen-Cornerstone
+             * Version: 0.84
+             * Date: 08.11.2011
+             *
+             * When cornerstone is exiting, we must kill the activities in the specific stack.
+             * As we don't want to resume any previous activity in the stack, we should call the
+             * finishCurrentActivityLocked with FINISH_IMMEDIATELY mode.
+             */
+            boolean finished = false;
+            if(mService.mActivityStackExiting) {
+                mStackPaused = false;
+                finished = finishCurrentActivityLocked(r, index, FINISH_IMMEDIATELY) == null;
+            } else {
+                finished = finishCurrentActivityLocked(r, index, FINISH_AFTER_PAUSE) == null;
+            }
+            return finished;
         } else {
             if (DEBUG_PAUSE) Slog.v(TAG, "Finish waiting for pause of: " + r);
         }
@@ -3564,7 +4009,7 @@ final class ActivityStack {
         // down to the max limit while they are still waiting to finish.
         mFinishingActivities.remove(r);
         mWaitingVisibleActivities.remove(r);
-        
+
         // Remove any pending results.
         if (r.finishing && r.pendingResults != null) {
             for (WeakReference<PendingIntentRecord> apr : r.pendingResults) {
@@ -3577,7 +4022,7 @@ final class ActivityStack {
         }
 
         if (cleanServices) {
-            cleanUpActivityServicesLocked(r);            
+            cleanUpActivityServicesLocked(r);
         }
 
         if (mService.mPendingThumbnails.size() > 0) {
@@ -3614,7 +4059,7 @@ final class ActivityStack {
             r.removeUriPermissionsLocked();
         }
     }
-    
+
     /**
      * Perform clean-up of service connections in an activity record.
      */
@@ -3629,7 +4074,7 @@ final class ActivityStack {
             r.connections = null;
         }
     }
-    
+
     final void destroyActivitiesLocked(ProcessRecord owner, boolean oomAdj, String reason) {
         for (int i=mHistory.size()-1; i>=0; i--) {
             ActivityRecord r = mHistory.get(i);
@@ -3662,11 +4107,11 @@ final class ActivityStack {
                 r.task.taskId, r.shortComponentName, reason);
 
         boolean removedFromHistory = false;
-        
+
         cleanUpActivityLocked(r, false, false);
 
         final boolean hadApp = r.app != null;
-        
+
         if (hadApp) {
             if (removeFromApp) {
                 int idx = r.app.activities.indexOf(r);
@@ -3686,7 +4131,7 @@ final class ActivityStack {
             }
 
             boolean skipDestroy = false;
-            
+
             try {
                 if (DEBUG_SWITCH) Slog.i(TAG, "Destroying: " + r);
                 r.app.thread.scheduleDestroyActivity(r.appToken, r.finishing,
@@ -3705,7 +4150,7 @@ final class ActivityStack {
 
             r.app = null;
             r.nowVisible = false;
-            
+
             // If the activity is finishing, we need to wait on removing it
             // from the list to give it a chance to do its cleanup.  During
             // that time it may make calls back with its token so we need to
@@ -3738,11 +4183,11 @@ final class ActivityStack {
         }
 
         r.configChangeFlags = 0;
-        
+
         if (!mLRUActivities.remove(r) && hadApp) {
             Slog.w(TAG, "Activity " + r + " being finished, but not in LRU list");
         }
-        
+
         return removedFromHistory;
     }
 
@@ -3752,7 +4197,7 @@ final class ActivityStack {
             if (r != null) {
                 mHandler.removeMessages(DESTROY_TIMEOUT_MSG, r);
             }
-            
+
             int index = indexOfActivityLocked(r);
             if (index >= 0) {
                 if (r.state == ActivityState.DESTROYING) {
@@ -3763,7 +4208,7 @@ final class ActivityStack {
             }
         }
     }
-    
+
     private static void removeHistoryRecordsForAppLocked(ArrayList list, ProcessRecord app) {
         int i = list.size();
         if (localLOGV) Slog.v(
@@ -3788,7 +4233,7 @@ final class ActivityStack {
         removeHistoryRecordsForAppLocked(mWaitingVisibleActivities, app);
         removeHistoryRecordsForAppLocked(mFinishingActivities, app);
     }
-    
+
     /**
      * Move the current home activity's task (if one exists) to the front
      * of the stack.
@@ -3861,7 +4306,7 @@ final class ActivityStack {
             mService.mWindowManager.prepareAppTransition(
                     WindowManagerPolicy.TRANSIT_TASK_TO_FRONT, false);
         }
-        
+
         mService.mWindowManager.moveAppTokensToTop(moved);
         if (VALIDATE_TOKENS) {
             validateAppTokensLocked();
@@ -3870,6 +4315,7 @@ final class ActivityStack {
         finishTaskMoveLocked(task);
         EventLog.writeEvent(EventLogTags.AM_TASK_TO_FRONT, task);
     }
+
 
     private final void finishTaskMoveLocked(int task) {
         resumeTopActivityLocked(null);
@@ -3888,11 +4334,27 @@ final class ActivityStack {
      */
     final boolean moveTaskToBackLocked(int task, ActivityRecord reason) {
         Slog.i(TAG, "moveTaskToBack: " + task);
-        
+
+     // Is this the last activity left?
+        /**
+         * Author: Onskreen
+         * Date: 16/09/2011
+         *
+         * If user tries to move back to the only top most activity left
+         * in the history list, then just ignore it. At least one activity
+         * always should be visible in either of cornerstone panels.
+         */
+        final int N = mHistory.size();
+        ActivityRecord p = mHistory.get(N-1);
+        if(task == p.task.taskId && mCornerstonePanelStack) {
+            Slog.i(TAG, "last Activity left, returning false");
+            return false;
+        }
         // If we have a watcher, preflight the move before committing to it.  First check
         // for *other* available tasks, but if none are available, then try again allowing the
         // current task to be selected.
-        if (mMainStack && mService.mController != null) {
+        if ((mMainStack || mCornerstoneStack || mCornerstonePanelStack)
+				&& mService.mController != null) {
             ActivityRecord next = topRunningActivityLocked(null, task);
             if (next == null) {
                 next = topRunningActivityLocked(null, 0);
@@ -3915,8 +4377,7 @@ final class ActivityStack {
 
         if (DEBUG_TRANSITION) Slog.v(TAG,
                 "Prepare to back transition: task=" + task);
-        
-        final int N = mHistory.size();
+
         int bottom = 0;
         int pos = 0;
 
@@ -3962,7 +4423,7 @@ final class ActivityStack {
         finishTaskMoveLocked(task);
         return true;
     }
-    
+
     public ActivityManager.TaskThumbnails getTaskThumbnailsLocked(TaskRecord tr) {
         TaskAccessInfo info = getTaskAccessInfoLocked(tr.taskId, true);
         ActivityRecord resumed = mResumedActivity;
@@ -4086,19 +4547,20 @@ final class ActivityStack {
                     "Skipping config check (will change): " + r);
             return true;
         }
-        
+
         if (DEBUG_SWITCH || DEBUG_CONFIGURATION) Slog.v(TAG,
                 "Ensuring correct configuration: " + r);
-        
+
         // Short circuit: if the two configurations are the exact same
-        // object (the common case), then there is nothing to do.
+        // object (the common case), then there is nothing to do.      
         Configuration newConfig = mService.mConfiguration;
+
         if (r.configuration == newConfig && !r.forceNewConfig) {
             if (DEBUG_SWITCH || DEBUG_CONFIGURATION) Slog.v(TAG,
                     "Configuration unchanged in " + r);
             return true;
         }
-        
+
         // We don't worry about activities that are finishing.
         if (r.finishing) {
             if (DEBUG_SWITCH || DEBUG_CONFIGURATION) Slog.v(TAG,
@@ -4106,21 +4568,110 @@ final class ActivityStack {
             r.stopFreezingScreenLocked(false);
             return true;
         }
-        
+
+		/**
+		 * Author: Onskreen
+		 * Date: 26/12/2011
+		 *
+		 * Diff the ActivityRecord.configuration with the AMS.mConfiguration taking into account the WindowPanel
+		 * differences we expect. If these are the same, then we move on.
+		 *
+		 */
+        //Configuration wpConfig = mService.mWindowManager.computeWindowPanelConfiguration(getWindowPanel());
+        Configuration wpConfig = mService.mWindowManager.computeWindowPanelConfiguration(mService.mConfiguration, r.appToken, mService.mWindowManager.mCornerstoneState);
+        if(DEBUG_CONFIGURATION) {
+			Slog.v(TAG, "Starting Values");
+			Slog.v(TAG, "\tCornerstone State: " + mService.mWindowManager.mCornerstoneState);
+			Slog.v(TAG, "\tActivity " + r);
+			Slog.v(TAG, "\tActivity Configuration " + r.configuration);
+			Slog.v(TAG, "\tActivity forceNewConfig " + r.forceNewConfig);
+			Slog.v(TAG, "\tPanel: " + getWindowPanel() + " WP: " + wpConfig);
+			Slog.v(TAG, "\tglobalChanges " + globalChanges);
+			Slog.v(TAG, "\tAMS.mConfiguration " + mService.mConfiguration);
+			Slog.v(TAG, "\tLast Activity Config Updated: " + mLastActivityConfigUpdated);
+            RuntimeException here = new RuntimeException("here");
+            here.fillInStackTrace();
+            Slog.i(TAG, "Called from:", here);
+        }
+
         // Okay we now are going to make this activity have the new config.
         // But then we need to figure out how it needs to deal with that.
         Configuration oldConfig = r.configuration;
-        r.configuration = newConfig;
+		/**
+		 * Author: Onskreen
+		 * Date: 07/01/2012
+		 *
+		 * The new Activity Configuration needs to actually include:
+		 * - The changes from the AMS.mConfiguration which are non-WindowPanel specific
+		 * - TODO Any new size Configuration info from the Window Panel which contains this ActivityRecord
+		 */
+        //r.configuration = newConfig;
+        mService.mWindowManager.updateNonWindowPanelConfigurationFrom(r.configuration, newConfig);
+
+        if(DEBUG_CONFIGURATION) {
+			Slog.v(TAG, "New Activity Configuration: " + r.configuration);
+        }
 
         // Determine what has changed.  May be nothing, if this is a config
         // that has come back from the app after going idle.  In that case
         // we just want to leave the official config object now in the
         // activity and do nothing else.
-        final int changes = oldConfig.diff(newConfig);
+        //final int changes = oldConfig.diff(newConfig);
+        int changes = mService.mWindowManager.diffNonWindowPanelConfiguration(oldConfig, newConfig);
+        if(DEBUG_CONFIGURATION) {
+			Slog.v(TAG, "Non WindowPanel Changes between " + oldConfig + " and " + newConfig);
+			Slog.v(TAG, "\t" + changes);
+        }
+        boolean nonWPChanges = true;
         if (changes == 0 && !r.forceNewConfig) {
             if (DEBUG_SWITCH || DEBUG_CONFIGURATION) Slog.v(TAG,
                     "Configuration no differences in " + r);
-            return true;
+            //return true;
+            nonWPChanges = false;
+        }
+
+		/**
+		 * Author: Onskreen
+		 * Date: 07/01/2012
+		 *
+		 * Include WP specific changes. we assume the Activity has been launched/executing with the
+		 * appropriate Window Panel Configuration and can diff against that.
+		 */
+        if(DEBUG_CONFIGURATION) {
+			Slog.v(TAG, "Including Window Panel Changes between " + r.configuration + " and " + wpConfig);
+        }
+		int wpChanges = mService.mWindowManager.updateWindowPanelConfigurationFrom(r.configuration, wpConfig);
+		changes |= wpChanges;
+        if(DEBUG_CONFIGURATION) {
+			Slog.v(TAG, "Updated r.configuration " + r.configuration);
+			Slog.v(TAG, "WP Changes\t" + wpChanges);
+        }
+        if(!nonWPChanges &&
+			wpChanges == 0 &&
+			!r.forceNewConfig) {
+            if(DEBUG_CONFIGURATION) {
+				Slog.v(TAG, "No Configuration Changes Found" );
+            }
+            mLastActivityConfigUpdateChangeFlags = wpChanges;
+			return true;
+        } else {							//Only updating due to WP changes
+            if(DEBUG_CONFIGURATION) {
+				Slog.v(TAG, "mLastActivityConfigUpdated " + mLastActivityConfigUpdated);
+				Slog.v(TAG, "mLastActivityConfigUpdateChangeFlags " + mLastActivityConfigUpdateChangeFlags);
+            }
+			if(mLastActivityConfigUpdated == r &&
+				changes==mLastActivityConfigUpdateChangeFlags) {
+                if(DEBUG_CONFIGURATION) {
+					Slog.e(TAG, "ActivityRecord: " + r + " just tried to update due to WP config differences. Ignore this one to be safe");
+					Slog.e(TAG, "This indicates we had a Configuration sequencing mistake somewhere.");
+                }
+				return true;
+			} else {
+				//Keep track of what and how we are updating based on WP changes so we don't try to repeat
+				mLastActivityConfigUpdated = r;
+				mLastActivityConfigUpdateChangeFlags = changes;
+				r.configuration.seq++;
+			}
         }
 
         // If the activity isn't currently running, just leave the new
@@ -4132,14 +4683,24 @@ final class ActivityStack {
             r.forceNewConfig = false;
             return true;
         }
-        
+
         // Figure out how to handle the changes between the configurations.
         if (DEBUG_SWITCH || DEBUG_CONFIGURATION) {
             Slog.v(TAG, "Checking to restart " + r.info.name + ": changed=0x"
                     + Integer.toHexString(changes) + ", handles=0x"
                     + Integer.toHexString(r.info.getRealConfigChanged())
                     + ", newConfig=" + newConfig);
+
+            Slog.v(TAG, "Activity: " + r);
+            Slog.v(TAG, "ActivityInfo: " + r.info);
+            Slog.v(TAG, "r.configChanges: " + r.info.configChanges);
+            Slog.v(TAG, "r.info.CONFIG_FONT_SCALE: " + r.info.CONFIG_FONT_SCALE);
+            Slog.v(TAG, "r.info.CONFIG_ORIENTATION: " + r.info.CONFIG_ORIENTATION);
+            Slog.v(TAG, "r.info.CONFIG_SCREEN_LAYOUT: " + r.info.CONFIG_SCREEN_LAYOUT);
+            Slog.v(TAG, "r.info.CONFIG_SCREEN_SIZE: " + r.info.CONFIG_SCREEN_SIZE);
+            Slog.v(TAG, "r.info.CONFIG_SMALLEST_SCREEN_SIZE: " + r.info.CONFIG_SMALLEST_SCREEN_SIZE);
         }
+
         if ((changes&(~r.info.getRealConfigChanged())) != 0 || r.forceNewConfig) {
             // Aha, the activity isn't handling the change, so DIE DIE DIE.
             r.configChangeFlags |= changes;
@@ -4158,7 +4719,7 @@ final class ActivityStack {
                 r.configDestroy = true;
                 return true;
             } else if (r.state == ActivityState.RESUMED) {
-                // Try to optimize this case: the configuration is changing
+            	// Try to optimize this case: the configuration is changing
                 // and we need to restart the top, resumed activity.
                 // Instead of doing the normal handshaking, just say
                 // "restart!".
@@ -4172,12 +4733,12 @@ final class ActivityStack {
                 relaunchActivityLocked(r, r.configChangeFlags, false);
                 r.configChangeFlags = 0;
             }
-            
+
             // All done...  tell the caller we weren't able to keep this
             // activity around.
             return false;
         }
-        
+
         // Default case: the activity can handle this new configuration, so
         // hand it over.  Note that we don't need to give it the new
         // configuration, since we always send configuration changes to all
@@ -4192,7 +4753,7 @@ final class ActivityStack {
             }
         }
         r.stopFreezingScreenLocked(false);
-        
+
         return true;
     }
 
@@ -4204,20 +4765,34 @@ final class ActivityStack {
             results = r.results;
             newIntents = r.newIntents;
         }
+        if(DEBUG_CONFIGURATION) {
+			Slog.v(TAG, "Activity " + r);
+			Slog.v(TAG, "Activity Configuration " + r.configuration);
+			Slog.v(TAG, "mService.mConfiguration " + mService.mConfiguration);
+			Slog.v(TAG, "changes " + changes);
+			Slog.v(TAG, "Panel: " + getWindowPanel() + " WP: " + mService.mWindowManager.computeWindowPanelConfiguration(getWindowPanel()));
+        }
+
         if (DEBUG_SWITCH) Slog.v(TAG, "Relaunching: " + r
                 + " with results=" + results + " newIntents=" + newIntents
                 + " andResume=" + andResume);
         EventLog.writeEvent(andResume ? EventLogTags.AM_RELAUNCH_RESUME_ACTIVITY
                 : EventLogTags.AM_RELAUNCH_ACTIVITY, System.identityHashCode(r),
                 r.task.taskId, r.shortComponentName);
-        
+
         r.startFreezingScreenLocked(r.app, 0);
-        
+
         try {
+			/**
+			 * Author: Onskreen
+			 * Date: 26/12/2011
+			 *
+			 * r.configuration contains all the changes.
+			 */
             if (DEBUG_SWITCH) Slog.i(TAG, "Switch is restarting resumed " + r);
             r.forceNewConfig = false;
             r.app.thread.scheduleRelaunchActivity(r.appToken, results, newIntents,
-                    changes, !andResume, new Configuration(mService.mConfiguration));
+                    changes, !andResume, new Configuration(r.configuration/**mService.mConfiguration**/));
             // Note: don't need to call pauseIfSleepingLocked() here, because
             // the caller will only pass in 'andResume' if this activity is
             // currently resumed, which implies we aren't sleeping.
@@ -4228,15 +4803,38 @@ final class ActivityStack {
         if (andResume) {
             r.results = null;
             r.newIntents = null;
-            if (mMainStack) {
+            if (mMainStack || mCornerstoneStack|| mCornerstonePanelStack) {
                 mService.reportResumedActivityLocked(r);
             }
         }
 
         return true;
     }
-    
+
     public void dismissKeyguardOnNextActivityLocked() {
         mDismissKeyguardOnNextActivity = true;
+    }
+
+    /**
+     * Author: Onskreen
+     * Date: 07/01/2012
+     *
+     * Utility to get the WP_Panel of this ActivityStack
+     */
+    private WindowManagerService.WP_Panel getWindowPanel() {
+        WindowManagerService.WP_Panel conf = WindowManagerService.WP_Panel.UNDEFINED;
+		if(mMainStack) {
+			return WindowManagerService.WP_Panel.MAIN_PANEL;
+		} else if(mCornerstonePanelStack && mCornerstonePanelIndex == 0) {
+			return WindowManagerService.WP_Panel.CS_APP_0;
+		} else if(mCornerstonePanelStack && mCornerstonePanelIndex == 1) {
+			return WindowManagerService.WP_Panel.CS_APP_1;
+		} else if(mCornerstoneStack) {
+			return WindowManagerService.WP_Panel.CORNERSTONE;
+		} else {
+			//Should never happen
+			return WindowManagerService.WP_Panel.DISPLAY;
+		}
+
     }
 }

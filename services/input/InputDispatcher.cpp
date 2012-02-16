@@ -1240,6 +1240,38 @@ Unresponsive:
     return injectionResult;
 }
 
+ /**
+  * Author: Onskreen
+  * Date: 25/05/2011
+  *
+  * Determines if the passed window is a dialog
+  */
+ bool InputDispatcher::isDialog(const InputWindowInfo* window){
+ 	int32_t type = window->layoutParamsType;
+ 	int32_t flags = window->layoutParamsFlags;
+ 	/**
+ 	 * Author: Onskreen
+ 	 * Date: 20/12/2011
+ 	 *
+ 	 * TYPE_CHANGED is no longer a defined Window type
+ 	 */
+ 	if((type == InputWindowInfo::TYPE_APPLICATION_ATTACHED_DIALOG) ||
+ 	   (type == InputWindowInfo::TYPE_KEYGUARD_DIALOG) ||
+ 	   (type == InputWindowInfo::TYPE_TOAST) ||
+ 	   (type == InputWindowInfo::TYPE_SYSTEM_ERROR) ||
+ 	   (type == InputWindowInfo::TYPE_SYSTEM_ALERT) ||
+ 	   /*(type == InputWindowInfo::TYPE_SEARCH_BAR) ||
+ 	   (type == InputWindowInfo::TYPE_STATUS_BAR) || */
+ 	   (type == InputWindowInfo::TYPE_SYSTEM_DIALOG) ||
+ 	   /*(type == InputWindowInfo::TYPE_CHANGED) || */
+ 	   (((flags == (InputWindowInfo::FLAG_ALT_FOCUSABLE_IM
+                             | InputWindowInfo::FLAG_DIM_BEHIND)))
+ 		&& (type == InputWindowInfo::TYPE_BASE_APPLICATION))){
+ 		return true;
+ 	}
+ 	return false;
+ }
+
 int32_t InputDispatcher::findTouchedWindowTargetsLocked(nsecs_t currentTime,
         const MotionEntry* entry, nsecs_t* nextWakeupTime, bool* outConflictingPointerActions,
         const MotionSample** outSplitBatchAfterSample) {
@@ -3373,6 +3405,37 @@ void InputDispatcher::setFocusedApplication(
     // Wake up poll loop since it may need to make new input dispatching choices.
     mLooper->wake();
 }
+
+ /**
+  * Author: Onskreen
+  * Date: 17/02/2011
+  *
+  * Utility function returning the sub string from InputWindow.name string.
+  */
+ String8 InputDispatcher::getSubStr(const char* src) {
+     String8 subStr;
+     char* str1;
+     str1 = strchr(src, ' ');
+     str1 = strtok(str1, "/");
+     subStr.append(str1);
+     return subStr;
+ }
+ 
+ /**
+  * Author: Onskreen
+  * Date: 18/02/2011
+  *
+  * Utility function returning the sub string from non-app (dialogs, virtual keyboard, statusbar etc.)
+  * InputWindow.name string.
+  */
+ String8 InputDispatcher::getNonAppSubStr(const char* src) {
+     String8 subStr;
+     char* str1;
+     str1 = strchr(src, ' ');
+     str1 = strtok(str1, " ");
+     subStr.append(str1);
+     return subStr;
+ }
 
 void InputDispatcher::setInputDispatchMode(bool enabled, bool frozen) {
 #if DEBUG_FOCUS
