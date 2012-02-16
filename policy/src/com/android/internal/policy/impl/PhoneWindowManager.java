@@ -1120,7 +1120,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 attrs.flags &= ~WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH;
                 break;
         }
-    }
     
          /**
           * Author: Onskreen
@@ -1133,6 +1132,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
          }
     
     }
+    
     void readLidState() {
         try {
             int sw = mWindowManager.getSwitchState(SW_LID);
