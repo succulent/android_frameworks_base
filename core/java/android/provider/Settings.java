@@ -2193,6 +2193,7 @@ public final class Settings {
         public static final String MENU_UNLOCK_SCREEN = "menu_unlock_screen";
 
         /**
+
          * Whether to hide the soft home.  The value is boolean (1 or 0).
          * @hide
          */
@@ -2239,6 +2240,12 @@ public final class Settings {
          * @hide
          */
         public static final String JPEG_SCREENSHOTS = "jpg_screenshots";
+
+        /**
+         * Whether to wake the screen with the volume keys, the value is boolean.
+         * @hide
+         */
+        public static final String VOLUME_WAKE_SCREEN = "volume_wake_screen";
 
         /**
          * Settings to backup. This is here so that it's in the same place as the settings
