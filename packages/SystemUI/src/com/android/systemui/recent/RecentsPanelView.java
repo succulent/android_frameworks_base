@@ -82,6 +82,7 @@ public class RecentsPanelView extends RelativeLayout implements OnItemClickListe
     private int mThumbnailWidth;
     private int mThumbnailHeight;
     private boolean mFitThumbnailToXY;
+    private boolean mRightButtons;
 
     public void setRecentTasksLoader(RecentTasksLoader loader) {
         mRecentTasksLoader = loader;
@@ -129,9 +130,7 @@ public class RecentsPanelView extends RelativeLayout implements OnItemClickListe
         public View getView(int position, View convertView, ViewGroup parent) {
             ViewHolder holder;
             if (convertView == null) {
-                boolean rightButtons = (Settings.System.getInt(mContext.getContentResolver(),
-                        Settings.System.RIGHT_SOFT_BUTTONS, 0) == 1);
-                convertView = mInflater.inflate((rightButtons ?
+                convertView = mInflater.inflate((mRightButtons ?
                         R.layout.status_bar_recent_item_flipped : R.layout.status_bar_recent_item),
                         parent, false);
                 holder = new ViewHolder();
@@ -336,6 +335,8 @@ public class RecentsPanelView extends RelativeLayout implements OnItemClickListe
         mThumbnailWidth = Math.round(res.getDimension(R.dimen.status_bar_recents_thumbnail_width));
         mThumbnailHeight = Math.round(res.getDimension(R.dimen.status_bar_recents_thumbnail_height));
         mFitThumbnailToXY = res.getBoolean(R.bool.config_recents_thumbnail_image_fits_to_xy);
+        mRightButtons = (Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.RIGHT_SOFT_BUTTONS, 0) == 1);
     }
 
     @Override

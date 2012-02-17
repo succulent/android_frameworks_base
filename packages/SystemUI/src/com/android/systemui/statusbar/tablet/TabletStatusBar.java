@@ -44,6 +44,7 @@ import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.LayerDrawable;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
@@ -2086,12 +2087,21 @@ public class TabletStatusBar extends StatusBar implements
                     Settings.System.HIDE_SOFT_MENU_BUTTON), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.STATUS_BAR_CLOCK), false, this);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.RIGHT_SOFT_BUTTONS), false, this);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.SHOW_NOTIFICATION_PEEK), false, this);
         }
 
         @Override
-        public void onChange(boolean selfChange) {
-            mHandler.removeMessages(MSG_HIDE_ITEMS);
-            mHandler.sendEmptyMessage(MSG_HIDE_ITEMS);
+        public void onChangeUri(Uri uri, boolean selfChange) {
+            if(uri.equals(Settings.System.getUriFor(Settings.System.RIGHT_SOFT_BUTTONS)) ||
+                    uri.equals(Settings.System.getUriFor(Settings.System.SHOW_NOTIFICATION_PEEK))) {
+                android.os.Process.killProcess(android.os.Process.myPid());
+            } else {
+                mHandler.removeMessages(MSG_HIDE_ITEMS);
+                mHandler.sendEmptyMessage(MSG_HIDE_ITEMS);
+            }
         }
     }
 }
