@@ -113,7 +113,9 @@ public class Tethering extends INetworkManagementEventObserver.Stub {
     private String[] mDhcpRange;
     private static final String[] DHCP_DEFAULT_RANGE = {
         "192.168.42.2", "192.168.42.254", "192.168.43.2", "192.168.43.254",
-        "192.168.44.2", "192.168.44.254",
+        "192.168.44.2", "192.168.44.254", "192.168.45.2", "192.168.45.254",
+        "192.168.46.2", "192.168.46.254", "192.168.47.2", "192.168.47.254",
+        "192.168.48.2", "192.168.48.254",
     };
 
     private String[] mDnsServers;
@@ -490,14 +492,6 @@ public class Tethering extends INetworkManagementEventObserver.Stub {
                 synchronized (Tethering.this.mPublicSync) {
                     boolean usbConnected = intent.getBooleanExtra(UsbManager.USB_CONNECTED, false);
                     mRndisEnabled = intent.getBooleanExtra(UsbManager.USB_FUNCTION_RNDIS, false);
-                    for (String regex : mTetherableUsbRegexs) {
-                        TetherInterfaceSM sm = mIfaces.get(regex);
-                        if (sm == null) {
-                            sm = new TetherInterfaceSM(regex, mLooper, true);
-                            mIfaces.put(regex, sm);
-                            sm.start();
-                        }
-                    }
                     // start tethering if we have a request pending
                     if (usbConnected && mRndisEnabled && mUsbTetherRequested) {
                         tetherUsb(true);
