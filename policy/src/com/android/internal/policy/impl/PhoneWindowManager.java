@@ -1642,7 +1642,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
  		    */
  		    if(win.isDialog()){
  		       win.removeWindowState();
- 		       }
+ 		     }
                     mHomePressed = true;
                 } else if ((event.getFlags() & KeyEvent.FLAG_LONG_PRESS) != 0) {
                     if (!keyguardOn) {
