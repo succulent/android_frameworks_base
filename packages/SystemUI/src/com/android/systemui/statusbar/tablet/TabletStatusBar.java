@@ -475,7 +475,7 @@ public class TabletStatusBar extends StatusBar implements
         loadDimens();
 
         final TabletStatusBarView sb = (TabletStatusBarView)View.inflate(
-                context, R.layout.status_bar, null);
+                context, mRightButtons ? R.layout.status_bar_flipped : R.layout.status_bar, null);
         mStatusBarView = sb;
 
         sb.setHandler(mHandler);
