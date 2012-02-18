@@ -19,6 +19,7 @@ package com.android.internal.policy.impl;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.StatusBarManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -84,6 +85,9 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
     private boolean mDeviceProvisioned = false;
     private ToggleAction.State mAirplaneState = ToggleAction.State.Off;
     private boolean mIsWaitingForEcmExit = false;
+    private boolean mStatusBarDisabled = false;
+
+    private StatusBarManager mStatusBarManager;
 
     /**
      * @param context everything needs a context :(
@@ -224,6 +228,33 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
 
         // next: airplane mode
         mItems.add(mAirplaneModeOn);
+
+        // next: statusbar
+        mItems.add(
+            new SinglePressAction(com.android.internal.R.drawable.ic_menu_copy,
+                    R.string.global_actions_toggle_statusbar) {
+                public void onPress() {
+                    if (mStatusBarManager == null) {
+                        mStatusBarManager = (StatusBarManager)
+                                mContext.getSystemService(Context.STATUS_BAR_SERVICE);
+                    }
+                    if (!mStatusBarDisabled) {
+                        mStatusBarManager.disable(0x10000000);
+                        mStatusBarDisabled = true;
+                    } else {
+                        mStatusBarManager.disable(0x00000000);
+                        mStatusBarDisabled = false;
+                    }
+                }
+
+                public boolean showDuringKeyguard() {
+                    return true;
+                }
+
+                public boolean showBeforeProvisioning() {
+                    return true;
+                }
+            });
 
         // last: silent mode
         if (SHOW_SILENT_TOGGLE) {
