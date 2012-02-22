@@ -129,6 +129,7 @@ public class Tethering extends INetworkManagementEventObserver.Stub {
     private boolean mRndisEnabled;       // track the RNDIS function enabled state
     private boolean mUsbTetherRequested; // true if USB tethering should be started
                                          // when RNDIS is enabled
+    private boolean mUsbInterfaceAdded = false;
 
     public Tethering(Context context, INetworkManagementService nmService,
             INetworkStatsService statsService, IConnectivityManager connService, Looper looper) {
@@ -492,6 +493,17 @@ public class Tethering extends INetworkManagementEventObserver.Stub {
                 synchronized (Tethering.this.mPublicSync) {
                     boolean usbConnected = intent.getBooleanExtra(UsbManager.USB_CONNECTED, false);
                     mRndisEnabled = intent.getBooleanExtra(UsbManager.USB_FUNCTION_RNDIS, false);
+                    if (!mUsbInterfaceAdded) {
+                        for (String regex : mTetherableUsbRegexs) {
+                            TetherInterfaceSM sm = mIfaces.get(regex);
+                            if (sm == null) {
+                                sm = new TetherInterfaceSM(regex, mLooper, true);
+                                mIfaces.put(regex, sm);
+                                sm.start();
+                            }
+                        }
+                        mUsbInterfaceAdded = true;
+                    }
                     // start tethering if we have a request pending
                     if (usbConnected && mRndisEnabled && mUsbTetherRequested) {
                         tetherUsb(true);

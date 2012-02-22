@@ -649,38 +649,11 @@ public class TabletStatusBar extends StatusBar implements
         context.registerReceiver(mBroadcastReceiver, filter);
 
         if (mRightButtons) {
-            RelativeLayout.LayoutParams naviParams = new RelativeLayout.LayoutParams(RelativeLayout
-                    .LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.MATCH_PARENT);
-            naviParams.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
-            mNavigationArea.setLayoutParams(naviParams);
-
-            RelativeLayout.LayoutParams notiParams = new RelativeLayout.LayoutParams(RelativeLayout
-                    .LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.MATCH_PARENT);
-            notiParams.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
-            mNotificationArea.setLayoutParams(notiParams);
-
             RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(80,
                     mNaturalBarHeight);
             params.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
             params.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
             mRecentsPanel.mRecentsDismissButton.setLayoutParams(params);
-
-            ImageView tempDot3 = (ImageView) sb.findViewById(R.id.dot3);
-            tempDot3.setId(3);
-
-            ImageView tempDot2 = (ImageView) sb.findViewById(R.id.dot2);
-            tempDot2.setId(2);
-            RelativeLayout.LayoutParams dot2Params = new RelativeLayout.LayoutParams(80, 48);
-            dot2Params.addRule(RelativeLayout.LEFT_OF, tempDot3.getId());
-            dot2Params.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
-            tempDot2.setLayoutParams(dot2Params);
-
-            ImageView tempDot1 = (ImageView) sb.findViewById(R.id.dot1);
-            tempDot1.setId(1);
-            RelativeLayout.LayoutParams dot1Params = new RelativeLayout.LayoutParams(80, 48);
-            dot1Params.addRule(RelativeLayout.LEFT_OF, tempDot2.getId());
-            dot1Params.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
-            tempDot1.setLayoutParams(dot1Params);
 
             RelativeLayout.LayoutParams scrimParams = new RelativeLayout.LayoutParams(RelativeLayout
                     .LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.MATCH_PARENT);
