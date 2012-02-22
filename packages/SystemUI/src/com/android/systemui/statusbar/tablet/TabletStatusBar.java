@@ -54,9 +54,7 @@ import android.os.ServiceManager;
 import android.os.storage.StorageManager;
 import android.provider.Settings;
 import android.text.TextUtils;
-import android.util.DisplayMetrics;
 import android.util.Slog;
-import android.util.TypedValue;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.Display;
 import android.view.Gravity;
@@ -71,10 +69,8 @@ import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.view.WindowManagerImpl;
-import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
 import android.widget.RemoteViews;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -217,8 +213,9 @@ public class TabletStatusBar extends StatusBar implements
         final Resources res = mContext.getResources();
 
         // Notification Panel
-        mNotificationPanel = (NotificationPanel)View.inflate(context,
-                R.layout.status_bar_notification_panel, null);
+        mNotificationPanel = (NotificationPanel)View.inflate(context, (mRightButtons ?
+                R.layout.status_bar_notification_panel_flipped :
+                R.layout.status_bar_notification_panel), null);
         mNotificationPanel.setBar(this);
         mNotificationPanel.show(false, false);
         mNotificationPanel.setOnTouchListener(
@@ -330,7 +327,8 @@ public class TabletStatusBar extends StatusBar implements
         // Recents Panel
         mRecentTasksLoader = new RecentTasksLoader(context);
         mRecentsPanel = (RecentsPanelView) View.inflate(context,
-                R.layout.status_bar_recent_panel, null);
+                (mRightButtons ? R.layout.status_bar_recent_panel_flipped :
+                        R.layout.status_bar_recent_panel), null);
         mRecentsPanel.setVisibility(View.GONE);
         mRecentsPanel.setSystemUiVisibility(View.STATUS_BAR_DISABLE_BACK);
         mRecentsPanel.setOnTouchListener(new TouchOutsideListener(MSG_CLOSE_RECENTS_PANEL,
@@ -648,69 +646,6 @@ public class TabletStatusBar extends StatusBar implements
         filter.addAction(Intent.ACTION_SCREEN_OFF);
         context.registerReceiver(mBroadcastReceiver, filter);
 
-        if (mRightButtons) {
-            RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(80,
-                    mNaturalBarHeight);
-            params.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
-            params.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
-            mRecentsPanel.mRecentsDismissButton.setLayoutParams(params);
-
-            RelativeLayout.LayoutParams scrimParams = new RelativeLayout.LayoutParams(RelativeLayout
-                    .LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.MATCH_PARENT);
-            scrimParams.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
-            scrimParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
-            mRecentsPanel.mRecentsScrim.setLayoutParams(scrimParams);
-
-            mRecentsPanel.mRecentsScrim.setBackgroundResource(
-                    R.drawable.recents_bg_protect_tile_flipped);
-
-            DisplayMetrics dm = mContext.getResources().getDisplayMetrics();
-            int titleWidth = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
-                    478f, dm);
-            int titleHeight = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
-                    224f, dm);
-            int frameMargin = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
-                    178f, dm);
-
-            RelativeLayout.LayoutParams frameParams = new RelativeLayout.LayoutParams(titleWidth,
-                    RelativeLayout.LayoutParams.WRAP_CONTENT);
-            frameParams.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
-            frameParams.addRule(RelativeLayout.ALIGN_PARENT_TOP);
-            frameParams.setMargins(0, frameMargin, 0, 0);
-            mNotificationPanel.mContentFrame.setLayoutParams(frameParams);
-
-            mNotificationPanel.mContentFrame.setBackgroundResource(
-                    R.drawable.notify_panel_notify_bg_flipped);
-
-            RelativeLayout.LayoutParams titleParams = new RelativeLayout.LayoutParams(titleWidth,
-                    titleHeight);
-            titleParams.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
-            titleParams.addRule(RelativeLayout.ALIGN_PARENT_TOP);
-            mNotificationPanel.mTitleArea.setLayoutParams(titleParams);
-
-            mNotificationPanel.mTitleArea.setBackgroundResource(
-                    R.drawable.notify_panel_clock_bg_flipped);
-
-            ViewGroup.MarginLayoutParams recentParams = new ViewGroup.MarginLayoutParams(
-                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            recentParams.setMargins(mContext.getResources().getDimensionPixelSize(
-                    R.dimen.status_bar_recents_right_glow_margin), 0, 0, 0);
-            FrameLayout.LayoutParams recentFrameParams = new FrameLayout.LayoutParams(recentParams);
-            recentFrameParams.gravity = Gravity.BOTTOM | Gravity.RIGHT;
-            mRecentsPanel.mRecentsContainer.setLayoutParams(recentFrameParams);
-
-            TextView noRecentApps = (TextView)mRecentsPanel.findViewById(R.id.recents_no_apps_text);
-            FrameLayout.LayoutParams noRecentParams = new FrameLayout.LayoutParams(
-                    RelativeLayout.LayoutParams.WRAP_CONTENT,
-                    RelativeLayout.LayoutParams.WRAP_CONTENT);
-            noRecentParams.gravity = Gravity.BOTTOM | Gravity.RIGHT;
-            noRecentApps.setLayoutParams(noRecentParams);
-            noRecentApps.setGravity(Gravity.RIGHT);
-
-            mHandler.sendEmptyMessage(MSG_OPEN_RECENTS_PANEL);
-            mHandler.sendEmptyMessage(MSG_CLOSE_RECENTS_PANEL);
-        }
-
         setNavigationVisibility(0);
 
         return sb;
@@ -838,14 +773,12 @@ public class TabletStatusBar extends StatusBar implements
                     if (DEBUG) Slog.d(TAG, "opening recents panel");
                     if (mRecentsPanel != null) {
                         mRecentsPanel.show(true, true);
-                        mRecentButton.setVisibility(View.INVISIBLE);
                     }
                     break;
                 case MSG_CLOSE_RECENTS_PANEL:
                     if (DEBUG) Slog.d(TAG, "closing recents panel");
                     if (mRecentsPanel != null && mRecentsPanel.isShowing()) {
                         mRecentsPanel.show(false, true);
-                        mRecentButton.setVisibility(View.VISIBLE);
                     }
                     break;
                 case MSG_OPEN_INPUT_METHODS_PANEL:
@@ -1124,6 +1057,7 @@ public class TabletStatusBar extends StatusBar implements
                 Settings.System.HIDE_SOFT_MENU_BUTTON, 0) == 1);
 
         disableRecent = disableRecent || (mRecentsPanel.isShowing() && mRightButtons);
+        disableHome = disableHome || (mRecentsPanel.isShowing() && mRightButtons);
 
         mBackButton.setVisibility(hideBack ? View.GONE : (disableBack ? View.INVISIBLE : View.VISIBLE));
         mHomeButton.setVisibility(hideHome ? View.GONE : (disableHome ? View.INVISIBLE : View.VISIBLE));
