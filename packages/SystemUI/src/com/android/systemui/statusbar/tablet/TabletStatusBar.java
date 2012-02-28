@@ -799,19 +799,31 @@ public class TabletStatusBar extends StatusBar implements
                     break;
                 case MSG_SHOW_CHROME:
                     if (DEBUG) Slog.d(TAG, "hiding shadows (lights on)");
-                    mBarContents.setVisibility(View.VISIBLE);
-                    mShadow.setVisibility(View.GONE);
-                    mSystemUiVisibility &= ~View.SYSTEM_UI_FLAG_LOW_PROFILE;
-                    notifyUiVisibilityChanged();
+                    boolean showStatusbar = (Settings.System.getInt(mContext.getContentResolver(),
+                            Settings.System.HIDE_STATUSBAR, 0) == 1);
+                    if (showStatusbar && ((mDisabled & 0x10000000) == 0)) {
+                        mStatusBarView.setVisibility(View.VISIBLE);
+                    } else {
+                        mBarContents.setVisibility(View.VISIBLE);
+                        mShadow.setVisibility(View.GONE);
+                        mSystemUiVisibility &= ~View.SYSTEM_UI_FLAG_LOW_PROFILE;
+                        notifyUiVisibilityChanged();
+                    }
                     break;
                 case MSG_HIDE_CHROME:
                     if (DEBUG) Slog.d(TAG, "showing shadows (lights out)");
+                    boolean hideStatusbar = (Settings.System.getInt(mContext.getContentResolver(),
+                            Settings.System.HIDE_STATUSBAR, 0) == 1);
                     animateCollapse();
                     visibilityChanged(false);
-                    mBarContents.setVisibility(View.GONE);
-                    mShadow.setVisibility(View.VISIBLE);
-                    mSystemUiVisibility |= View.SYSTEM_UI_FLAG_LOW_PROFILE;
-                    notifyUiVisibilityChanged();
+                    if (hideStatusbar) {
+                        mStatusBarView.setVisibility(View.GONE);
+                    } else {
+                        mBarContents.setVisibility(View.GONE);
+                        mShadow.setVisibility(View.VISIBLE);
+                        mSystemUiVisibility |= View.SYSTEM_UI_FLAG_LOW_PROFILE;
+                        notifyUiVisibilityChanged();
+                    }
                     break;
                 case MSG_STOP_TICKER:
                     mTicker.halt();

@@ -2256,6 +2256,12 @@ public final class Settings {
         public static final String JPEG_SCREENSHOTS = "jpg_screenshots";
 
         /**
+         * Whether to hide the status bar instead of shadowing it.  The value is boolean (1 or 0).
+         * @hide
+         */
+        public static final String HIDE_STATUSBAR = "hide_statusbar";
+
+        /**
          * Whether to wake the screen with the volume keys, the value is boolean.
          * @hide
          */
