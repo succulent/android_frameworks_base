@@ -154,6 +154,9 @@ public class TabletStatusBar extends StatusBar implements
     View mRecentButton;
 
     boolean mHideMenuButton;
+    boolean mHideBackButton;
+    boolean mHideRecentButton;
+    boolean mHideHomeButton;
 
     ViewGroup mFeedbackIconArea; // notification icons, IME icon, compat icon
     InputMethodButton mInputMethodSwitchButton;
@@ -330,7 +333,7 @@ public class TabletStatusBar extends StatusBar implements
                 (mRightButtons ? R.layout.status_bar_recent_panel_flipped :
                         R.layout.status_bar_recent_panel), null);
         mRecentsPanel.setVisibility(View.GONE);
-        mRecentsPanel.setSystemUiVisibility(View.STATUS_BAR_DISABLE_BACK);
+        if (!mRightButtons) mRecentsPanel.setSystemUiVisibility(View.STATUS_BAR_DISABLE_BACK);
         mRecentsPanel.setOnTouchListener(new TouchOutsideListener(MSG_CLOSE_RECENTS_PANEL,
                 mRecentsPanel));
         mRecentsPanel.setRecentTasksLoader(mRecentTasksLoader);
@@ -646,7 +649,7 @@ public class TabletStatusBar extends StatusBar implements
         filter.addAction(Intent.ACTION_SCREEN_OFF);
         context.registerReceiver(mBroadcastReceiver, filter);
 
-        setNavigationVisibility(0);
+        updateVisibilitySettings();
 
         return sb;
     }
@@ -829,7 +832,7 @@ public class TabletStatusBar extends StatusBar implements
                     mTicker.halt();
                     break;
                 case MSG_HIDE_ITEMS:
-                    setNavigationVisibility(0);
+                    updateVisibilitySettings();
                     break;
             }
         }
@@ -1059,28 +1062,36 @@ public class TabletStatusBar extends StatusBar implements
 
         ContentResolver resolver = mContext.getContentResolver();
 
-        boolean hideHome = (Settings.System.getInt(resolver,
-                Settings.System.HIDE_SOFT_HOME_BUTTON, 0) == 1);
-        boolean hideRecent = (Settings.System.getInt(resolver,
-                Settings.System.HIDE_SOFT_RECENT_BUTTON, 0) == 1);
-        boolean hideBack = (Settings.System.getInt(resolver,
-                Settings.System.HIDE_SOFT_BACK_BUTTON, 0) == 1);
-        mHideMenuButton = (Settings.System.getInt(resolver,
-                Settings.System.HIDE_SOFT_MENU_BUTTON, 0) == 1);
-
-        disableRecent = disableRecent || (mRecentsPanel.isShowing() && mRightButtons);
-        disableHome = disableHome || (mRecentsPanel.isShowing() && mRightButtons);
-
-        mBackButton.setVisibility(hideBack ? View.GONE : (disableBack ? View.INVISIBLE : View.VISIBLE));
-        mHomeButton.setVisibility(hideHome ? View.GONE : (disableHome ? View.INVISIBLE : View.VISIBLE));
-        mRecentButton.setVisibility(hideRecent ? View.GONE : (disableRecent ? View.INVISIBLE : View.VISIBLE));
+        mBackButton.setVisibility(mHideBackButton ? View.GONE : (disableBack ? View.INVISIBLE :
+                View.VISIBLE));
+        mHomeButton.setVisibility(mHideHomeButton ? View.GONE : (disableHome ? View.INVISIBLE :
+                View.VISIBLE));
+        mRecentButton.setVisibility(mHideRecentButton ? View.GONE : (disableRecent ? View.INVISIBLE
+                : View.VISIBLE));
 
         mInputMethodSwitchButton.setScreenLocked(
                 (visibility & StatusBarManager.DISABLE_SYSTEM_INFO) != 0);
+    }
 
+    private void updateVisibilitySettings() {
+        ContentResolver resolver = mContext.getContentResolver();
+
+        mHideHomeButton = (Settings.System.getInt(resolver,
+                Settings.System.HIDE_SOFT_HOME_BUTTON, 0) == 1);
+        mHideRecentButton = (Settings.System.getInt(resolver,
+                Settings.System.HIDE_SOFT_RECENT_BUTTON, 0) == 1);
+        mHideBackButton = (Settings.System.getInt(resolver,
+                Settings.System.HIDE_SOFT_BACK_BUTTON, 0) == 1);
+        mHideMenuButton = (Settings.System.getInt(resolver,
+                Settings.System.HIDE_SOFT_MENU_BUTTON, 0) == 1);
         mShowClock = (Settings.System.getInt(resolver,
                 Settings.System.STATUS_BAR_CLOCK, 1) == 1);
 
+        setNavigationVisibility(0);
+        setClockVisibility();
+    }
+
+    private void setClockVisibility() {
         View clock = mBarContents.findViewById(R.id.clock);
         if (clock != null) {
             clock.setVisibility(mShowClock ? View.VISIBLE : View.GONE);

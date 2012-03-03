@@ -228,6 +228,7 @@ public class RecentsPanelView extends RelativeLayout implements OnItemClickListe
             }
         } else {
             mShowing = show;
+            mRecentsDismissButton.setVisibility(show ? View.VISIBLE : View.INVISIBLE);
             setVisibility(show ? View.VISIBLE : View.GONE);
             mChoreo.jumpTo(show);
             onAnimationEnd(null);
@@ -272,6 +273,7 @@ public class RecentsPanelView extends RelativeLayout implements OnItemClickListe
             final LayoutTransition transitioner = new LayoutTransition();
             ((ViewGroup)mRecentsContainer).setLayoutTransition(transitioner);
             createCustomAnimations(transitioner);
+            mRecentsDismissButton.setVisibility(View.VISIBLE);
         } else {
             ((ViewGroup)mRecentsContainer).setLayoutTransition(null);
             clearRecentTasksList();
@@ -282,6 +284,7 @@ public class RecentsPanelView extends RelativeLayout implements OnItemClickListe
     }
 
     public void onAnimationStart(Animator animation) {
+        if (!mShowing) mRecentsDismissButton.setVisibility(View.INVISIBLE);
     }
 
 
