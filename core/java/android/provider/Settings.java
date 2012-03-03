@@ -2294,6 +2294,12 @@ public final class Settings {
         public static final String RIGHT_SOFT_BUTTONS = "right_soft_buttons";
 
         /**
+         * Whether to show the phone navigation controls.  The value is boolean (1 or 0).
+         * @hide
+         */
+        public static final String PHONE_NAVIGATION_CONTROL = "phone_navigation_control";
+
+        /**
          * Whether to show notification peeks.  The value is boolean (1 or 0).
          * @hide
          */

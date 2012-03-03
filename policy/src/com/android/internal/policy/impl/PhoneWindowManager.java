@@ -929,6 +929,9 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             else if (navBarOverride.equals("0")) mHasNavigationBar = true;
         }
 
+        mHasNavigationBar = (Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.PHONE_NAVIGATION_CONTROL, 0) == 1) && mStatusBarCanHide;
+
         mNavigationBarHeight = mHasNavigationBar
                 ? mContext.getResources().getDimensionPixelSize(
                     com.android.internal.R.dimen.navigation_bar_height)

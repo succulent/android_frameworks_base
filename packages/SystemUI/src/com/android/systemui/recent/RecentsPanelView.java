@@ -30,6 +30,7 @@ import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.provider.Settings;
 import android.util.AttributeSet;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -83,6 +84,7 @@ public class RecentsPanelView extends RelativeLayout implements OnItemClickListe
     private int mThumbnailHeight;
     private boolean mFitThumbnailToXY;
     private boolean mRightButtons;
+    private boolean mLargeThumbnail;
 
     public void setRecentTasksLoader(RecentTasksLoader loader) {
         mRecentTasksLoader = loader;
@@ -228,7 +230,9 @@ public class RecentsPanelView extends RelativeLayout implements OnItemClickListe
             }
         } else {
             mShowing = show;
-            mRecentsDismissButton.setVisibility(show ? View.VISIBLE : View.INVISIBLE);
+            if (mRecentsDismissButton != null) {
+                mRecentsDismissButton.setVisibility(show ? View.VISIBLE : View.INVISIBLE);
+            }
             setVisibility(show ? View.VISIBLE : View.GONE);
             mChoreo.jumpTo(show);
             onAnimationEnd(null);
@@ -273,7 +277,7 @@ public class RecentsPanelView extends RelativeLayout implements OnItemClickListe
             final LayoutTransition transitioner = new LayoutTransition();
             ((ViewGroup)mRecentsContainer).setLayoutTransition(transitioner);
             createCustomAnimations(transitioner);
-            mRecentsDismissButton.setVisibility(View.VISIBLE);
+            if (mRecentsDismissButton != null) mRecentsDismissButton.setVisibility(View.VISIBLE);
         } else {
             ((ViewGroup)mRecentsContainer).setLayoutTransition(null);
             clearRecentTasksList();
@@ -284,7 +288,9 @@ public class RecentsPanelView extends RelativeLayout implements OnItemClickListe
     }
 
     public void onAnimationStart(Animator animation) {
-        if (!mShowing) mRecentsDismissButton.setVisibility(View.INVISIBLE);
+        if (!mShowing && mRecentsDismissButton != null) {
+            mRecentsDismissButton.setVisibility(View.INVISIBLE);
+        }
     }
 
 
@@ -340,6 +346,16 @@ public class RecentsPanelView extends RelativeLayout implements OnItemClickListe
         mFitThumbnailToXY = res.getBoolean(R.bool.config_recents_thumbnail_image_fits_to_xy);
         mRightButtons = (Settings.System.getInt(mContext.getContentResolver(),
                 Settings.System.RIGHT_SOFT_BUTTONS, 0) == 1);
+        int height = getHeight();
+        int width = getWidth();
+        int shortSize = 0;
+        if (width > height) shortSize = height;
+        else shortSize = width;
+        int shortSizeDp = shortSize
+                * DisplayMetrics.DENSITY_DEFAULT
+                / DisplayMetrics.DENSITY_DEVICE;
+        mLargeThumbnail = (Settings.System.getInt(mContext.getContentResolver(),
+                    Settings.System.LARGE_RECENT_THUMBNAILS, 0) == 1) && (shortSizeDp >= 600);
     }
 
     @Override
@@ -414,9 +430,8 @@ public class RecentsPanelView extends RelativeLayout implements OnItemClickListe
             // Should remove the default image in the frame
             // that this now covers, to improve scrolling speed.
             // That can't be done until the anim is complete though.
-            boolean largeThumbnail = Settings.System.getInt(mContext.getContentResolver(),
-                    Settings.System.LARGE_RECENT_THUMBNAILS, 0) == 1;
-            if (largeThumbnail) {
+
+            if (mLargeThumbnail) {
                 int width = mThumbnailWidth * 2;
                 int height = mThumbnailHeight * 2;
                 h.thumbnailViewImage.setLayoutParams(new FrameLayout.LayoutParams(width, height));
@@ -432,7 +447,7 @@ public class RecentsPanelView extends RelativeLayout implements OnItemClickListe
                     h.thumbnailViewImage.setScaleType(ScaleType.FIT_XY);
                 } else {
                     Matrix scaleMatrix = new Matrix();
-                    if (largeThumbnail) {
+                    if (mLargeThumbnail) {
                         mThumbnailWidth = mThumbnailWidth * 2;
                     }
                     float scale = mThumbnailWidth / (float) thumbnail.getWidth();

@@ -113,6 +113,7 @@ public class TabletStatusBar extends StatusBar implements
     public static final int MSG_CLOSE_COMPAT_MODE_PANEL = 1051;
     public static final int MSG_STOP_TICKER = 2000;
     public static final int MSG_HIDE_ITEMS = 3000;
+    public static final int MSG_LARGE_THUMBS = 3001;
 
     // Fitts' Law assistance for LatinIME; see policy.EventHole
     private static final boolean FAKE_SPACE_BAR = true;
@@ -834,6 +835,9 @@ public class TabletStatusBar extends StatusBar implements
                 case MSG_HIDE_ITEMS:
                     updateVisibilitySettings();
                     break;
+                case MSG_LARGE_THUMBS:
+                    mRecentsPanel.updateValuesFromResources();
+                    break;
             }
         }
     }
@@ -1219,7 +1223,7 @@ public class TabletStatusBar extends StatusBar implements
         if (DEBUG) {
             Slog.d(TAG, (showMenu?"showing":"hiding") + " the MENU button");
         }
-        if (!mHideMenuButton) mMenuButton.setVisibility(showMenu ? View.VISIBLE : View.GONE);
+        if (!mHideMenuButton) mMenuButton.setVisibility(showMenu ? View.VISIBLE : View.INVISIBLE);
 
         // See above re: lights-out policy for legacy apps.
         if (showMenu) setLightsOn(true);
@@ -2028,13 +2032,19 @@ public class TabletStatusBar extends StatusBar implements
                     Settings.System.RIGHT_SOFT_BUTTONS), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.SHOW_NOTIFICATION_PEEK), false, this);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.LARGE_RECENT_THUMBNAILS), false, this);
         }
 
         @Override
         public void onChangeUri(Uri uri, boolean selfChange) {
-            if(uri.equals(Settings.System.getUriFor(Settings.System.RIGHT_SOFT_BUTTONS)) ||
+            if (uri.equals(Settings.System.getUriFor(Settings.System.RIGHT_SOFT_BUTTONS)) ||
                     uri.equals(Settings.System.getUriFor(Settings.System.SHOW_NOTIFICATION_PEEK))) {
                 android.os.Process.killProcess(android.os.Process.myPid());
+            } else if (uri.equals(Settings.System.getUriFor(
+                    Settings.System.LARGE_RECENT_THUMBNAILS))) {
+                mHandler.removeMessages(MSG_LARGE_THUMBS);
+                mHandler.sendEmptyMessage(MSG_LARGE_THUMBS);
             } else {
                 mHandler.removeMessages(MSG_HIDE_ITEMS);
                 mHandler.sendEmptyMessage(MSG_HIDE_ITEMS);
