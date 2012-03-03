@@ -346,16 +346,12 @@ public class RecentsPanelView extends RelativeLayout implements OnItemClickListe
         mFitThumbnailToXY = res.getBoolean(R.bool.config_recents_thumbnail_image_fits_to_xy);
         mRightButtons = (Settings.System.getInt(mContext.getContentResolver(),
                 Settings.System.RIGHT_SOFT_BUTTONS, 0) == 1);
-        int height = getHeight();
-        int width = getWidth();
-        int shortSize = 0;
-        if (width > height) shortSize = height;
-        else shortSize = width;
-        int shortSizeDp = shortSize
-                * DisplayMetrics.DENSITY_DEFAULT
-                / DisplayMetrics.DENSITY_DEVICE;
+        final int screenSize = Resources.getSystem().getConfiguration().screenLayout &
+                Configuration.SCREENLAYOUT_SIZE_MASK;
+        boolean isScreenLarge = screenSize == Configuration.SCREENLAYOUT_SIZE_LARGE ||
+            screenSize == Configuration.SCREENLAYOUT_SIZE_XLARGE;
         mLargeThumbnail = (Settings.System.getInt(mContext.getContentResolver(),
-                    Settings.System.LARGE_RECENT_THUMBNAILS, 0) == 1) && (shortSizeDp >= 600);
+                    Settings.System.LARGE_RECENT_THUMBNAILS, 0) == 1) && isScreenLarge;
     }
 
     @Override
@@ -432,9 +428,8 @@ public class RecentsPanelView extends RelativeLayout implements OnItemClickListe
             // That can't be done until the anim is complete though.
 
             if (mLargeThumbnail) {
-                int width = mThumbnailWidth * 2;
-                int height = mThumbnailHeight * 2;
-                h.thumbnailViewImage.setLayoutParams(new FrameLayout.LayoutParams(width, height));
+                h.thumbnailViewImage.setLayoutParams(new FrameLayout.LayoutParams(
+                        mThumbnailWidth * 2, mThumbnailHeight * 2));
             }
             h.thumbnailViewImage.setImageBitmap(thumbnail);
 
@@ -447,10 +442,8 @@ public class RecentsPanelView extends RelativeLayout implements OnItemClickListe
                     h.thumbnailViewImage.setScaleType(ScaleType.FIT_XY);
                 } else {
                     Matrix scaleMatrix = new Matrix();
-                    if (mLargeThumbnail) {
-                        mThumbnailWidth = mThumbnailWidth * 2;
-                    }
-                    float scale = mThumbnailWidth / (float) thumbnail.getWidth();
+                    float scale = (mLargeThumbnail ? mThumbnailWidth * 2 : mThumbnailWidth) /
+                            (float) thumbnail.getWidth();
                     scaleMatrix.setScale(scale, scale);
                     h.thumbnailViewImage.setScaleType(ScaleType.MATRIX);
                     h.thumbnailViewImage.setImageMatrix(scaleMatrix);
