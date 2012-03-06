@@ -278,11 +278,13 @@ public class BluetoothTetheringDataTracker implements NetworkStateTracker {
                 mNetworkInfo.setIsAvailable(true);
                 mNetworkInfo.setDetailedState(DetailedState.CONNECTED, null, null);
 
-                Message msg = mCsHandler.obtainMessage(EVENT_CONFIGURATION_CHANGED, mNetworkInfo);
-                msg.sendToTarget();
+                if (mCsHandler != null) {
+                    Message msg = mCsHandler.obtainMessage(EVENT_CONFIGURATION_CHANGED, mNetworkInfo);
+                    msg.sendToTarget();
 
-                msg = mCsHandler.obtainMessage(EVENT_STATE_CHANGED, mNetworkInfo);
-                msg.sendToTarget();
+                    msg = mCsHandler.obtainMessage(EVENT_STATE_CHANGED, mNetworkInfo);
+                    msg.sendToTarget();
+                }
             }
         });
         dhcpThread.start();
@@ -295,11 +297,13 @@ public class BluetoothTetheringDataTracker implements NetworkStateTracker {
         mNetworkInfo.setIsAvailable(false);
         mNetworkInfo.setDetailedState(DetailedState.DISCONNECTED, null, null);
 
-        Message msg = mCsHandler.obtainMessage(EVENT_CONFIGURATION_CHANGED, mNetworkInfo);
-        msg.sendToTarget();
+        if (mCsHandler != null) {
+            Message msg = mCsHandler.obtainMessage(EVENT_CONFIGURATION_CHANGED, mNetworkInfo);
+            msg.sendToTarget();
 
-        msg = mCsHandler.obtainMessage(EVENT_STATE_CHANGED, mNetworkInfo);
-        msg.sendToTarget();
+            msg = mCsHandler.obtainMessage(EVENT_STATE_CHANGED, mNetworkInfo);
+            msg.sendToTarget();
+        }
     }
 
     public void setDependencyMet(boolean met) {
