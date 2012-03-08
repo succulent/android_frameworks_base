@@ -6092,6 +6092,8 @@ public class WindowManagerService extends IWindowManager.Stub
         config.compatSmallestScreenWidthDp = computeCompatSmallestWidth(rotated, dm, dw, dh);
 
         // Determine whether a hard keyboard is available and enabled.
+        mForceDisableHardwareKeyboard = (Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.ENABLE_HARD_KEYBOARD, 0) == 0) && mForceDisableHardwareKeyboard;
         boolean hardKeyboardAvailable = false;
         if (!mForceDisableHardwareKeyboard) {
             hardKeyboardAvailable = config.keyboard != Configuration.KEYBOARD_NOKEYS;
