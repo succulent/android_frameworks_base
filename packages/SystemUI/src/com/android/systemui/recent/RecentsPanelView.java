@@ -348,8 +348,9 @@ public class RecentsPanelView extends RelativeLayout implements OnItemClickListe
                 Settings.System.RIGHT_SOFT_BUTTONS, 0) == 1);
         final int screenSize = Resources.getSystem().getConfiguration().screenLayout &
                 Configuration.SCREENLAYOUT_SIZE_MASK;
-        boolean isScreenLarge = screenSize == Configuration.SCREENLAYOUT_SIZE_LARGE ||
-            screenSize == Configuration.SCREENLAYOUT_SIZE_XLARGE;
+        boolean isScreenLarge = (screenSize == Configuration.SCREENLAYOUT_SIZE_LARGE ||
+                screenSize == Configuration.SCREENLAYOUT_SIZE_XLARGE) &&
+                getResources().getDisplayMetrics().density <= 1f;
         mLargeThumbnail = (Settings.System.getInt(mContext.getContentResolver(),
                     Settings.System.LARGE_RECENT_THUMBNAILS, 0) == 1) && isScreenLarge;
     }
@@ -429,7 +430,7 @@ public class RecentsPanelView extends RelativeLayout implements OnItemClickListe
 
             if (mLargeThumbnail) {
                 h.thumbnailViewImage.setLayoutParams(new FrameLayout.LayoutParams(
-                        mThumbnailWidth * 2, mThumbnailHeight * 2));
+                        mThumbnailWidth * 3 / 2, mThumbnailHeight * 3 / 2));
             }
             h.thumbnailViewImage.setImageBitmap(thumbnail);
 
@@ -442,7 +443,7 @@ public class RecentsPanelView extends RelativeLayout implements OnItemClickListe
                     h.thumbnailViewImage.setScaleType(ScaleType.FIT_XY);
                 } else {
                     Matrix scaleMatrix = new Matrix();
-                    float scale = (mLargeThumbnail ? mThumbnailWidth * 2 : mThumbnailWidth) /
+                    float scale = (mLargeThumbnail ? mThumbnailWidth * 3 / 2 : mThumbnailWidth) /
                             (float) thumbnail.getWidth();
                     scaleMatrix.setScale(scale, scale);
                     h.thumbnailViewImage.setScaleType(ScaleType.MATRIX);
