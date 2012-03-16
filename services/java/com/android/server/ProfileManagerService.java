@@ -37,6 +37,7 @@ import android.os.ParcelUuid;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -284,7 +285,9 @@ public class ProfileManagerService extends IProfileManager.Stub {
 
     @Override
     public Profile[] getProfiles() throws RemoteException {
-        return mProfiles.values().toArray(new Profile[mProfiles.size()]);
+        Profile[] tmpArr = mProfiles.values().toArray(new Profile[mProfiles.size()]);
+        Arrays.sort(tmpArr);
+        return tmpArr;
     }
 
     @Override
@@ -315,6 +318,11 @@ public class ProfileManagerService extends IProfileManager.Stub {
             /* no need to set mDirty, if the profile was actually changed,
              * it's marked as dirty by itself */
             persistIfDirty();
+
+            // Also update we changed the active profile
+            if (mActiveProfile != null && mActiveProfile.getUuid().equals(profile.getUuid())) {
+                setActiveProfile(profile, true);
+            }
         }
     }
 
@@ -325,7 +333,12 @@ public class ProfileManagerService extends IProfileManager.Stub {
 
     @Override
     public boolean profileExistsByName(String profileName) throws RemoteException {
-        return mProfileNames.containsKey(profileName);
+        for (Map.Entry<String, UUID> entry : mProfileNames.entrySet()) {
+            if (entry.getKey().equalsIgnoreCase(profileName)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
