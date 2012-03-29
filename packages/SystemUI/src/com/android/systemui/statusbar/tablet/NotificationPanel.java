@@ -62,7 +62,6 @@ public class NotificationPanel extends RelativeLayout implements StatusBarPanel,
     ViewGroup mContentParent;
     TabletStatusBar mBar;
     View mClearButton;
-    TextView mNetworkText;
     static Interpolator sAccelerateInterpolator = new AccelerateInterpolator();
     static Interpolator sDecelerateInterpolator = new DecelerateInterpolator();
 
@@ -120,8 +119,9 @@ public class NotificationPanel extends RelativeLayout implements StatusBarPanel,
         }
 
         mPowerWidget = (PowerWidget) findViewById(R.id.exp_power_stat);
-        mPowerWidget.setupSettingsObserver(mHandler);
-        mPowerWidget.setGlobalButtonOnClickListener(new View.OnClickListener() {
+        if (mPowerWidget != null) {
+            mPowerWidget.setupSettingsObserver(mHandler);
+            mPowerWidget.setGlobalButtonOnClickListener(new View.OnClickListener() {
                     public void onClick(View v) {
                         vibrate();
                         if(Settings.System.getInt(mContext.getContentResolver(),
@@ -130,17 +130,15 @@ public class NotificationPanel extends RelativeLayout implements StatusBarPanel,
                         }
                     }
                 });
-        mPowerWidget.setGlobalButtonOnLongClickListener(new View.OnLongClickListener() {
-            public boolean onLongClick(View v) {
-                vibrate();
-                mBar.animateCollapse();
-                return true;
-            }
-        });
-
-        mPowerWidget.setupWidget();
-
-        mNetworkText = (TextView) findViewById(R.id.network_text);
+            mPowerWidget.setGlobalButtonOnLongClickListener(new View.OnLongClickListener() {
+                    public boolean onLongClick(View v) {
+                        vibrate();
+                        mBar.animateCollapse();
+                        return true;
+                    }
+                });
+            mPowerWidget.setupWidget();
+        }
 
         mShowing = false;
 
@@ -189,7 +187,10 @@ public class NotificationPanel extends RelativeLayout implements StatusBarPanel,
         }
 
         if (show) {
-            mNetworkText.setSelected(true);
+            TextView wifiText = (TextView) findViewById(R.id.wifi_text);
+            TextView mobileText = (TextView) findViewById(R.id.mobile_text);
+            if (wifiText.getVisibility() == View.VISIBLE) wifiText.setSelected(true);
+            else if (mobileText.getVisibility() == View.VISIBLE) mobileText.setSelected(true);
         }
     }
 
@@ -225,7 +226,7 @@ public class NotificationPanel extends RelativeLayout implements StatusBarPanel,
             mNotificationScroller.setAlpha(1f);
             mNotificationScroller.scrollTo(0, 0);
             updatePanelModeButtons();
-            mPowerWidget.updateWidget();
+            if (mPowerWidget != null) mPowerWidget.updateWidget();
         }
     }
 
