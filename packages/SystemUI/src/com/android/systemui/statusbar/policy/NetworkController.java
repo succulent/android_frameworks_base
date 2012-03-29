@@ -912,11 +912,7 @@ public class NetworkController extends BroadcastReceiver {
             if (mDataConnected) {
                 mobileLabel = mNetworkName;
             } else if (mWifiConnected) {
-                if (hasService()) {
-                    mobileLabel = mNetworkName;
-                } else {
-                    mobileLabel = "";
-                }
+                mobileLabel = "";
             } else {
                 mobileLabel
                     = context.getString(R.string.status_bar_settings_signal_meter_disconnected);
