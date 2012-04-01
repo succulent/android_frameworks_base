@@ -862,13 +862,10 @@ status_t OMXCodec::configureCodec(const sp<MetaData> &meta) {
         }
 
     }
-#ifndef QCOM_HARDWARE
-    if (!strcasecmp(MEDIA_MIMETYPE_VIDEO_DIVX, mMIME) || !strcasecmp(MEDIA_MIMETYPE_VIDEO_DIVX4, mMIME)) {
-#else
+
     if (!strcasecmp(MEDIA_MIMETYPE_VIDEO_DIVX, mMIME) ||
         !strcasecmp(MEDIA_MIMETYPE_VIDEO_DIVX4, mMIME) ||
         !strcasecmp(MEDIA_MIMETYPE_VIDEO_DIVX311, mMIME)) {
-#endif
         LOGV("Setting the QOMX_VIDEO_PARAM_DIVXTYPE params ");
         QOMX_VIDEO_PARAM_DIVXTYPE paramDivX;
         InitOMXParams(&paramDivX);
@@ -1852,10 +1849,7 @@ status_t OMXCodec::setVideoOutputFormat(
 #endif
                );
 #ifdef SAMSUNG_CODEC_SUPPORT
-        if (!strcmp("OMX.SEC.FP.AVC.Decoder", mComponentName) ||
-            !strcmp("OMX.SEC.AVC.Decoder", mComponentName) ||
-            !strcmp("OMX.SEC.MPEG4.Decoder", mComponentName) ||
-            !strcmp("OMX.SEC.H263.Decoder", mComponentName)) {
+        if (!strncmp("OMX.SEC.", mComponentName, 8)) {
             if (mNativeWindow == NULL)
                 format.eColorFormat = OMX_COLOR_FormatYUV420Planar;
             else
@@ -1884,8 +1878,9 @@ status_t OMXCodec::setVideoOutputFormat(
 
     CHECK_EQ(err, (status_t)OK);
 
-#if 1
-    // XXX Need a (much) better heuristic to compute input buffer sizes.
+#ifdef EXYNOS4210_ENHANCEMENTS
+    const size_t X = 64 * 8 * 1024;  // const size_t X = 64 * 1024;
+#else
     const size_t X = 64 * 1024;
     if (def.nBufferSize < X) {
         def.nBufferSize = X;
