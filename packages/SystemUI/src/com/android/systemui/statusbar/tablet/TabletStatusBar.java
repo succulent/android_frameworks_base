@@ -114,6 +114,7 @@ public class TabletStatusBar extends StatusBar implements
     public static final int MSG_STOP_TICKER = 2000;
     public static final int MSG_HIDE_ITEMS = 3000;
     public static final int MSG_LARGE_THUMBS = 3001;
+    public static final int MSG_POWER_WIDGET = 3002;
 
     // Fitts' Law assistance for LatinIME; see policy.EventHole
     private static final boolean FAKE_SPACE_BAR = true;
@@ -820,6 +821,9 @@ public class TabletStatusBar extends StatusBar implements
                     break;
                 case MSG_LARGE_THUMBS:
                     mRecentsPanel.updateValuesFromResources();
+                    break;
+                case MSG_POWER_WIDGET:
+                    mNotificationPanel.updatePowerWidgetVisibility();
                     break;
             }
         }
@@ -2017,6 +2021,8 @@ public class TabletStatusBar extends StatusBar implements
                     Settings.System.SHOW_NOTIFICATION_PEEK), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.LARGE_RECENT_THUMBNAILS), false, this);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.EXPANDED_VIEW_WIDGET), false, this);
         }
 
         @Override
@@ -2028,6 +2034,10 @@ public class TabletStatusBar extends StatusBar implements
                     Settings.System.LARGE_RECENT_THUMBNAILS))) {
                 mHandler.removeMessages(MSG_LARGE_THUMBS);
                 mHandler.sendEmptyMessage(MSG_LARGE_THUMBS);
+            } else if (uri.equals(Settings.System.getUriFor(
+                    Settings.System.EXPANDED_VIEW_WIDGET))) {
+                mHandler.removeMessages(MSG_POWER_WIDGET);
+                mHandler.sendEmptyMessage(MSG_POWER_WIDGET);
             } else {
                 mHandler.removeMessages(MSG_HIDE_ITEMS);
                 mHandler.sendEmptyMessage(MSG_HIDE_ITEMS);

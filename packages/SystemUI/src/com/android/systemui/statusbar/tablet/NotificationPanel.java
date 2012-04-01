@@ -27,6 +27,7 @@ import android.os.Handler;
 import android.provider.Settings;
 import android.util.AttributeSet;
 import android.util.Slog;
+import android.view.HapticFeedbackConstants;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -110,20 +111,14 @@ public class NotificationPanel extends RelativeLayout implements StatusBarPanel,
         mClearButton = findViewById(R.id.clear_all_button);
         mClearButton.setOnClickListener(mClearButtonListener);
 
-        mDisplayPowerWidget = Settings.System.getInt(mContext.getContentResolver(),
-                   Settings.System.EXPANDED_VIEW_WIDGET, 1) == 1;
-
-        if (mDisplayPowerWidget) {
-            mSettingsButton.setVisibility(View.GONE);
-            mNotificationButton.setVisibility(View.GONE);
-        }
+        updatePowerWidgetVisibility();
 
         mPowerWidget = (PowerWidget) findViewById(R.id.exp_power_stat);
         if (mPowerWidget != null) {
             mPowerWidget.setupSettingsObserver(mHandler);
             mPowerWidget.setGlobalButtonOnClickListener(new View.OnClickListener() {
                     public void onClick(View v) {
-                        vibrate();
+                        vibrate(v);
                         if(Settings.System.getInt(mContext.getContentResolver(),
                                 Settings.System.EXPANDED_HIDE_ONCHANGE, 0) == 1) {
                             mBar.animateCollapse();
@@ -132,7 +127,7 @@ public class NotificationPanel extends RelativeLayout implements StatusBarPanel,
                 });
             mPowerWidget.setGlobalButtonOnLongClickListener(new View.OnLongClickListener() {
                     public boolean onLongClick(View v) {
-                        vibrate();
+                        vibrate(v);
                         mBar.animateCollapse();
                         return true;
                     }
@@ -226,7 +221,6 @@ public class NotificationPanel extends RelativeLayout implements StatusBarPanel,
             mNotificationScroller.setAlpha(1f);
             mNotificationScroller.scrollTo(0, 0);
             updatePanelModeButtons();
-            if (mPowerWidget != null) mPowerWidget.updateWidget();
         }
     }
 
@@ -380,6 +374,18 @@ public class NotificationPanel extends RelativeLayout implements StatusBarPanel,
         }
     }
 
+    private void hidePanelModeButtons() {
+        mSettingsButton.setVisibility(View.GONE);
+        mNotificationButton.setVisibility(View.GONE);
+    }
+
+    public void updatePowerWidgetVisibility() {
+        mDisplayPowerWidget = Settings.System.getInt(mContext.getContentResolver(),
+                   Settings.System.EXPANDED_VIEW_WIDGET, 1) == 1;
+        updatePanelModeButtons();
+        if (mDisplayPowerWidget) hidePanelModeButtons();
+    }
+
     public boolean isInContentArea(int x, int y) {
         mContentArea.left = mTitleArea.getLeft() + mTitleArea.getPaddingLeft();
         mContentArea.top = mTitleArea.getTop() + mTitleArea.getPaddingTop() 
@@ -501,7 +507,7 @@ public class NotificationPanel extends RelativeLayout implements StatusBarPanel,
         }
     }
 
-    void vibrate() {
+    void vibrate(View v) {
         boolean hapticFeedbackEnabled;
         int expandedHapticFeedback = Settings.System.getInt(getContext().getContentResolver(),
                 Settings.System.EXPANDED_HAPTIC_FEEDBACK, 2);
@@ -512,9 +518,7 @@ public class NotificationPanel extends RelativeLayout implements StatusBarPanel,
             hapticFeedbackEnabled = (expandedHapticFeedback == 1);
         }
         if (hapticFeedbackEnabled) {
-            android.os.Vibrator vib = (android.os.Vibrator)mContext.getSystemService(
-                    Context.VIBRATOR_SERVICE);
-            vib.vibrate(100);
+            v.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
         }
     }
 }
