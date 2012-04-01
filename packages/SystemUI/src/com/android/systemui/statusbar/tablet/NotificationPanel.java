@@ -119,7 +119,7 @@ public class NotificationPanel extends RelativeLayout implements StatusBarPanel,
             mPowerWidget.setGlobalButtonOnClickListener(new View.OnClickListener() {
                     public void onClick(View v) {
                         vibrate(v);
-                        if(Settings.System.getInt(mContext.getContentResolver(),
+                        if (Settings.System.getInt(mContext.getContentResolver(),
                                 Settings.System.EXPANDED_HIDE_ONCHANGE, 0) == 1) {
                             mBar.animateCollapse();
                         }
