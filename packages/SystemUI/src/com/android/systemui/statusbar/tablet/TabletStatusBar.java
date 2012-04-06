@@ -112,9 +112,10 @@ public class TabletStatusBar extends StatusBar implements
     public static final int MSG_OPEN_COMPAT_MODE_PANEL = 1050;
     public static final int MSG_CLOSE_COMPAT_MODE_PANEL = 1051;
     public static final int MSG_STOP_TICKER = 2000;
-    public static final int MSG_HIDE_ITEMS = 3000;
+    public static final int MSG_BUTTON_VISIBILITY = 3000;
     public static final int MSG_LARGE_THUMBS = 3001;
     public static final int MSG_POWER_WIDGET = 3002;
+    public static final int MSG_CLOCK_VISIBILITY = 3003;
 
     // Fitts' Law assistance for LatinIME; see policy.EventHole
     private static final boolean FAKE_SPACE_BAR = true;
@@ -159,6 +160,7 @@ public class TabletStatusBar extends StatusBar implements
     boolean mHideBackButton;
     boolean mHideRecentButton;
     boolean mHideHomeButton;
+    boolean mForceMenuButton;
 
     ViewGroup mFeedbackIconArea; // notification icons, IME icon, compat icon
     InputMethodButton mInputMethodSwitchButton;
@@ -646,7 +648,9 @@ public class TabletStatusBar extends StatusBar implements
         filter.addAction(Intent.ACTION_SCREEN_OFF);
         context.registerReceiver(mBroadcastReceiver, filter);
 
-        updateVisibilitySettings();
+        // Set navigation button and clock visibility
+        updateButtonVisibilitySettings();
+        updateClockVisibilitySettings();
 
         return sb;
     }
@@ -816,8 +820,11 @@ public class TabletStatusBar extends StatusBar implements
                 case MSG_STOP_TICKER:
                     mTicker.halt();
                     break;
-                case MSG_HIDE_ITEMS:
-                    updateVisibilitySettings();
+                case MSG_BUTTON_VISIBILITY:
+                    updateButtonVisibilitySettings();
+                    break;
+                case MSG_CLOCK_VISIBILITY:
+                    updateClockVisibilitySettings();
                     break;
                 case MSG_LARGE_THUMBS:
                     mRecentsPanel.updateValuesFromResources();
@@ -1064,7 +1071,7 @@ public class TabletStatusBar extends StatusBar implements
                 (visibility & StatusBarManager.DISABLE_SYSTEM_INFO) != 0);
     }
 
-    private void updateVisibilitySettings() {
+    private void updateButtonVisibilitySettings() {
         ContentResolver resolver = mContext.getContentResolver();
 
         mHideHomeButton = (Settings.System.getInt(resolver,
@@ -1075,14 +1082,21 @@ public class TabletStatusBar extends StatusBar implements
                 Settings.System.HIDE_SOFT_BACK_BUTTON, 0) == 1);
         mHideMenuButton = (Settings.System.getInt(resolver,
                 Settings.System.HIDE_SOFT_MENU_BUTTON, 0) == 1);
+        mForceMenuButton = (Settings.System.getInt(resolver,
+                Settings.System.FORCE_SOFT_MENU_BUTTON, 0) == 1);
+
+        mMenuButton.setVisibility(mHideMenuButton ? View.GONE : (mForceMenuButton ? View.VISIBLE :
+                View.INVISIBLE));
+
+        setNavigationVisibility(0);
+    }
+
+    private void updateClockVisibilitySettings() {
+        ContentResolver resolver = mContext.getContentResolver();
+
         mShowClock = (Settings.System.getInt(resolver,
                 Settings.System.STATUS_BAR_CLOCK, 1) == 1);
 
-        setNavigationVisibility(0);
-        setClockVisibility();
-    }
-
-    private void setClockVisibility() {
         View clock = mBarContents.findViewById(R.id.clock);
         if (clock != null) {
             clock.setVisibility(mShowClock ? View.VISIBLE : View.GONE);
@@ -1210,7 +1224,9 @@ public class TabletStatusBar extends StatusBar implements
         if (DEBUG) {
             Slog.d(TAG, (showMenu?"showing":"hiding") + " the MENU button");
         }
-        if (!mHideMenuButton) mMenuButton.setVisibility(showMenu ? View.VISIBLE : View.INVISIBLE);
+        if (!mHideMenuButton && !mForceMenuButton) {
+            mMenuButton.setVisibility(showMenu ? View.VISIBLE : View.INVISIBLE);
+        }
 
         // See above re: lights-out policy for legacy apps.
         if (showMenu) setLightsOn(true);
@@ -2014,6 +2030,8 @@ public class TabletStatusBar extends StatusBar implements
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.HIDE_SOFT_MENU_BUTTON), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.FORCE_SOFT_MENU_BUTTON), false, this);
+            resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.STATUS_BAR_CLOCK), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.RIGHT_SOFT_BUTTONS), false, this);
@@ -2038,9 +2056,13 @@ public class TabletStatusBar extends StatusBar implements
                     Settings.System.EXPANDED_VIEW_WIDGET))) {
                 mHandler.removeMessages(MSG_POWER_WIDGET);
                 mHandler.sendEmptyMessage(MSG_POWER_WIDGET);
+            } else if (uri.equals(Settings.System.getUriFor(
+                    Settings.System.STATUS_BAR_CLOCK))) {
+                mHandler.removeMessages(MSG_CLOCK_VISIBILITY);
+                mHandler.sendEmptyMessage(MSG_CLOCK_VISIBILITY);
             } else {
-                mHandler.removeMessages(MSG_HIDE_ITEMS);
-                mHandler.sendEmptyMessage(MSG_HIDE_ITEMS);
+                mHandler.removeMessages(MSG_BUTTON_VISIBILITY);
+                mHandler.sendEmptyMessage(MSG_BUTTON_VISIBILITY);
             }
         }
     }

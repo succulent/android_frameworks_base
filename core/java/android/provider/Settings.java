@@ -2282,6 +2282,12 @@ public final class Settings {
         public static final String HIDE_SOFT_MENU_BUTTON = "hide_soft_menu_button";
 
         /**
+         * Whether to force the soft menu button to show.  The value is boolean (1 or 0).
+         * @hide
+         */
+        public static final String FORCE_SOFT_MENU_BUTTON = "force_soft_menu_button";
+
+        /**
          * Whether to show larger thumbnails in recent items.  The value is boolean (1 or 0).
          * @hide
          */
