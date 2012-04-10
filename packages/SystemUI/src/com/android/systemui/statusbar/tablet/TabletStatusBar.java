@@ -1067,6 +1067,12 @@ public class TabletStatusBar extends StatusBar implements
         mRecentButton.setVisibility(mHideRecentButton ? View.GONE : (disableRecent ? View.INVISIBLE
                 : View.VISIBLE));
 
+        if (mForceMenuButton) {
+            boolean disableMenu = disableBack && disableHome && disableRecent;
+            mMenuButton.setVisibility(mHideMenuButton ? View.GONE : (disableMenu ?
+                    View.INVISIBLE : View.VISIBLE));
+        }
+
         mInputMethodSwitchButton.setScreenLocked(
                 (visibility & StatusBarManager.DISABLE_SYSTEM_INFO) != 0);
     }
