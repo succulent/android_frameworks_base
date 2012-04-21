@@ -25,8 +25,6 @@
         android:id="@+id/option1"
         android:layout_width="64dp"
         android:layout_height="match_parent"
-        android:background="?android:attr/actionBarItemBackground"
-        android:contentDescription="@string/silent_mode_silent"
         android:focusable="true"
         >
         <ImageView
@@ -37,12 +35,13 @@
             android:layout_marginRight="8dp"
             android:layout_marginTop="6dp"
             android:layout_marginBottom="6dp"
-            android:src="@drawable/ic_audio_vol_mute"
+            android:src="@drawable/ic_lock_screenshot"
             android:scaleType="center"
             android:duplicateParentState="true"
             android:background="@drawable/silent_mode_indicator"
             />
     </LinearLayout>
+
     <!-- Spacer -->
     <View android:layout_width="0dp"
         android:layout_height="match_parent"
@@ -53,8 +52,6 @@
         android:id="@+id/option2"
         android:layout_width="64dp"
         android:layout_height="match_parent"
-        android:background="?android:attr/actionBarItemBackground"
-        android:contentDescription="@string/silent_mode_vibrate"
         android:focusable="true"
         >
         <ImageView
@@ -65,7 +62,7 @@
             android:layout_marginRight="8dp"
             android:layout_marginTop="6dp"
             android:layout_marginBottom="6dp"
-            android:src="@drawable/ic_audio_ring_notif_vibrate"
+            android:src="@drawable/ic_menu_copy"
             android:scaleType="center"
             android:duplicateParentState="true"
             android:background="@drawable/silent_mode_indicator"
@@ -82,8 +79,6 @@
         android:id="@+id/option3"
         android:layout_width="64dp"
         android:layout_height="match_parent"
-        android:background="?android:attr/actionBarItemBackground"
-        android:contentDescription="@string/silent_mode_ring"
         android:focusable="true"
         >
         <ImageView
@@ -94,7 +89,7 @@
             android:layout_marginRight="8dp"
             android:layout_marginTop="6dp"
             android:layout_marginBottom="6dp"
-            android:src="@drawable/ic_audio_vol"
+            android:src="@drawable/ic_menu_home"
             android:scaleType="center"
             android:duplicateParentState="true"
             android:background="@drawable/silent_mode_indicator"

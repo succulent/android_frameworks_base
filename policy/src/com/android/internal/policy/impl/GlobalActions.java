@@ -37,6 +37,7 @@ import android.telephony.PhoneStateListener;
 import android.telephony.ServiceState;
 import android.telephony.TelephonyManager;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -81,6 +82,8 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
     private AlertDialog mDialog;
 
     private SilentModeAction mSilentModeAction;
+    private CondensedModeAction mCondensedModeAction;
+    private CondensedModeActionTwo mCondensedModeActionTwo;
     private ToggleAction mAirplaneModeOn;
 
     private MyAdapter mAdapter;
@@ -89,7 +92,6 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
     private boolean mDeviceProvisioned = false;
     private ToggleAction.State mAirplaneState = ToggleAction.State.Off;
     private boolean mIsWaitingForEcmExit = false;
-    private boolean mStatusBarDisabled = false;
 
     private StatusBarManager mStatusBarManager;
 
@@ -101,6 +103,9 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
     public GlobalActions(Context context) {
         mContext = context;
         mAudioManager = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
+        mStatusBarManager = (StatusBarManager)
+                mContext.getSystemService(Context.STATUS_BAR_SERVICE);
+
 
         // receive broadcasts
         IntentFilter filter = new IntentFilter();
@@ -137,6 +142,8 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
      */
     private AlertDialog createDialog() {
         mSilentModeAction = new SilentModeAction(mAudioManager, mHandler);
+        mCondensedModeAction = new CondensedModeAction(mHandler, mContext);
+        mCondensedModeActionTwo = new CondensedModeActionTwo(mStatusBarManager, mHandler, mContext);
 
         mAirplaneModeOn = new ToggleAction(
                 R.drawable.ic_lock_airplane_mode,
@@ -181,7 +188,7 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
         mItems = new ArrayList<Action>();
 
         // first: power off
-        mItems.add(
+/*        mItems.add(
             new SinglePressAction(
                     com.android.internal.R.drawable.ic_lock_power_off,
                     R.string.global_action_power_off) {
@@ -256,17 +263,7 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
             new SinglePressAction(com.android.internal.R.drawable.ic_menu_copy,
                     R.string.global_actions_toggle_statusbar) {
                 public void onPress() {
-                    if (mStatusBarManager == null) {
-                        mStatusBarManager = (StatusBarManager)
-                                mContext.getSystemService(Context.STATUS_BAR_SERVICE);
-                    }
-                    if (!mStatusBarDisabled) {
-                        mStatusBarManager.disable(0x10000000);
-                        mStatusBarDisabled = true;
-                    } else {
-                        mStatusBarManager.disable(0x00000000);
-                        mStatusBarDisabled = false;
-                    }
+
                 }
 
                 public boolean showDuringKeyguard() {
@@ -277,6 +274,30 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
                     return true;
                 }
             });
+
+        // next: home
+        mItems.add(
+            new SinglePressAction(com.android.internal.R.drawable.ic_menu_home,
+                    R.string.phoneTypeHome) {
+                public void onPress() {
+                    Intent intent = new Intent("android.intent.action.MAIN");
+                    intent.addCategory("android.intent.category.HOME");
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    mContext.startActivity(intent);
+                }
+
+                public boolean showDuringKeyguard() {
+                    return true;
+                }
+
+                public boolean showBeforeProvisioning() {
+                    return true;
+                }
+            });*/
+
+        mItems.add(mCondensedModeAction);
+
+        mItems.add(mCondensedModeActionTwo);
 
         // last: silent mode
         if (SHOW_SILENT_TOGGLE) {
@@ -821,6 +842,137 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
         }
     }
 
+    private static class CondensedModeAction implements Action, View.OnClickListener {
+
+        private final int[] ITEM_IDS = { R.id.option1, R.id.option2, R.id.option3 };
+
+        private final Handler mHandler;
+        private Context mContext;
+
+        CondensedModeAction(Handler handler, Context context) {
+            mHandler = handler;
+            mContext = context;
+        }
+
+        public View create(Context context, View convertView, ViewGroup parent,
+                LayoutInflater inflater) {
+            View v = inflater.inflate(R.layout.global_actions_condensed_mode, parent, false);
+
+            for (int i = 0; i < 3; i++) {
+                View itemView = v.findViewById(ITEM_IDS[i]);
+                // Set up click handler
+                itemView.setTag(i);
+                itemView.setOnClickListener(this);
+            }
+            return v;
+        }
+
+        public void onPress() {
+        }
+
+        public boolean showDuringKeyguard() {
+            return true;
+        }
+
+        public boolean showBeforeProvisioning() {
+            return false;
+        }
+
+        public boolean isEnabled() {
+            return true;
+        }
+
+        void willCreate() {
+        }
+
+        public void onClick(View v) {
+            if (!(v.getTag() instanceof Integer)) return;
+
+            int index = (Integer) v.getTag();
+            switch (index) {
+                case 0:
+                    ShutdownThread.shutdown(mContext, true);
+                    break;
+                case 1:
+                    ShutdownThread.reboot(mContext, "null", true);
+                    break;
+                case 2:
+                    mHandler.sendEmptyMessage(MESSAGE_PROFILE);
+                    break;
+            }
+            mHandler.sendEmptyMessageDelayed(MESSAGE_DISMISS, DIALOG_DISMISS_DELAY);
+        }
+    }
+
+    private static class CondensedModeActionTwo implements Action, View.OnClickListener {
+
+        private final int[] ITEM_IDS = { R.id.option1, R.id.option2, R.id.option3 };
+
+        private final StatusBarManager mStatusBarManager;
+        private final Handler mHandler;
+        private Context mContext;
+        private boolean mStatusBarDisabled = false;
+
+        CondensedModeActionTwo(StatusBarManager statusBarManager, Handler handler, Context context) {
+            mStatusBarManager = statusBarManager;
+            mHandler = handler;
+            mContext = context;
+        }
+
+        public View create(Context context, View convertView, ViewGroup parent,
+                LayoutInflater inflater) {
+            View v = inflater.inflate(R.layout.global_actions_condensed_mode_row_two, parent, false);
+
+            for (int i = 0; i < 3; i++) {
+                View itemView = v.findViewById(ITEM_IDS[i]);
+                // Set up click handler
+                itemView.setTag(i);
+                itemView.setOnClickListener(this);
+            }
+            return v;
+        }
+
+        public void onPress() {
+        }
+
+        public boolean showDuringKeyguard() {
+            return true;
+        }
+
+        public boolean showBeforeProvisioning() {
+            return false;
+        }
+
+        public boolean isEnabled() {
+            return true;
+        }
+
+        void willCreate() {
+        }
+
+        public void onClick(View v) {
+            if (!(v.getTag() instanceof Integer)) return;
+
+            int index = (Integer) v.getTag();
+            switch (index) {
+                case 0:
+                    mHandler.sendEmptyMessage(MESSAGE_SCREENSHOT);
+                    break;
+                case 1:
+                    mStatusBarManager.disable(mStatusBarDisabled ? 0x00000000 : 0x10000000);
+                    mStatusBarDisabled = !mStatusBarDisabled;
+                    break;
+                case 2:
+                    Intent intent = new Intent("android.intent.action.MAIN");
+                    intent.addCategory("android.intent.category.HOME");
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    mContext.startActivity(intent);
+                    break;
+            }
+            mHandler.sendEmptyMessageDelayed(MESSAGE_DISMISS, DIALOG_DISMISS_DELAY);
+        }
+    }
+
     private BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
@@ -863,6 +1015,8 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
 
     private static final int MESSAGE_DISMISS = 0;
     private static final int MESSAGE_REFRESH = 1;
+    private static final int MESSAGE_PROFILE = 2;
+    private static final int MESSAGE_SCREENSHOT = 3;
     private static final int DIALOG_DISMISS_DELAY = 300; // ms
 
     private Handler mHandler = new Handler() {
@@ -873,6 +1027,10 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
                 }
             } else if (msg.what == MESSAGE_REFRESH) {
                 mAdapter.notifyDataSetChanged();
+            } else if (msg.what == MESSAGE_PROFILE) {
+                createProfileDialog();
+            } else if (msg.what == MESSAGE_SCREENSHOT) {
+                takeScreenshot();
             }
         }
     };
