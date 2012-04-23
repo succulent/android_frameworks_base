@@ -125,6 +125,15 @@ public class TabletStatusBar extends StatusBar implements
     final static int NOTIFICATION_PEEK_HOLD_THRESH = 200; // ms
     final static int NOTIFICATION_PEEK_FADE_DELAY = 3000; // ms
 
+    // Navigation button visibility strings
+    private static final String BACK = "back";
+    private static final String HOME = "home";
+    private static final String RECENT = "recent";
+    private static final String MENU = "menu";
+    private static final String SPLIT = "|";
+    private static final String DEFAULT_BUTTONS =
+            BACK + SPLIT + HOME + SPLIT + RECENT + SPLIT + MENU + SPLIT;
+
     // The height of the bar, as definied by the build.  It may be taller if we're plugged
     // into hdmi.
     int mNaturalBarHeight = -1;
@@ -422,9 +431,6 @@ public class TabletStatusBar extends StatusBar implements
     @Override
     public void start() {
         super.start(); // will add the main bar view
-
-        SettingsObserver observer = new SettingsObserver(mHandler);
-        observer.observe(mContext);
     }
 
     @Override
@@ -465,6 +471,9 @@ public class TabletStatusBar extends StatusBar implements
 
     protected View makeStatusBarView() {
         final Context context = mContext;
+
+        SettingsObserver observer = new SettingsObserver(mHandler);
+        observer.observe(mContext);
 
         mShowPeeks = (Settings.System.getInt(mContext.getContentResolver(),
                 Settings.System.SHOW_NOTIFICATION_PEEK, 0) == 1);
@@ -1094,23 +1103,25 @@ public class TabletStatusBar extends StatusBar implements
     }
 
     private void updateButtonVisibilitySettings() {
-        ContentResolver resolver = mContext.getContentResolver();
+        String navButtons = Settings.System.getString(mContext.getContentResolver(),
+                Settings.System.COMBINED_BAR_NAVIGATION);
 
-        mHideHomeButton = (Settings.System.getInt(resolver,
-                Settings.System.HIDE_SOFT_HOME_BUTTON, 0) == 1);
-        mHideRecentButton = (Settings.System.getInt(resolver,
-                Settings.System.HIDE_SOFT_RECENT_BUTTON, 0) == 1);
-        mHideBackButton = (Settings.System.getInt(resolver,
-                Settings.System.HIDE_SOFT_BACK_BUTTON, 0) == 1);
-        mHideMenuButton = (Settings.System.getInt(resolver,
-                Settings.System.HIDE_SOFT_MENU_BUTTON, 0) == 1);
-        mForceMenuButton = (Settings.System.getInt(resolver,
+        if (navButtons == null) {
+            navButtons = DEFAULT_BUTTONS;
+        }
+
+        mHideBackButton = !navButtons.contains(BACK);
+        mHideHomeButton = !navButtons.contains(HOME);
+        mHideRecentButton = !navButtons.contains(RECENT);
+        mHideMenuButton = !navButtons.contains(MENU);
+
+        mForceMenuButton = (Settings.System.getInt(mContext.getContentResolver(),
                 Settings.System.FORCE_SOFT_MENU_BUTTON, 0) == 1);
 
         mMenuButton.setVisibility(mHideMenuButton ? View.GONE : (mForceMenuButton ? View.VISIBLE :
                 View.INVISIBLE));
 
-        setNavigationVisibility(0);
+        setNavigationVisibility(StatusBarManager.DISABLE_NONE);
     }
 
     private void updateClockVisibilitySettings() {
@@ -2044,13 +2055,7 @@ public class TabletStatusBar extends StatusBar implements
         void observe(Context context) {
             ContentResolver resolver = context.getContentResolver();
             resolver.registerContentObserver(Settings.System.getUriFor(
-                    Settings.System.HIDE_SOFT_RECENT_BUTTON), false, this);
-            resolver.registerContentObserver(Settings.System.getUriFor(
-                    Settings.System.HIDE_SOFT_HOME_BUTTON), false, this);
-            resolver.registerContentObserver(Settings.System.getUriFor(
-                    Settings.System.HIDE_SOFT_BACK_BUTTON), false, this);
-            resolver.registerContentObserver(Settings.System.getUriFor(
-                    Settings.System.HIDE_SOFT_MENU_BUTTON), false, this);
+                    Settings.System.COMBINED_BAR_NAVIGATION), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.FORCE_SOFT_MENU_BUTTON), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(

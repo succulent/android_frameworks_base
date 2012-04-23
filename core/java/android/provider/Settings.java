@@ -2192,6 +2192,18 @@ public final class Settings {
         public static final String COMBINED_BAR_AUTO_HIDE = "combined_bar_auto_hide";
 
         /**
+        * CombinedBar navigation visibility on tablets.
+        * String of visible navigation elements seperated by the | character
+        * back: Shows back button
+        * home: Shows home button
+        * recent: Shows recent button
+        * menu: Shows menu button
+        * default: back|home|recent|menu|
+        * @hide
+        */
+        public static final String COMBINED_BAR_NAVIGATION = "combined_bar_navigation";
+
+        /**
          * Display style of AM/PM next to clock in status bar
          * 0: Normal display (Eclair stock)
          * 1: Small display (Froyo stock)
@@ -2277,31 +2289,6 @@ public final class Settings {
          * @hide
          */
         public static final String MENU_UNLOCK_SCREEN = "menu_unlock_screen";
-
-        /**
-
-         * Whether to hide the soft home.  The value is boolean (1 or 0).
-         * @hide
-         */
-        public static final String HIDE_SOFT_HOME_BUTTON = "hide_soft_home_button";
-
-        /**
-         * Whether to hide the soft recent button.  The value is boolean (1 or 0).
-         * @hide
-         */
-        public static final String HIDE_SOFT_RECENT_BUTTON = "hide_soft_recent_button";
-
-        /**
-         * Whether to hide the soft back button.  The value is boolean (1 or 0).
-         * @hide
-         */
-        public static final String HIDE_SOFT_BACK_BUTTON = "hide_soft_back_button";
-
-        /**
-         * Whether to hide the soft menu button.  The value is boolean (1 or 0).
-         * @hide
-         */
-        public static final String HIDE_SOFT_MENU_BUTTON = "hide_soft_menu_button";
 
         /**
          * Whether to force the soft menu button to show.  The value is boolean (1 or 0).
