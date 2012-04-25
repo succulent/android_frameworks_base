@@ -72,7 +72,7 @@ public class VolumeController implements ToggleSlider.Listener,
                 } else {
                     mAudioManager.setStreamMute(stream, mute);
                 }
-                mAudioManager.setStreamVolume(stream, level, AudioManager.FLAG_PLAY_SOUND);
+                mAudioManager.setStreamVolume(stream, level, 0);
             }
         }
     }
