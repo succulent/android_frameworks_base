@@ -25,6 +25,7 @@
         android:id="@+id/option1"
         android:layout_width="64dp"
         android:layout_height="match_parent"
+        android:background="?android:attr/actionBarItemBackground"
         android:focusable="true"
         >
         <ImageView
@@ -52,6 +53,7 @@
         android:id="@+id/option2"
         android:layout_width="64dp"
         android:layout_height="match_parent"
+        android:background="?android:attr/actionBarItemBackground"
         android:focusable="true"
         >
         <ImageView
@@ -79,6 +81,7 @@
         android:id="@+id/option3"
         android:layout_width="64dp"
         android:layout_height="match_parent"
+        android:background="?android:attr/actionBarItemBackground"
         android:focusable="true"
         >
         <ImageView

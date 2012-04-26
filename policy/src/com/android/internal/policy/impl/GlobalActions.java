@@ -37,6 +37,7 @@ import android.telephony.PhoneStateListener;
 import android.telephony.ServiceState;
 import android.telephony.TelephonyManager;
 import android.util.Log;
+import android.view.HapticFeedbackConstants;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -887,7 +888,7 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
 
         public void onClick(View v) {
             if (!(v.getTag() instanceof Integer)) return;
-
+            v.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
             int index = (Integer) v.getTag();
             switch (index) {
                 case 0:
@@ -952,7 +953,7 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
 
         public void onClick(View v) {
             if (!(v.getTag() instanceof Integer)) return;
-
+            v.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
             int index = (Integer) v.getTag();
             switch (index) {
                 case 0:
