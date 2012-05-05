@@ -2204,6 +2204,13 @@ public final class Settings {
         public static final String COMBINED_BAR_NAVIGATION = "combined_bar_navigation";
 
         /**
+         * The color tint of the navigation buttons in the tablet combined bar.
+         * default: none
+         * @hide
+         */
+        public static final String COMBINED_BAR_NAVIGATION_COLOR = "combined_bar_navigation_color";
+
+        /**
          * Display style of AM/PM next to clock in status bar
          * 0: Normal display (Eclair stock)
          * 1: Small display (Froyo stock)
@@ -2232,6 +2239,13 @@ public final class Settings {
          * @hide
          */
         public static final String STATUS_BAR_CLOCK = "status_bar_clock";
+
+        /**
+         * The color of the clock in status bar
+         * default: colors/holo_blue_light
+         * @hide
+         */
+        public static final String STATUS_BAR_CLOCK_COLOR = "status_bar_clock_color";
 
         /**
          * Whether to show the signal text or signal bars.
