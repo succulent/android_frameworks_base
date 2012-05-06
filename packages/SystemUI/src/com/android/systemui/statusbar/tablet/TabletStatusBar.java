@@ -117,6 +117,8 @@ public class TabletStatusBar extends StatusBar implements
     public static final int MSG_LARGE_THUMBS = 3001;
     public static final int MSG_POWER_WIDGET = 3002;
     public static final int MSG_CLOCK_VISIBILITY = 3003;
+    public static final int MSG_CLOCK_COLOR = 3004;
+    public static final int MSG_BUTTON_COLOR = 3005;
 
     // Fitts' Law assistance for LatinIME; see policy.EventHole
     private static final boolean FAKE_SPACE_BAR = true;
@@ -124,6 +126,15 @@ public class TabletStatusBar extends StatusBar implements
     // Notification "peeking" (flyover preview of individual notifications)
     final static int NOTIFICATION_PEEK_HOLD_THRESH = 200; // ms
     final static int NOTIFICATION_PEEK_FADE_DELAY = 3000; // ms
+
+    // Navigation button visibility strings
+    private static final String BACK = "back";
+    private static final String HOME = "home";
+    private static final String RECENT = "recent";
+    private static final String MENU = "menu";
+    private static final String SPLIT = "|";
+    private static final String DEFAULT_BUTTONS =
+            BACK + SPLIT + HOME + SPLIT + RECENT + SPLIT + MENU + SPLIT;
 
     // The height of the bar, as definied by the build.  It may be taller if we're plugged
     // into hdmi.
@@ -153,9 +164,9 @@ public class TabletStatusBar extends StatusBar implements
     NotificationData.Entry mNotificationDNDDummyEntry;
 
     ImageView mBackButton;
-    View mHomeButton;
-    View mMenuButton;
-    View mRecentButton;
+    ImageView mHomeButton;
+    ImageView mMenuButton;
+    ImageView mRecentButton;
 
     boolean mHideMenuButton;
     boolean mHideBackButton;
@@ -422,9 +433,6 @@ public class TabletStatusBar extends StatusBar implements
     @Override
     public void start() {
         super.start(); // will add the main bar view
-
-        SettingsObserver observer = new SettingsObserver(mHandler);
-        observer.observe(mContext);
     }
 
     @Override
@@ -465,6 +473,9 @@ public class TabletStatusBar extends StatusBar implements
 
     protected View makeStatusBarView() {
         final Context context = mContext;
+
+        SettingsObserver observer = new SettingsObserver(mHandler);
+        observer.observe(mContext);
 
         mShowPeeks = (Settings.System.getInt(mContext.getContentResolver(),
                 Settings.System.SHOW_NOTIFICATION_PEEK, 0) == 1);
@@ -551,11 +562,11 @@ public class TabletStatusBar extends StatusBar implements
         mNetworkController.addSignalCluster(signalCluster);
 
         // The navigation buttons
-        mBackButton = (ImageView)sb.findViewById(R.id.back);
+        mBackButton = (ImageView) sb.findViewById(R.id.back);
         mNavigationArea = (ViewGroup) sb.findViewById(R.id.navigationArea);
-        mHomeButton = mNavigationArea.findViewById(R.id.home);
-        mMenuButton = mNavigationArea.findViewById(R.id.menu);
-        mRecentButton = mNavigationArea.findViewById(R.id.recent_apps);
+        mHomeButton = (ImageView) mNavigationArea.findViewById(R.id.home);
+        mMenuButton = (ImageView) mNavigationArea.findViewById(R.id.menu);
+        mRecentButton = (ImageView) mNavigationArea.findViewById(R.id.recent_apps);
         mRecentButton.setOnClickListener(mOnClickListener);
 
         LayoutTransition lt = new LayoutTransition();
@@ -667,6 +678,8 @@ public class TabletStatusBar extends StatusBar implements
         // Set navigation button and clock visibility
         updateButtonVisibilitySettings();
         updateClockVisibilitySettings();
+        updateButtonColorSettings();
+        updateClockColorSettings();
 
         return sb;
     }
@@ -847,6 +860,12 @@ public class TabletStatusBar extends StatusBar implements
                     break;
                 case MSG_POWER_WIDGET:
                     mNotificationPanel.updatePowerWidgetVisibility();
+                    break;
+                case MSG_BUTTON_COLOR:
+                    updateButtonColorSettings();
+                    break;
+                case MSG_CLOCK_COLOR:
+                    updateClockColorSettings();
                     break;
             }
         }
@@ -1094,23 +1113,25 @@ public class TabletStatusBar extends StatusBar implements
     }
 
     private void updateButtonVisibilitySettings() {
-        ContentResolver resolver = mContext.getContentResolver();
+        String navButtons = Settings.System.getString(mContext.getContentResolver(),
+                Settings.System.COMBINED_BAR_NAVIGATION);
 
-        mHideHomeButton = (Settings.System.getInt(resolver,
-                Settings.System.HIDE_SOFT_HOME_BUTTON, 0) == 1);
-        mHideRecentButton = (Settings.System.getInt(resolver,
-                Settings.System.HIDE_SOFT_RECENT_BUTTON, 0) == 1);
-        mHideBackButton = (Settings.System.getInt(resolver,
-                Settings.System.HIDE_SOFT_BACK_BUTTON, 0) == 1);
-        mHideMenuButton = (Settings.System.getInt(resolver,
-                Settings.System.HIDE_SOFT_MENU_BUTTON, 0) == 1);
-        mForceMenuButton = (Settings.System.getInt(resolver,
+        if (navButtons == null) {
+            navButtons = DEFAULT_BUTTONS;
+        }
+
+        mHideBackButton = !navButtons.contains(BACK);
+        mHideHomeButton = !navButtons.contains(HOME);
+        mHideRecentButton = !navButtons.contains(RECENT);
+        mHideMenuButton = !navButtons.contains(MENU);
+
+        mForceMenuButton = (Settings.System.getInt(mContext.getContentResolver(),
                 Settings.System.FORCE_SOFT_MENU_BUTTON, 0) == 1);
 
         mMenuButton.setVisibility(mHideMenuButton ? View.GONE : (mForceMenuButton ? View.VISIBLE :
                 View.INVISIBLE));
 
-        setNavigationVisibility(0);
+        setNavigationVisibility(StatusBarManager.DISABLE_NONE);
     }
 
     private void updateClockVisibilitySettings() {
@@ -1122,6 +1143,41 @@ public class TabletStatusBar extends StatusBar implements
         View clock = mBarContents.findViewById(R.id.clock);
         if (clock != null) {
             clock.setVisibility(mShowClock ? View.VISIBLE : View.GONE);
+        }
+    }
+
+    private void updateClockColorSettings() {
+        ContentResolver resolver = mContext.getContentResolver();
+
+        int clockColor = Settings.System.getInt(resolver,
+                Settings.System.STATUS_BAR_CLOCK_COLOR, 0xFF33B5E5);
+
+        TextView clockText = (TextView) mBarContents.findViewById(R.id.time_solid);
+        if (clockText != null) {
+            if (clockColor != 0x00000000) {
+                clockText.setTextColor(clockColor);
+            } else {
+                clockText.setTextColor(0xFF33B5E5);
+            }
+        }
+    }
+
+    private void updateButtonColorSettings() {
+        ContentResolver resolver = mContext.getContentResolver();
+
+        int buttonColor = Settings.System.getInt(resolver,
+                Settings.System.COMBINED_BAR_NAVIGATION_COLOR, 0x00000000);
+
+        if (buttonColor != 0x00000000) {
+            mBackButton.setColorFilter(buttonColor);
+            mHomeButton.setColorFilter(buttonColor);
+            mRecentButton.setColorFilter(buttonColor);
+            mMenuButton.setColorFilter(buttonColor);
+        } else {
+            mBackButton.clearColorFilter();
+            mHomeButton.clearColorFilter();
+            mRecentButton.clearColorFilter();
+            mMenuButton.clearColorFilter();
         }
     }
 
@@ -2044,13 +2100,9 @@ public class TabletStatusBar extends StatusBar implements
         void observe(Context context) {
             ContentResolver resolver = context.getContentResolver();
             resolver.registerContentObserver(Settings.System.getUriFor(
-                    Settings.System.HIDE_SOFT_RECENT_BUTTON), false, this);
+                    Settings.System.COMBINED_BAR_NAVIGATION), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
-                    Settings.System.HIDE_SOFT_HOME_BUTTON), false, this);
-            resolver.registerContentObserver(Settings.System.getUriFor(
-                    Settings.System.HIDE_SOFT_BACK_BUTTON), false, this);
-            resolver.registerContentObserver(Settings.System.getUriFor(
-                    Settings.System.HIDE_SOFT_MENU_BUTTON), false, this);
+                    Settings.System.COMBINED_BAR_NAVIGATION_COLOR), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.FORCE_SOFT_MENU_BUTTON), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
@@ -2063,6 +2115,8 @@ public class TabletStatusBar extends StatusBar implements
                     Settings.System.LARGE_RECENT_THUMBNAILS), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.EXPANDED_VIEW_WIDGET), false, this);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.STATUS_BAR_CLOCK_COLOR), false, this);
         }
 
         @Override
@@ -2082,6 +2136,14 @@ public class TabletStatusBar extends StatusBar implements
                     Settings.System.STATUS_BAR_CLOCK))) {
                 mHandler.removeMessages(MSG_CLOCK_VISIBILITY);
                 mHandler.sendEmptyMessage(MSG_CLOCK_VISIBILITY);
+            } else if (uri.equals(Settings.System.getUriFor(
+                    Settings.System.STATUS_BAR_CLOCK_COLOR))) {
+                mHandler.removeMessages(MSG_CLOCK_COLOR);
+                mHandler.sendEmptyMessage(MSG_CLOCK_COLOR);
+            } else if (uri.equals(Settings.System.getUriFor(
+                    Settings.System.COMBINED_BAR_NAVIGATION_COLOR))) {
+                mHandler.removeMessages(MSG_BUTTON_COLOR);
+                mHandler.sendEmptyMessage(MSG_BUTTON_COLOR);
             } else {
                 mHandler.removeMessages(MSG_BUTTON_VISIBILITY);
                 mHandler.sendEmptyMessage(MSG_BUTTON_VISIBILITY);

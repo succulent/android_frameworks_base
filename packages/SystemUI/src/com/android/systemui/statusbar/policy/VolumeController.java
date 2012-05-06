@@ -26,9 +26,11 @@ import android.util.Slog;
 import android.view.IWindowManager;
 import android.widget.CompoundButton;
 
-public class VolumeController implements ToggleSlider.Listener {
+public class VolumeController implements ToggleSlider.Listener,
+        AudioManager.OnAudioFocusChangeListener {
     private static final String TAG = "StatusBar.VolumeController";
-    private static final int STREAM = AudioManager.STREAM_NOTIFICATION;
+    private static final int STREAM_NOTIFICATION = AudioManager.STREAM_NOTIFICATION;
+    private static final int STREAM_MUSIC = AudioManager.STREAM_MUSIC;
 
     private Context mContext;
     private ToggleSlider mControl;
@@ -36,33 +38,48 @@ public class VolumeController implements ToggleSlider.Listener {
 
     private boolean mMute;
     private int mVolume;
+    private int mStream;
+    private boolean mVibeInSilent;
 
     public VolumeController(Context context, ToggleSlider control) {
         mContext = context;
         mControl = control;
+        mControl.setOnChangedListener(this);
         mAudioManager = (AudioManager)context.getSystemService(Context.AUDIO_SERVICE);
+        setupVolume();
+    }
 
-        mMute = mAudioManager.getRingerMode() != AudioManager.RINGER_MODE_NORMAL;
-        mVolume = mAudioManager.getStreamVolume(STREAM);
-        control.setMax(mAudioManager.getStreamMaxVolume(STREAM));
-        control.setValue(mVolume);
-        control.setChecked(mMute);
-
-        control.setOnChangedListener(this);
+    private void setupVolume() {
+        boolean isMusicActive = mAudioManager.isMusicActive();
+        mStream = isMusicActive ? STREAM_MUSIC : STREAM_NOTIFICATION;
+        mVolume = mAudioManager.getStreamVolume(mStream);
+        mMute = isMusicActive ? mVolume == 0 :
+                mAudioManager.getRingerMode() != AudioManager.RINGER_MODE_NORMAL;
+        mControl.setMax(mAudioManager.getStreamMaxVolume(mStream));
+        mControl.setValue(mVolume);
+        mControl.setChecked(mMute);
+        mVibeInSilent = Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.VIBRATE_IN_SILENT, 1) == 1;
     }
 
     public void onChanged(ToggleSlider view, boolean tracking, boolean mute, int level) {
+        int mStream = mAudioManager.isMusicActive() ? STREAM_MUSIC : STREAM_NOTIFICATION;
         if (!tracking) {
-            if (mute) {
-                boolean vibeInSilent = (1 == Settings.System.getInt(mContext.getContentResolver(),
-                        Settings.System.VIBRATE_IN_SILENT, 1));
-                mAudioManager.setRingerMode(
-                        vibeInSilent ? AudioManager.RINGER_MODE_VIBRATE
-                                     : AudioManager.RINGER_MODE_SILENT);
+            if (mute && !mAudioManager.isMusicActive()) {
+                mAudioManager.setRingerMode(mVibeInSilent ? AudioManager.RINGER_MODE_VIBRATE
+                        : AudioManager.RINGER_MODE_SILENT);
             } else {
-                mAudioManager.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
-                mAudioManager.setStreamVolume(STREAM, level, AudioManager.FLAG_PLAY_SOUND);
+                if (!mAudioManager.isMusicActive()) {
+                    mAudioManager.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
+                } else {
+                    mAudioManager.setStreamMute(mStream, mute);
+                }
             }
         }
+        mAudioManager.setStreamVolume(mStream, level, 0);
+    }
+
+    public void onAudioFocusChange(int focusChange) {
+        setupVolume();
     }
 }

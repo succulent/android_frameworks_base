@@ -2192,6 +2192,25 @@ public final class Settings {
         public static final String COMBINED_BAR_AUTO_HIDE = "combined_bar_auto_hide";
 
         /**
+        * CombinedBar navigation visibility on tablets.
+        * String of visible navigation elements seperated by the | character
+        * back: Shows back button
+        * home: Shows home button
+        * recent: Shows recent button
+        * menu: Shows menu button
+        * default: back|home|recent|menu|
+        * @hide
+        */
+        public static final String COMBINED_BAR_NAVIGATION = "combined_bar_navigation";
+
+        /**
+         * The color tint of the navigation buttons in the tablet combined bar.
+         * default: none
+         * @hide
+         */
+        public static final String COMBINED_BAR_NAVIGATION_COLOR = "combined_bar_navigation_color";
+
+        /**
          * Display style of AM/PM next to clock in status bar
          * 0: Normal display (Eclair stock)
          * 1: Small display (Froyo stock)
@@ -2220,6 +2239,13 @@ public final class Settings {
          * @hide
          */
         public static final String STATUS_BAR_CLOCK = "status_bar_clock";
+
+        /**
+         * The color of the clock in status bar
+         * default: colors/holo_blue_light
+         * @hide
+         */
+        public static final String STATUS_BAR_CLOCK_COLOR = "status_bar_clock_color";
 
         /**
          * Whether to show the signal text or signal bars.
@@ -2279,31 +2305,6 @@ public final class Settings {
         public static final String MENU_UNLOCK_SCREEN = "menu_unlock_screen";
 
         /**
-
-         * Whether to hide the soft home.  The value is boolean (1 or 0).
-         * @hide
-         */
-        public static final String HIDE_SOFT_HOME_BUTTON = "hide_soft_home_button";
-
-        /**
-         * Whether to hide the soft recent button.  The value is boolean (1 or 0).
-         * @hide
-         */
-        public static final String HIDE_SOFT_RECENT_BUTTON = "hide_soft_recent_button";
-
-        /**
-         * Whether to hide the soft back button.  The value is boolean (1 or 0).
-         * @hide
-         */
-        public static final String HIDE_SOFT_BACK_BUTTON = "hide_soft_back_button";
-
-        /**
-         * Whether to hide the soft menu button.  The value is boolean (1 or 0).
-         * @hide
-         */
-        public static final String HIDE_SOFT_MENU_BUTTON = "hide_soft_menu_button";
-
-        /**
          * Whether to force the soft menu button to show.  The value is boolean (1 or 0).
          * @hide
          */
@@ -2344,6 +2345,12 @@ public final class Settings {
          * @hide
          */
         public static final String ENABLE_HARD_KEYBOARD = "enable_hard_keyboard";
+
+        /**
+         * Whether to use the condensed global actions dialog.  The value is boolean (1 or 0).
+         * @hide
+         */
+        public static final String CONDENSED_GLOBAL_ACTIONS = "condensed_global_actions";
 
         /**
          * Whether to wake the screen with the volume keys, the value is boolean.
@@ -3232,6 +3239,12 @@ public final class Settings {
          * @hide
          */
         public static final String TETHER_DUN_APN = "tether_dun_apn";
+
+        /** DHCP lease time for tethering in seconds {@hide} */
+        public static final String TETHER_LEASE_TIME = "tether_lease_time";
+
+        /** Default value for TETHER_LEASE_TIME {@hide} */
+        public static final int TETHER_LEASE_TIME_DEFAULT = -1;
 
         /**
          * No longer supported.

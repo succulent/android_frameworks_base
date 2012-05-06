@@ -74,7 +74,7 @@
         android:layout_below="@id/app_label"
         android:layout_marginTop="3dip"
         android:layout_alignParentRight="true"
-        android:layout_marginLeft="@dimen/status_bar_recents_app_label_left_margin"
+        android:layout_marginLeft="14dip"
         android:layout_toRightOf="@id/app_thumbnail"
         android:layout_marginRight="3dip"
         android:background="@drawable/recents_callout_line"
