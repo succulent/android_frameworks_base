@@ -2347,6 +2347,12 @@ public final class Settings {
         public static final String ENABLE_HARD_KEYBOARD = "enable_hard_keyboard";
 
         /**
+         * Whether to use the condensed global actions dialog.  The value is boolean (1 or 0).
+         * @hide
+         */
+        public static final String CONDENSED_GLOBAL_ACTIONS = "condensed_global_actions";
+
+        /**
          * Whether to wake the screen with the volume keys, the value is boolean.
          * @hide
          */

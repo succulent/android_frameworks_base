@@ -93,6 +93,7 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
     private boolean mDeviceProvisioned = false;
     private ToggleAction.State mAirplaneState = ToggleAction.State.Off;
     private boolean mIsWaitingForEcmExit = false;
+    private boolean mCondensedDialog;
 
     private StatusBarManager mStatusBarManager;
 
@@ -106,7 +107,8 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
         mAudioManager = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
         mStatusBarManager = (StatusBarManager)
                 mContext.getSystemService(Context.STATUS_BAR_SERVICE);
-
+        mCondensedDialog = Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.CONDENSED_GLOBAL_ACTIONS, 0) == 1;
 
         // receive broadcasts
         IntentFilter filter = new IntentFilter();
@@ -128,7 +130,10 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
     public void showDialog(boolean keyguardShowing, boolean isDeviceProvisioned) {
         mKeyguardShowing = keyguardShowing;
         mDeviceProvisioned = isDeviceProvisioned;
-        if (mDialog == null) {
+        boolean condensedDialog = Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.CONDENSED_GLOBAL_ACTIONS, 0) == 1;
+        if (mDialog == null || condensedDialog != mCondensedDialog) {
+            mCondensedDialog = condensedDialog;
             mDialog = createDialog();
         }
         prepareDialog();
@@ -143,8 +148,12 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
      */
     private AlertDialog createDialog() {
         mSilentModeAction = new SilentModeAction(mAudioManager, mHandler);
-        mCondensedModeAction = new CondensedModeAction(mHandler, mContext);
-        mCondensedModeActionTwo = new CondensedModeActionTwo(mStatusBarManager, mHandler, mContext);
+
+        if (mCondensedDialog) {
+            mCondensedModeAction = new CondensedModeAction(mHandler, mContext);
+            mCondensedModeActionTwo = new CondensedModeActionTwo(mStatusBarManager, mHandler,
+                    mContext);
+        }
 
         mAirplaneModeOn = new ToggleAction(
                 R.drawable.ic_lock_airplane_mode,
@@ -188,117 +197,98 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
 
         mItems = new ArrayList<Action>();
 
-        // first: power off
-/*        mItems.add(
-            new SinglePressAction(
-                    com.android.internal.R.drawable.ic_lock_power_off,
-                    R.string.global_action_power_off) {
+        if (!mCondensedDialog) {
+            // first: power off
+            mItems.add(
+                new SinglePressAction(
+                        com.android.internal.R.drawable.ic_lock_power_off,
+                        R.string.global_action_power_off) {
 
-                public void onPress() {
-                    // shutdown by making sure radio and power are handled accordingly.
-                    ShutdownThread.shutdown(mContext, true);
-                }
+                    public void onPress() {
+                        // shutdown by making sure radio and power are handled accordingly.
+                        ShutdownThread.shutdown(mContext, true);
+                    }
 
-                public boolean showDuringKeyguard() {
-                    return true;
-                }
+                    public boolean showDuringKeyguard() {
+                        return true;
+                    }
 
-                public boolean showBeforeProvisioning() {
-                    return true;
-                }
-            });
+                    public boolean showBeforeProvisioning() {
+                        return true;
+                    }
+                });
 
-        // next: reboot
-        mItems.add(
-            new SinglePressAction(com.android.internal.R.drawable.ic_lock_reboot, R.string.global_action_reboot) {
-                public void onPress() {
-                    ShutdownThread.reboot(mContext, "null", true);
-                }
+            // next: reboot
+            mItems.add(
+                new SinglePressAction(com.android.internal.R.drawable.ic_lock_reboot, R.string.global_action_reboot) {
+                    public void onPress() {
+                        ShutdownThread.reboot(mContext, "null", true);
+                    }
 
-                public boolean showDuringKeyguard() {
-                    return true;
-                }
+                    public boolean showDuringKeyguard() {
+                        return true;
+                    }
 
-                public boolean showBeforeProvisioning() {
-                    return true;
-                }
-            });
+                    public boolean showBeforeProvisioning() {
+                        return true;
+                    }
+                });
 
-        // next: profile
-        mItems.add(
-            new ProfileChooseAction() {
-                public void onPress() {
-                    createProfileDialog();
-                }
+            // next: profile
+            mItems.add(
+                new ProfileChooseAction() {
+                    public void onPress() {
+                        createProfileDialog();
+                    }
 
-                public boolean showDuringKeyguard() {
-                    return false;
-                }
+                    public boolean showDuringKeyguard() {
+                        return false;
+                    }
 
-                public boolean showBeforeProvisioning() {
-                    return false;
-                }
-            });
+                    public boolean showBeforeProvisioning() {
+                        return false;
+                    }
+                });
 
-        // next: screenshot
-        mItems.add(
-            new SinglePressAction(com.android.internal.R.drawable.ic_lock_screenshot, R.string.global_action_screenshot) {
-                public void onPress() {
-                    takeScreenshot();
-                }
+            // next: screenshot
+            mItems.add(
+                new SinglePressAction(com.android.internal.R.drawable.ic_lock_screenshot, R.string.global_action_screenshot) {
+                    public void onPress() {
+                        takeScreenshot();
+                    }
 
-                public boolean showDuringKeyguard() {
-                    return true;
-                }
+                    public boolean showDuringKeyguard() {
+                        return true;
+                    }
 
-                public boolean showBeforeProvisioning() {
-                    return true;
-                }
-            });
+                    public boolean showBeforeProvisioning() {
+                        return true;
+                    }
+                });
 
-        // next: airplane mode
-        mItems.add(mAirplaneModeOn);
+            // next: airplane mode
+            mItems.add(mAirplaneModeOn);
 
-        // next: statusbar
-        mItems.add(
-            new SinglePressAction(com.android.internal.R.drawable.ic_menu_copy,
-                    R.string.global_actions_toggle_statusbar) {
-                public void onPress() {
+            // next: statusbar
+            mItems.add(
+                new SinglePressAction(com.android.internal.R.drawable.ic_menu_copy,
+                        R.string.global_actions_toggle_statusbar) {
+                    public void onPress() {
 
-                }
+                    }
 
-                public boolean showDuringKeyguard() {
-                    return true;
-                }
+                    public boolean showDuringKeyguard() {
+                        return true;
+                    }
 
-                public boolean showBeforeProvisioning() {
-                    return true;
-                }
-            });
-
-        // next: home
-        mItems.add(
-            new SinglePressAction(com.android.internal.R.drawable.ic_menu_home,
-                    R.string.phoneTypeHome) {
-                public void onPress() {
-                    Intent intent = new Intent("android.intent.action.MAIN");
-                    intent.addCategory("android.intent.category.HOME");
-                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                    mContext.startActivity(intent);
-                }
-
-                public boolean showDuringKeyguard() {
-                    return true;
-                }
-
-                public boolean showBeforeProvisioning() {
-                    return true;
-                }
-            });*/
-
-        mItems.add(mCondensedModeAction);
-
-        mItems.add(mCondensedModeActionTwo);
+                    public boolean showBeforeProvisioning() {
+                        return true;
+                    }
+                });
+        } else {
+            mItems.add(mCondensedModeAction);
+            mItems.add(mCondensedModeActionTwo);
+        }
 
         // last: silent mode
         if (SHOW_SILENT_TOGGLE) {
