@@ -38,9 +38,17 @@ import com.android.systemui.statusbar.policy.ToggleSlider;
 import com.android.systemui.statusbar.policy.VolumeController;
 import com.android.systemui.statusbar.policy.WifiController;
 
-
 public class SettingsView extends LinearLayout implements View.OnClickListener {
     static final String TAG = "SettingsView";
+
+    public static final String BUTTON_WIFI = "toggleWifi";
+    public static final String BUTTON_BLUETOOTH = "toggleBluetooth";
+    public static final String BUTTON_BRIGHTNESS = "toggleBrightness";
+    public static final String BUTTON_SOUND = "toggleSound";
+    public static final String BUTTON_NOTIFICATIONS = "toggleNotifications";
+    public static final String BUTTON_SETTINGS = "toggleSettings";
+    public static final String BUTTON_AUTOROTATE = "toggleAutoRotate";
+    public static final String BUTTON_AIRPLANE = "toggleAirplane";
 
     AirplaneModeController mAirplane;
     AutoRotateController mRotate;
@@ -81,6 +89,48 @@ public class SettingsView extends LinearLayout implements View.OnClickListener {
         mVolume = new VolumeController(context,
                 (ToggleSlider)findViewById(R.id.volume));
         findViewById(R.id.settings).setOnClickListener(this);
+
+        String buttons = Settings.System.getString(context.getContentResolver(),
+                Settings.System.COMBINED_BAR_SETTINGS);
+
+        if (buttons != null) {
+            setupButtons(buttons);
+        }
+    }
+
+    public void setupButtons(String buttons) {
+        if (!buttons.contains(BUTTON_WIFI)) {
+            removeView(findViewById(R.id.network));
+            removeView(findViewById(R.id.network_separator));
+        }
+        if (!buttons.contains(BUTTON_BLUETOOTH)) {
+            removeView(findViewById(R.id.bluetooth));
+            removeView(findViewById(R.id.bluetooth_separator));
+        }
+        if (!buttons.contains(BUTTON_BRIGHTNESS)) {
+            removeView(findViewById(R.id.brightness_row));
+            removeView(findViewById(R.id.brightness_separator));
+        }
+        if (!buttons.contains(BUTTON_SOUND)) {
+            removeView(findViewById(R.id.volume_row));
+            removeView(findViewById(R.id.volume_separator));
+        }
+        if (!buttons.contains(BUTTON_NOTIFICATIONS)) {
+            removeView(findViewById(R.id.do_not_disturb));
+            removeView(findViewById(R.id.do_not_disturb_separator));
+        }
+        if (!buttons.contains(BUTTON_SETTINGS)) {
+            removeView(findViewById(R.id.settings));
+            removeView(findViewById(R.id.settings_separator));
+        }
+        if (!buttons.contains(BUTTON_AUTOROTATE)) {
+            removeView(findViewById(R.id.rotate));
+            removeView(findViewById(R.id.rotate_separator));
+        }
+        if (!buttons.contains(BUTTON_AIRPLANE)) {
+            removeView(findViewById(R.id.airplane));
+            removeView(findViewById(R.id.airplane_separator));
+        }
     }
 
     @Override
