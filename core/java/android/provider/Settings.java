@@ -2211,6 +2211,12 @@ public final class Settings {
         public static final String COMBINED_BAR_NAVIGATION_COLOR = "combined_bar_navigation_color";
 
         /**
+         * String for combined bar settings.
+         * @hide
+         */
+        public static final String COMBINED_BAR_SETTINGS = "combined_bar_settings";
+
+        /**
          * Display style of AM/PM next to clock in status bar
          * 0: Normal display (Eclair stock)
          * 1: Small display (Froyo stock)

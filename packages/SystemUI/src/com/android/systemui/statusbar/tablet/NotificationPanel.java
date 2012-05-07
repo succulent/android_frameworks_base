@@ -37,6 +37,7 @@ import android.view.animation.AccelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
 import android.view.animation.Interpolator;
 import android.widget.RelativeLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
 
 import com.android.systemui.statusbar.powerwidget.PowerWidget;
@@ -63,6 +64,7 @@ public class NotificationPanel extends RelativeLayout implements StatusBarPanel,
     ViewGroup mContentParent;
     TabletStatusBar mBar;
     View mClearButton;
+    int mButtonCount = 8;
     static Interpolator sAccelerateInterpolator = new AccelerateInterpolator();
     static Interpolator sDecelerateInterpolator = new DecelerateInterpolator();
 
@@ -331,7 +333,7 @@ public class NotificationPanel extends RelativeLayout implements StatusBarPanel,
                 if (toShow != null) {
                     if (mNotificationCount == 0) {
                         // show the frame for settings, hide for notifications
-                        setContentFrameVisible(toShow == mSettingsView, true);
+                        setContentFrameVisible(toShow == mSettingsView && mButtonCount > 0, true);
                     }
 
                     toShow.setVisibility(View.VISIBLE);
@@ -349,6 +351,12 @@ public class NotificationPanel extends RelativeLayout implements StatusBarPanel,
                 updatePanelModeButtons();
             }
         });
+        if (toShow == mSettingsView && mButtonCount < 1) {
+             // hide the frame if there are no notifications
+             setContentFrameVisible(false, true);
+        } else if (toShow == mNotificationScroller) {
+             setContentFrameVisible(mNotificationCount != 0, true);
+        }
         a.start();
     }
  
@@ -412,7 +420,49 @@ public class NotificationPanel extends RelativeLayout implements StatusBarPanel,
         LayoutInflater infl = LayoutInflater.from(getContext());
         mSettingsView = infl.inflate(R.layout.status_bar_settings_view, mContentFrame, false);
         mSettingsView.setVisibility(View.GONE);
+        ScrollView scrollSettings = (ScrollView) mSettingsView.findViewById(R.id.scroll_settings);
+        String buttons = Settings.System.getString(getContext().getContentResolver(),
+                Settings.System.COMBINED_BAR_SETTINGS);
+        if (buttons != null) {
+            mButtonCount = countButtons(buttons);
+            if (mButtonCount < 6) {
+                ViewGroup.LayoutParams wrap = new ViewGroup.LayoutParams(
+                        ViewGroup.LayoutParams.WRAP_CONTENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT);
+                scrollSettings.setLayoutParams(wrap);
+            }
+        }
+
         mContentFrame.addView(mSettingsView);
+    }
+
+    private int countButtons(String buttons) {
+        int buttonCount = 0;
+        if (buttons.contains(SettingsView.BUTTON_WIFI)) {
+            buttonCount++;
+        }
+        if (buttons.contains(SettingsView.BUTTON_BLUETOOTH)) {
+            buttonCount++;
+        }
+        if (buttons.contains(SettingsView.BUTTON_BRIGHTNESS)) {
+            buttonCount++;
+        }
+        if (buttons.contains(SettingsView.BUTTON_SOUND)) {
+            buttonCount++;
+        }
+        if (buttons.contains(SettingsView.BUTTON_NOTIFICATIONS)) {
+            buttonCount++;
+        }
+        if (buttons.contains(SettingsView.BUTTON_SETTINGS)) {
+            buttonCount++;
+        }
+        if (buttons.contains(SettingsView.BUTTON_AUTOROTATE)) {
+            buttonCount++;
+        }
+        if (buttons.contains(SettingsView.BUTTON_AIRPLANE)) {
+            buttonCount++;
+        }
+        return buttonCount;
     }
 
     private class Choreographer implements Animator.AnimatorListener {

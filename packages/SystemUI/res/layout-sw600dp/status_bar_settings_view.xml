@@ -18,7 +18,8 @@
 <ScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_height="355px"
-    android:layout_width="match_parent">
+    android:layout_width="match_parent"
+    android:id="@+id/scroll_settings" >
 
 <com.android.systemui.statusbar.tablet.SettingsView
         xmlns:android="http://schemas.android.com/apk/res/android"
@@ -29,7 +30,8 @@
         >
 
     <!-- Volume -->
-    <LinearLayout style="@style/StatusBarPanelSettingsRow" >
+    <LinearLayout style="@style/StatusBarPanelSettingsRow"
+         android:id="@+id/volume_row" >
         <ImageView
                 android:id="@+id/volume_icon"
                 style="@style/StatusBarPanelSettingsIcon"
@@ -44,10 +46,12 @@
                 systemui:text="@string/status_bar_settings_mute_label"
                 />
     </LinearLayout>
-    <View style="@style/StatusBarPanelSettingsPanelSeparator" />
+    <View style="@style/StatusBarPanelSettingsPanelSeparator"
+        android:id="@+id/volume_separator" />
 
     <!-- Brightness -->
-    <LinearLayout style="@style/StatusBarPanelSettingsRow" >
+    <LinearLayout style="@style/StatusBarPanelSettingsRow"
+         android:id="@+id/brightness_row" >
         <ImageView
                 android:id="@+id/brightness_icon"
                 style="@style/StatusBarPanelSettingsIcon"
@@ -62,7 +66,8 @@
                 systemui:text="@string/status_bar_settings_auto_brightness_label"
                 />
     </LinearLayout>
-    <View style="@style/StatusBarPanelSettingsPanelSeparator" />
+    <View style="@style/StatusBarPanelSettingsPanelSeparator"
+        android:id="@+id/brightness_separator" />
 
     <!-- Airplane mode -->
     <LinearLayout
@@ -87,7 +92,8 @@
                 android:layout_marginRight="5dp"
                 />
     </LinearLayout>
-    <View style="@style/StatusBarPanelSettingsPanelSeparator" />
+    <View style="@style/StatusBarPanelSettingsPanelSeparator"
+        android:id="@+id/airplane_separator" />
 
     <!-- Network -->
     <LinearLayout
@@ -112,7 +118,8 @@
                 android:layout_marginRight="5dp"
                 />
     </LinearLayout>
-    <View style="@style/StatusBarPanelSettingsPanelSeparator" />
+    <View style="@style/StatusBarPanelSettingsPanelSeparator"
+        android:id="@+id/network_separator" />
 
     <!-- Bluetooth -->
     <LinearLayout
@@ -137,7 +144,8 @@
                 android:layout_marginRight="5dp"
                 />
     </LinearLayout>
-    <View style="@style/StatusBarPanelSettingsPanelSeparator" />
+    <View style="@style/StatusBarPanelSettingsPanelSeparator"
+        android:id="@+id/bluetooth_separator" />
 
     <!-- Rotation lock -->
     <LinearLayout
@@ -162,7 +170,8 @@
                 android:layout_marginRight="5dp"
                 />
     </LinearLayout>
-    <View style="@style/StatusBarPanelSettingsPanelSeparator" />
+    <View style="@style/StatusBarPanelSettingsPanelSeparator"
+        android:id="@+id/rotate_separator" />
 
     <!-- Notifications / Do not disturb -->
     <LinearLayout
@@ -186,7 +195,8 @@
                 android:layout_marginRight="5dp"
                 />
     </LinearLayout>
-    <View style="@style/StatusBarPanelSettingsPanelSeparator" />
+    <View style="@style/StatusBarPanelSettingsPanelSeparator"
+        android:id="@+id/do_not_disturb_separator" />
 
     <!-- Link to settings -->
     <LinearLayout
@@ -204,7 +214,8 @@
                 android:text="@string/status_bar_settings_settings_button"
                 />
     </LinearLayout>
-    <View style="@style/StatusBarPanelSettingsPanelSeparator" />
+    <View style="@style/StatusBarPanelSettingsPanelSeparator"
+        android:id="@+id/settings_separator" />
 
 </com.android.systemui.statusbar.tablet.SettingsView>
 
