@@ -122,6 +122,7 @@ public class TabletStatusBar extends StatusBar implements
     public static final int MSG_CLOCK_VISIBILITY = 3003;
     public static final int MSG_CLOCK_COLOR = 3004;
     public static final int MSG_BUTTON_COLOR = 3005;
+    public static final int MSG_EXPANDED_TRANSPARENCY = 3006;
 
     // Fitts' Law assistance for LatinIME; see policy.EventHole
     private static final boolean FAKE_SPACE_BAR = true;
@@ -176,6 +177,7 @@ public class TabletStatusBar extends StatusBar implements
     boolean mHideRecentButton;
     boolean mHideHomeButton;
     boolean mForceMenuButton;
+    int mExpandedTransparency;
 
     ViewGroup mFeedbackIconArea; // notification icons, IME icon, compat icon
     InputMethodButton mInputMethodSwitchButton;
@@ -733,6 +735,7 @@ public class TabletStatusBar extends StatusBar implements
         updateClockVisibilitySettings();
         updateButtonColorSettings();
         updateClockColorSettings();
+        updateExpandedTransparency();
 
         return sb;
     }
@@ -919,6 +922,9 @@ public class TabletStatusBar extends StatusBar implements
                     break;
                 case MSG_CLOCK_COLOR:
                     updateClockColorSettings();
+                    break;
+                case MSG_EXPANDED_TRANSPARENCY:
+                    updateExpandedTransparency();
                     break;
             }
         }
@@ -1232,6 +1238,27 @@ public class TabletStatusBar extends StatusBar implements
             mRecentButton.clearColorFilter();
             mMenuButton.clearColorFilter();
         }
+    }
+
+    private void updateExpandedTransparency() {
+        ContentResolver resolver = mContext.getContentResolver();
+
+        int transparency = Settings.System.getInt(resolver,
+                Settings.System.COMBINED_BAR_EXPANDED_TRANSPARENCY, 255);
+
+        if (mExpandedTransparency != transparency) {
+            Drawable background = mContext.getResources().getDrawable(mRightButtons ?
+                    R.drawable.notify_panel_clock_bg_normal_flipped :
+                    R.drawable.notify_panel_clock_bg_normal);
+            background.setAlpha(transparency);
+            mNotificationPanel.mTitleArea.setBackgroundDrawable(background);
+            Drawable notifyBackground = mContext.getResources().getDrawable(mRightButtons ?
+                    R.drawable.notify_panel_notify_bg_flipped :
+                    R.drawable.notify_panel_notify_bg);
+            notifyBackground.setAlpha(transparency);
+            mNotificationPanel.mContentFrame.setBackgroundDrawable(notifyBackground);
+        }
+        mExpandedTransparency = transparency;
     }
 
     private boolean hasTicker(Notification n) {
@@ -2026,6 +2053,13 @@ public class TabletStatusBar extends StatusBar implements
             content.setOnClickListener(null);
         }
 
+        if (mExpandedTransparency != 255) {
+            Drawable background =
+                    mContext.getResources().getDrawable(R.drawable.notification_row_bg);
+            background.setAlpha(0);
+            content.setBackgroundDrawable(background);
+        }
+
         View expanded = null;
         Exception exception = null;
         try {
@@ -2064,9 +2098,23 @@ public class TabletStatusBar extends StatusBar implements
                 Slog.e(TAG, "Failed looking up ApplicationInfo for " + sbn.pkg, ex);
             }
             if (version > 0 && version < Build.VERSION_CODES.GINGERBREAD) {
-                content.setBackgroundResource(R.drawable.notification_row_legacy_bg);
+                if (mExpandedTransparency != 255) {
+                    Drawable background =
+                            mContext.getResources().getDrawable(R.drawable.notification_row_legacy_bg);
+                    background.setAlpha(0);
+                    content.setBackgroundDrawable(background);
+                } else {
+                    content.setBackgroundResource(R.drawable.notification_row_legacy_bg);
+                }
             } else {
-                content.setBackgroundResource(R.drawable.notification_row_bg);
+                if (mExpandedTransparency != 255) {
+                    Drawable background =
+                            mContext.getResources().getDrawable(R.drawable.notification_row_bg);
+                    background.setAlpha(0);
+                    content.setBackgroundDrawable(background);
+                } else {
+                    content.setBackgroundResource(R.drawable.notification_row_bg);
+                }
             }
         }
     }
@@ -2170,6 +2218,8 @@ public class TabletStatusBar extends StatusBar implements
                     Settings.System.EXPANDED_VIEW_WIDGET), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.STATUS_BAR_CLOCK_COLOR), false, this);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.COMBINED_BAR_EXPANDED_TRANSPARENCY), false, this);
         }
 
         @Override
@@ -2197,6 +2247,10 @@ public class TabletStatusBar extends StatusBar implements
                     Settings.System.COMBINED_BAR_NAVIGATION_COLOR))) {
                 mHandler.removeMessages(MSG_BUTTON_COLOR);
                 mHandler.sendEmptyMessage(MSG_BUTTON_COLOR);
+            } else if (uri.equals(Settings.System.getUriFor(
+                    Settings.System.COMBINED_BAR_EXPANDED_TRANSPARENCY))) {
+                mHandler.removeMessages(MSG_EXPANDED_TRANSPARENCY);
+                mHandler.sendEmptyMessage(MSG_EXPANDED_TRANSPARENCY);
             } else {
                 mHandler.removeMessages(MSG_BUTTON_VISIBILITY);
                 mHandler.sendEmptyMessage(MSG_BUTTON_VISIBILITY);
