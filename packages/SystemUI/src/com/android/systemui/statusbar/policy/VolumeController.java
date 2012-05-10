@@ -16,8 +16,11 @@
 
 package com.android.systemui.statusbar.policy;
 
+import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.RemoteException;
 import android.os.ServiceManager;
 import android.media.AudioManager;
@@ -47,6 +50,11 @@ public class VolumeController implements ToggleSlider.Listener,
         mControl.setOnChangedListener(this);
         mAudioManager = (AudioManager)context.getSystemService(Context.AUDIO_SERVICE);
         setupVolume();
+
+        // receive broadcasts
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(AudioManager.VOLUME_CHANGED_ACTION);
+        context.registerReceiver(mBroadcastReceiver, filter);
     }
 
     private void setupVolume() {
@@ -82,4 +90,10 @@ public class VolumeController implements ToggleSlider.Listener,
     public void onAudioFocusChange(int focusChange) {
         setupVolume();
     }
+
+    private BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
+        public void onReceive(Context context, Intent intent) {
+            mControl.setValue(intent.getIntExtra(AudioManager.EXTRA_VOLUME_STREAM_VALUE, mVolume));
+        }
+    };
 }
