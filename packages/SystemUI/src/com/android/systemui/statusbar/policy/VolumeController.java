@@ -93,7 +93,8 @@ public class VolumeController implements ToggleSlider.Listener,
 
     private BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
         public void onReceive(Context context, Intent intent) {
-            mControl.setValue(intent.getIntExtra(AudioManager.EXTRA_VOLUME_STREAM_VALUE, mVolume));
+            mVolume = intent.getIntExtra(AudioManager.EXTRA_VOLUME_STREAM_VALUE, mVolume);
+            setupVolume();
         }
     };
 }
