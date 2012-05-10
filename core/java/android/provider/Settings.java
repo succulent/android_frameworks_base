@@ -2217,6 +2217,12 @@ public final class Settings {
         public static final String COMBINED_BAR_SETTINGS = "combined_bar_settings";
 
         /**
+         * String for expanded combined bar transparency.
+         * @hide
+         */
+        public static final String COMBINED_BAR_EXPANDED_TRANSPARENCY = "combined_bar_expanded_transaparency";
+
+        /**
          * Display style of AM/PM next to clock in status bar
          * 0: Normal display (Eclair stock)
          * 1: Small display (Froyo stock)
