@@ -191,6 +191,7 @@ public class HoloClock extends FrameLayout {
     }
 
     private final CharSequence getTimeText() {
+        if (mFgText != null) AM_PM_STYLE = AM_PM_STYLE_GONE;
         Context context = getContext();
         int res = DateFormat.is24HourFormat(context)
             ? com.android.internal.R.string.twenty_four_hour_time_format
