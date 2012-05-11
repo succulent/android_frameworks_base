@@ -123,6 +123,7 @@ public class TabletStatusBar extends StatusBar implements
     public static final int MSG_CLOCK_COLOR = 3004;
     public static final int MSG_BUTTON_COLOR = 3005;
     public static final int MSG_EXPANDED_TRANSPARENCY = 3006;
+    public static final int MSG_STATUS_BAR_COLOR = 3007;
 
     // Fitts' Law assistance for LatinIME; see policy.EventHole
     private static final boolean FAKE_SPACE_BAR = true;
@@ -736,6 +737,7 @@ public class TabletStatusBar extends StatusBar implements
         updateButtonColorSettings();
         updateClockColorSettings();
         updateExpandedTransparency();
+        updateStatusBarColor();
 
         return sb;
     }
@@ -925,6 +927,9 @@ public class TabletStatusBar extends StatusBar implements
                     break;
                 case MSG_EXPANDED_TRANSPARENCY:
                     updateExpandedTransparency();
+                    break;
+                case MSG_STATUS_BAR_COLOR:
+                    updateStatusBarColor();
                     break;
             }
         }
@@ -1238,6 +1243,17 @@ public class TabletStatusBar extends StatusBar implements
             mRecentButton.clearColorFilter();
             mMenuButton.clearColorFilter();
         }
+
+        mStatusBarView.setBackgroundColor(buttonColor);
+    }
+
+    private void updateStatusBarColor() {
+        ContentResolver resolver = mContext.getContentResolver();
+
+        int color = Settings.System.getInt(resolver,
+                Settings.System.COMBINED_BAR_COLOR, 0xFF000000);
+
+        mStatusBarView.setBackgroundColor(color);
     }
 
     private void updateExpandedTransparency() {
@@ -2219,6 +2235,8 @@ public class TabletStatusBar extends StatusBar implements
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.STATUS_BAR_CLOCK_COLOR), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.COMBINED_BAR_COLOR), false, this);
+            resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.COMBINED_BAR_EXPANDED_TRANSPARENCY), false, this);
         }
 
@@ -2247,6 +2265,10 @@ public class TabletStatusBar extends StatusBar implements
                     Settings.System.COMBINED_BAR_NAVIGATION_COLOR))) {
                 mHandler.removeMessages(MSG_BUTTON_COLOR);
                 mHandler.sendEmptyMessage(MSG_BUTTON_COLOR);
+            } else if (uri.equals(Settings.System.getUriFor(
+                    Settings.System.COMBINED_BAR_COLOR))) {
+                mHandler.removeMessages(MSG_STATUS_BAR_COLOR);
+                mHandler.sendEmptyMessage(MSG_STATUS_BAR_COLOR);
             } else if (uri.equals(Settings.System.getUriFor(
                     Settings.System.COMBINED_BAR_EXPANDED_TRANSPARENCY))) {
                 mHandler.removeMessages(MSG_EXPANDED_TRANSPARENCY);

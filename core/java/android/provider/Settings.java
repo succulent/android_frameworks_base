@@ -2192,6 +2192,18 @@ public final class Settings {
         public static final String COMBINED_BAR_AUTO_HIDE = "combined_bar_auto_hide";
 
         /**
+        * CombinedBar color on tablets.
+        * @hide
+        */
+        public static final String COMBINED_BAR_COLOR = "combined_bar_color";
+
+        /**
+        * Lockscreen color.
+        * @hide
+        */
+        public static final String LOCKSCREEN_COLOR = "lockscreen_color";
+
+        /**
         * CombinedBar navigation visibility on tablets.
         * String of visible navigation elements seperated by the | character
         * back: Shows back button

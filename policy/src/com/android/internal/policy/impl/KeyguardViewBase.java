@@ -24,6 +24,7 @@ import android.graphics.PixelFormat;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.media.AudioManager;
+import android.provider.Settings;
 import android.telephony.TelephonyManager;
 import android.view.KeyEvent;
 import android.view.View;
@@ -50,12 +51,13 @@ public abstract class KeyguardViewBase extends FrameLayout {
     // they will be handled here for specific media types such as music, otherwise
     // the audio service will bring up the volume dialog.
     private static final boolean KEYGUARD_MANAGES_VOLUME = true;
+    private int mColor;
 
     // This is a faster way to draw the background on devices without hardware acceleration
     Drawable mBackgroundDrawable = new Drawable() {
         @Override
         public void draw(Canvas canvas) {
-            canvas.drawColor(BACKGROUND_COLOR, PorterDuff.Mode.SRC);
+            canvas.drawColor(mColor, PorterDuff.Mode.SRC);
         }
 
         @Override
@@ -74,6 +76,8 @@ public abstract class KeyguardViewBase extends FrameLayout {
 
     public KeyguardViewBase(Context context) {
         super(context);
+        mColor = Settings.System.getInt(context.getContentResolver(),
+                Settings.System.LOCKSCREEN_COLOR, BACKGROUND_COLOR);
         resetBackground();
     }
 
