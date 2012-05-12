@@ -1098,9 +1098,9 @@ public class TabletStatusBar extends StatusBar implements
         int diff = state ^ old;
         mDisabled = state;
 
-        boolean visible = mStatusBarView.getVisibility() == View.VISIBLE;
+        boolean visible = mStatusBarContainer.getVisibility() == View.VISIBLE;
         if ((diff & 0x10000000) != 0) {
-            mStatusBarView.setVisibility(visible ? View.GONE : View.VISIBLE);
+            mStatusBarContainer.setVisibility(visible ? View.GONE : View.VISIBLE);
         }
 
         // act accordingly
