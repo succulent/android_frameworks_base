@@ -23,9 +23,12 @@ import android.provider.Settings;
 import android.util.AttributeSet;
 import android.util.Slog;
 import android.widget.LinearLayout;
+import android.view.Gravity;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
+import android.widget.Switch;
 import android.widget.TextView;
 
 import com.android.systemui.R;
@@ -49,6 +52,12 @@ public class SettingsView extends LinearLayout implements View.OnClickListener {
     public static final String BUTTON_SETTINGS = "toggleSettings";
     public static final String BUTTON_AUTOROTATE = "toggleAutoRotate";
     public static final String BUTTON_AIRPLANE = "toggleAirplane";
+    public static final String BUTTON_DELIMITER = "|";
+    public static final String BUTTONS_DEFAULT = BUTTON_AIRPLANE + BUTTON_DELIMITER +
+            BUTTON_WIFI + BUTTON_DELIMITER + BUTTON_BLUETOOTH + BUTTON_DELIMITER +
+            BUTTON_BRIGHTNESS + BUTTON_DELIMITER + BUTTON_SOUND + BUTTON_DELIMITER +
+            BUTTON_AUTOROTATE + BUTTON_DELIMITER + BUTTON_NOTIFICATIONS + BUTTON_DELIMITER +
+            BUTTON_SETTINGS;
 
     AirplaneModeController mAirplane;
     AutoRotateController mRotate;
@@ -72,83 +81,151 @@ public class SettingsView extends LinearLayout implements View.OnClickListener {
 
         final Context context = getContext();
 
-        mAirplane = new AirplaneModeController(context,
-                (CompoundButton)findViewById(R.id.airplane_checkbox));
-        findViewById(R.id.network).setOnClickListener(this);
-        findViewById(R.id.bluetooth).setOnClickListener(this);
-        mBluetooth = new BluetoothController(context,
-                (CompoundButton)findViewById(R.id.bluetooth_checkbox));
-        mWifi = new WifiController(context,
-                (CompoundButton)findViewById(R.id.wifi_checkbox));
-        mRotate = new AutoRotateController(context,
-                (CompoundButton)findViewById(R.id.rotate_checkbox));
-        mBrightness = new BrightnessController(context,
-                (ToggleSlider)findViewById(R.id.brightness));
-        mDoNotDisturb = new DoNotDisturbController(context,
-                (CompoundButton)findViewById(R.id.do_not_disturb_checkbox));
-        mVolume = new VolumeController(context,
-                (ToggleSlider)findViewById(R.id.volume));
-        findViewById(R.id.settings).setOnClickListener(this);
-
-        String buttons = Settings.System.getString(context.getContentResolver(),
+        String rows = Settings.System.getString(context.getContentResolver(),
                 Settings.System.COMBINED_BAR_SETTINGS);
 
-        if (buttons != null) {
-            setupButtons(buttons);
+        if (rows == null) {
+            rows = BUTTONS_DEFAULT;
         }
+
+        setupRows(context, rows);
     }
 
-    public void setupButtons(String buttons) {
-        if (!buttons.contains(BUTTON_WIFI)) {
-            removeView(findViewById(R.id.network));
-            removeView(findViewById(R.id.network_separator));
-        }
-        if (!buttons.contains(BUTTON_BLUETOOTH)) {
-            removeView(findViewById(R.id.bluetooth));
-            removeView(findViewById(R.id.bluetooth_separator));
-        }
-        if (!buttons.contains(BUTTON_BRIGHTNESS)) {
-            removeView(findViewById(R.id.brightness_row));
-            removeView(findViewById(R.id.brightness_separator));
-        }
-        if (!buttons.contains(BUTTON_SOUND)) {
-            removeView(findViewById(R.id.volume_row));
-            removeView(findViewById(R.id.volume_separator));
-        }
-        if (!buttons.contains(BUTTON_NOTIFICATIONS)) {
-            removeView(findViewById(R.id.do_not_disturb));
-            removeView(findViewById(R.id.do_not_disturb_separator));
-        }
-        if (!buttons.contains(BUTTON_SETTINGS)) {
-            removeView(findViewById(R.id.settings));
-            removeView(findViewById(R.id.settings_separator));
-        }
-        if (!buttons.contains(BUTTON_AUTOROTATE)) {
-            removeView(findViewById(R.id.rotate));
-            removeView(findViewById(R.id.rotate_separator));
-        }
-        if (!buttons.contains(BUTTON_AIRPLANE)) {
-            removeView(findViewById(R.id.airplane));
-            removeView(findViewById(R.id.airplane_separator));
+    private void setupRows(Context context, String rows) {
+        String[] settingsRow = rows.split("\\|");
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, 64);
+        LinearLayout.LayoutParams iconlp = new LinearLayout.LayoutParams(
+                64, ViewGroup.LayoutParams.MATCH_PARENT);
+        LinearLayout.LayoutParams separatorlp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, 1);
+        LinearLayout.LayoutParams textlp = new LinearLayout.LayoutParams(0,
+                ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+        textlp.gravity = Gravity.LEFT | Gravity.CENTER_VERTICAL;
+        LinearLayout.LayoutParams sliderlp = new LinearLayout.LayoutParams(0,
+                ViewGroup.LayoutParams.MATCH_PARENT, 1f);
+        LinearLayout.LayoutParams switchlp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        switchlp.gravity = Gravity.CENTER_VERTICAL;
+        for (int i = 0; i < settingsRow.length; i++) {
+            LinearLayout ll = new LinearLayout(context);
+            ll.setOrientation(LinearLayout.HORIZONTAL);
+            ll.setPadding(0, 0, 64, 0);
+            ImageView icon = new ImageView(context);
+            icon.setScaleType(ImageView.ScaleType.CENTER);
+            if (settingsRow[i].contains(BUTTON_WIFI)) {
+                icon.setImageResource(R.drawable.ic_sysbar_wifi_on);
+                ll.addView(icon, iconlp);
+                TextView text = new TextView(context);
+                text.setText(R.string.status_bar_settings_wifi_button);
+                text.setGravity(Gravity.CENTER_VERTICAL);
+                text.setTextSize(18);
+                ll.addView(text, textlp);
+                Switch toggle = new Switch(context);
+                toggle.setGravity(Gravity.CENTER_VERTICAL);
+                mWifi = new WifiController(context, toggle);
+                ll.addView(toggle, switchlp);
+                ll.setId(1);
+                ll.setOnClickListener(this);
+            } else if (settingsRow[i].contains(BUTTON_BLUETOOTH)) {
+                icon.setImageResource(R.drawable.stat_sys_data_bluetooth);
+                ll.addView(icon, iconlp);
+                TextView text = new TextView(context);
+                text.setText(R.string.status_bar_settings_bluetooth_button);
+                text.setGravity(Gravity.CENTER_VERTICAL);
+                text.setTextSize(18);
+                ll.addView(text, textlp);
+                Switch toggle = new Switch(context);
+                toggle.setGravity(Gravity.CENTER_VERTICAL);
+                mBluetooth = new BluetoothController(context, toggle);
+                ll.addView(toggle, switchlp);
+                ll.setId(2);
+                ll.setOnClickListener(this);
+            } else if (settingsRow[i].contains(BUTTON_BRIGHTNESS)) {
+                icon.setImageResource(R.drawable.ic_sysbar_brightness);
+                ll.addView(icon, iconlp);
+                ToggleSlider toggle = new ToggleSlider(context);
+                toggle.setLabel(R.string.status_bar_settings_auto_brightness_label);
+                mBrightness = new BrightnessController(context, toggle);
+                ll.addView(toggle, sliderlp);
+            } else if (settingsRow[i].contains(BUTTON_SOUND)) {
+                icon.setImageResource(R.drawable.stat_ring_on);
+                ll.addView(icon, iconlp);
+                ToggleSlider toggle = new ToggleSlider(context);
+                toggle.setLabel(R.string.status_bar_settings_mute_label);
+                mVolume = new VolumeController(context, toggle);
+                ll.addView(toggle, sliderlp);
+            } else if (settingsRow[i].contains(BUTTON_NOTIFICATIONS)) {
+                icon.setImageResource(R.drawable.ic_notification_open);
+                ll.addView(icon, iconlp);
+                TextView text = new TextView(context);
+                text.setText(R.string.status_bar_settings_notifications);
+                text.setGravity(Gravity.CENTER_VERTICAL);
+                text.setTextSize(18);
+                ll.addView(text, textlp);
+                Switch toggle = new Switch(context);
+                toggle.setGravity(Gravity.CENTER_VERTICAL);
+                mDoNotDisturb = new DoNotDisturbController(context, toggle);
+                ll.addView(toggle, switchlp);
+            } else if (settingsRow[i].contains(BUTTON_SETTINGS)) {
+                icon.setImageResource(R.drawable.ic_sysbar_quicksettings);
+                ll.addView(icon, iconlp);
+                TextView text = new TextView(context);
+                text.setText(R.string.status_bar_settings_settings_button);
+                text.setGravity(Gravity.CENTER_VERTICAL);
+                text.setTextSize(18);
+                ll.addView(text, textlp);
+                ll.setId(3);
+                ll.setOnClickListener(this);
+            } else if (settingsRow[i].contains(BUTTON_AUTOROTATE)) {
+                icon.setImageResource(R.drawable.ic_sysbar_rotate_on);
+                ll.addView(icon, iconlp);
+                TextView text = new TextView(context);
+                text.setText(R.string.status_bar_settings_auto_rotation);
+                text.setGravity(Gravity.CENTER_VERTICAL);
+                text.setTextSize(18);
+                ll.addView(text, textlp);
+                Switch toggle = new Switch(context);
+                toggle.setGravity(Gravity.CENTER_VERTICAL);
+                mRotate = new AutoRotateController(context, toggle);
+                ll.addView(toggle, switchlp);
+            } else if (settingsRow[i].contains(BUTTON_AIRPLANE)) {
+                icon.setImageResource(R.drawable.ic_sysbar_airplane_on);
+                ll.addView(icon, iconlp);
+                TextView text = new TextView(context);
+                text.setText(R.string.status_bar_settings_airplane);
+                text.setGravity(Gravity.CENTER_VERTICAL);
+                text.setTextSize(18);
+                ll.addView(text, textlp);
+                Switch toggle = new Switch(context);
+                toggle.setGravity(Gravity.CENTER_VERTICAL);
+                mAirplane = new AirplaneModeController(context, toggle);
+                ll.addView(toggle, switchlp);
+            }
+
+            addView(ll, lp);
+            View separator = new View(context);
+            separator.setBackgroundResource(com.android.internal.R.drawable.divider_horizontal_dark);
+            addView(separator, separatorlp);
         }
     }
 
     @Override
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
-        mAirplane.release();
-        mDoNotDisturb.release();
+        if (mAirplane != null) mAirplane.release();
+        if (mDoNotDisturb != null) mDoNotDisturb.release();
     }
 
     public void onClick(View v) {
         switch (v.getId()) {
-            case R.id.network:
+            case 1:
                 onClickNetwork();
                 break;
-            case R.id.bluetooth:
+            case 2:
                 onClickBluetooth();
                 break;
-            case R.id.settings:
+            case 3:
                 onClickSettings();
                 break;
         }
