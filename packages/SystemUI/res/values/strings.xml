@@ -134,6 +134,12 @@
     <!-- Name of the button that links to the GPS settings screen. [CHAR LIMIT=NONE] -->
     <string name="status_bar_settings_gps_button">GPS</string>
 
+    <!-- Name of the button that links to the mobile data screen. [CHAR LIMIT=NONE] -->
+    <string name="status_bar_settings_data_button">Mobile data</string>
+
+    <!-- Name of the button that links to the lock screen. [CHAR LIMIT=NONE] -->
+    <string name="status_bar_settings_lockscreen_button">Lock screen</string>
+
     <!-- Separator for PLMN and SPN in network name. -->
     <string name="status_bar_network_name_separator" translatable="false">"\n"</string>
 
