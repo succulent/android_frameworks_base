@@ -37,6 +37,7 @@ import com.android.systemui.statusbar.policy.AutoRotateController;
 import com.android.systemui.statusbar.policy.BrightnessController;
 import com.android.systemui.statusbar.policy.BluetoothController;
 import com.android.systemui.statusbar.policy.DoNotDisturbController;
+import com.android.systemui.statusbar.policy.GPSController;
 import com.android.systemui.statusbar.policy.ToggleSlider;
 import com.android.systemui.statusbar.policy.VolumeController;
 import com.android.systemui.statusbar.policy.WifiController;
@@ -52,6 +53,7 @@ public class SettingsView extends LinearLayout implements View.OnClickListener {
     public static final String BUTTON_SETTINGS = "toggleSettings";
     public static final String BUTTON_AUTOROTATE = "toggleAutoRotate";
     public static final String BUTTON_AIRPLANE = "toggleAirplane";
+    public static final String BUTTON_GPS = "toggleGPS";
     public static final String BUTTON_DELIMITER = "|";
     public static final String BUTTONS_DEFAULT = BUTTON_AIRPLANE + BUTTON_DELIMITER +
             BUTTON_WIFI + BUTTON_DELIMITER + BUTTON_BLUETOOTH + BUTTON_DELIMITER +
@@ -64,6 +66,7 @@ public class SettingsView extends LinearLayout implements View.OnClickListener {
     BrightnessController mBrightness;
     DoNotDisturbController mDoNotDisturb;
     BluetoothController mBluetooth;
+    GPSController mGPS;
     WifiController mWifi;
     VolumeController mVolume;
 
@@ -201,6 +204,20 @@ public class SettingsView extends LinearLayout implements View.OnClickListener {
                 toggle.setGravity(Gravity.CENTER_VERTICAL);
                 mAirplane = new AirplaneModeController(context, toggle);
                 ll.addView(toggle, switchlp);
+            } else if (settingsRow[i].contains(BUTTON_GPS)) {
+                icon.setImageResource(R.drawable.stat_gps_on);
+                ll.addView(icon, iconlp);
+                TextView text = new TextView(context);
+                text.setText(R.string.status_bar_settings_gps_button);
+                text.setGravity(Gravity.CENTER_VERTICAL);
+                text.setTextSize(18);
+                ll.addView(text, textlp);
+                Switch toggle = new Switch(context);
+                toggle.setGravity(Gravity.CENTER_VERTICAL);
+                mGPS = new GPSController(context, toggle);
+                ll.addView(toggle, switchlp);
+                ll.setId(4);
+                ll.setOnClickListener(this);
             }
 
             addView(ll, lp);
@@ -227,6 +244,9 @@ public class SettingsView extends LinearLayout implements View.OnClickListener {
                 break;
             case 3:
                 onClickSettings();
+                break;
+            case 4:
+                onClickGPS();
                 break;
         }
     }
@@ -256,6 +276,16 @@ public class SettingsView extends LinearLayout implements View.OnClickListener {
     private void onClickSettings() {
         getContext().startActivity(new Intent(Settings.ACTION_SETTINGS)
                 .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+        getStatusBarManager().collapse();
+    }
+
+    // GPS
+    // ----------------------------
+    private void onClickGPS() {
+        Intent intent = new Intent("android.settings.LOCATION_SOURCE_SETTINGS");
+        intent.addCategory(Intent.CATEGORY_DEFAULT);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        getContext().startActivity(intent);
         getStatusBarManager().collapse();
     }
 }

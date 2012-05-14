@@ -52,18 +52,13 @@ public class PowerWidget extends FrameLayout {
                              + BUTTON_DELIMITER + PowerButton.BUTTON_GPS
                              + BUTTON_DELIMITER + PowerButton.BUTTON_SOUND;
 
-    private static final FrameLayout.LayoutParams WIDGET_LAYOUT_PARAMS = new FrameLayout.LayoutParams(
-                                        ViewGroup.LayoutParams.MATCH_PARENT, // width = match_parent
-                                        ViewGroup.LayoutParams.WRAP_CONTENT  // height = wrap_content
-                                        );
+    private static final FrameLayout.LayoutParams WIDGET_LAYOUT_PARAMS =
+            new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT);
 
-    private static final LinearLayout.LayoutParams BUTTON_LAYOUT_PARAMS = new LinearLayout.LayoutParams(
-                                        ViewGroup.LayoutParams.WRAP_CONTENT, // width = wrap_content
-                                        ViewGroup.LayoutParams.MATCH_PARENT, // height = match_parent
-                                        1.0f                                    // weight = 1
-                                        );
-
-    private static final int LAYOUT_SCROLL_BUTTON_THRESHOLD = 4;
+    private static final LinearLayout.LayoutParams BUTTON_LAYOUT_PARAMS =
+            new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
+            ViewGroup.LayoutParams.MATCH_PARENT, 1.0f);
 
     private static final int LAYOUT_SCROLL_BUTTON_WIDTH = 184;
 
@@ -71,6 +66,7 @@ public class PowerWidget extends FrameLayout {
     private LayoutInflater mInflater;
     private WidgetBroadcastReceiver mBroadcastReceiver = null;
     private WidgetSettingsObserver mObserver = null;
+    private int mScrollButtonThreshold;
 
     private HorizontalScrollView mScrollView;
 
@@ -79,6 +75,9 @@ public class PowerWidget extends FrameLayout {
 
         mContext = context;
         mInflater = (LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+
+        mScrollButtonThreshold = getResources().getConfiguration().smallestScreenWidthDp < 600
+                ? 6 : 4;
 
         // get an initial width
         updateButtonLayoutWidth();
@@ -109,7 +108,8 @@ public class PowerWidget extends FrameLayout {
 
         Log.i(TAG, "Setting up widget");
 
-        String buttons = Settings.System.getString(mContext.getContentResolver(), Settings.System.WIDGET_BUTTONS);
+        String buttons = Settings.System.getString(mContext.getContentResolver(),
+                Settings.System.WIDGET_BUTTONS);
         if(buttons == null) {
             Log.i(TAG, "Default buttons being loaded");
             buttons = BUTTONS_DEFAULT;
@@ -140,17 +140,23 @@ public class PowerWidget extends FrameLayout {
             }
         }
 
-        // we determine if we're using a horizontal scroll view based on a threshold of button counts
-        if(buttonCount > LAYOUT_SCROLL_BUTTON_THRESHOLD) {
+        // we determine if we're using a horizontal scroll view based on a threshold button count
+        if(buttonCount > mScrollButtonThreshold) {
             // we need our horizontal scroll view to wrap the linear layout
             mScrollView = new HorizontalScrollView(mContext);
             // make the fading edge the size of a button (makes it more noticible that we can scroll
-            //mScrollView.setFadingEdgeLength(mContext.getResources().getDisplayMetrics().widthPixels / LAYOUT_SCROLL_BUTTON_THRESHOLD);
-            mScrollView.setFadingEdgeLength(LAYOUT_SCROLL_BUTTON_WIDTH / LAYOUT_SCROLL_BUTTON_THRESHOLD);
+            boolean notLarge = getResources().getConfiguration().smallestScreenWidthDp < 600;
+            if (notLarge) {
+                mScrollView.setFadingEdgeLength(mContext.getResources().getDisplayMetrics()
+                        .widthPixels / mScrollButtonThreshold);
+            } else {
+                mScrollView.setFadingEdgeLength(LAYOUT_SCROLL_BUTTON_WIDTH /
+                        mScrollButtonThreshold);
+            }
             mScrollView.setScrollBarStyle(View.SCROLLBARS_INSIDE_INSET);
             mScrollView.setOverScrollMode(View.OVER_SCROLL_NEVER);
-            // set the padding on the linear layout to the size of our scrollbar, so we don't have them overlap
-            if (getResources().getConfiguration().smallestScreenWidthDp < 600) {
+            // set the padding on the linear layout to the size of our scrollbar
+            if (notLarge) {
                 ll.setPadding(ll.getPaddingLeft(), ll.getPaddingTop(), ll.getPaddingRight(),
                         mScrollView.getVerticalScrollbarWidth());
             }
@@ -162,12 +168,12 @@ public class PowerWidget extends FrameLayout {
             addView(ll, WIDGET_LAYOUT_PARAMS);
         }
 
-        // set up a broadcast receiver for our intents, based off of what our power buttons have been loaded
+        // set up a broadcast receiver for power button intents
         setupBroadcastReceiver();
         IntentFilter filter = PowerButton.getAllBroadcastIntentFilters();
         // we add this so we can update views and such if the settings for our widget change
         filter.addAction(Settings.SETTINGS_CHANGED);
-        // we need to detect orientation changes and update the static button width value appropriately
+        // detect orientation changes and update the static button width value appropriately
         filter.addAction(Intent.ACTION_CONFIGURATION_CHANGED);
         // register the receiver
         mContext.registerReceiver(mBroadcastReceiver, filter);
@@ -203,8 +209,13 @@ public class PowerWidget extends FrameLayout {
 
     private void updateButtonLayoutWidth() {
         // use our context to set a valid button width
-        //BUTTON_LAYOUT_PARAMS.width = mContext.getResources().getDisplayMetrics().widthPixels / LAYOUT_SCROLL_BUTTON_THRESHOLD;
-        BUTTON_LAYOUT_PARAMS.width = LAYOUT_SCROLL_BUTTON_WIDTH / LAYOUT_SCROLL_BUTTON_THRESHOLD;
+        if (getResources().getConfiguration().smallestScreenWidthDp < 600) {
+            BUTTON_LAYOUT_PARAMS.width = mContext.getResources().getDisplayMetrics().widthPixels
+                    / mScrollButtonThreshold;
+        } else {
+            BUTTON_LAYOUT_PARAMS.width = LAYOUT_SCROLL_BUTTON_WIDTH
+                    / mScrollButtonThreshold;
+        }
     }
 
     private void updateVisibility() {
@@ -304,7 +315,8 @@ public class PowerWidget extends FrameLayout {
             } else if(uri.equals(Settings.System.getUriFor(Settings.System.EXPANDED_VIEW_WIDGET))) {
                 updateVisibility();
             // now check for scrollbar hiding
-            } else if(uri.equals(Settings.System.getUriFor(Settings.System.EXPANDED_HIDE_SCROLLBAR))) {
+            } else if(uri.equals(Settings.System.getUriFor(
+                    Settings.System.EXPANDED_HIDE_SCROLLBAR))) {
                 updateScrollbar();
             }
 
