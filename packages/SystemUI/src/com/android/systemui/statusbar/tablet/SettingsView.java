@@ -19,15 +19,17 @@ package com.android.systemui.statusbar.tablet;
 import android.app.StatusBarManager;
 import android.content.Context;
 import android.content.Intent;
+import android.os.SystemClock;
 import android.provider.Settings;
 import android.util.AttributeSet;
 import android.util.Slog;
-import android.widget.LinearLayout;
 import android.view.Gravity;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.Switch;
 import android.widget.TextView;
 
@@ -38,6 +40,8 @@ import com.android.systemui.statusbar.policy.BrightnessController;
 import com.android.systemui.statusbar.policy.BluetoothController;
 import com.android.systemui.statusbar.policy.DoNotDisturbController;
 import com.android.systemui.statusbar.policy.GPSController;
+import com.android.systemui.statusbar.policy.LockScreenController;
+import com.android.systemui.statusbar.policy.MobileDataController;
 import com.android.systemui.statusbar.policy.ToggleSlider;
 import com.android.systemui.statusbar.policy.VolumeController;
 import com.android.systemui.statusbar.policy.WifiController;
@@ -54,6 +58,9 @@ public class SettingsView extends LinearLayout implements View.OnClickListener {
     public static final String BUTTON_AUTOROTATE = "toggleAutoRotate";
     public static final String BUTTON_AIRPLANE = "toggleAirplane";
     public static final String BUTTON_GPS = "toggleGPS";
+    public static final String BUTTON_MEDIA = "toggleMedia";
+    public static final String BUTTON_MOBILEDATA = "toggleMobileData";
+    public static final String BUTTON_LOCKSCREEN = "toggleLockScreen";
     public static final String BUTTON_DELIMITER = "|";
     public static final String BUTTONS_DEFAULT = BUTTON_AIRPLANE + BUTTON_DELIMITER +
             BUTTON_WIFI + BUTTON_DELIMITER + BUTTON_BLUETOOTH + BUTTON_DELIMITER +
@@ -67,6 +74,8 @@ public class SettingsView extends LinearLayout implements View.OnClickListener {
     DoNotDisturbController mDoNotDisturb;
     BluetoothController mBluetooth;
     GPSController mGPS;
+    LockScreenController mLock;
+    MobileDataController mData;
     WifiController mWifi;
     VolumeController mVolume;
 
@@ -100,6 +109,8 @@ public class SettingsView extends LinearLayout implements View.OnClickListener {
                 ViewGroup.LayoutParams.MATCH_PARENT, 64);
         LinearLayout.LayoutParams iconlp = new LinearLayout.LayoutParams(
                 64, ViewGroup.LayoutParams.MATCH_PARENT);
+        LinearLayout.LayoutParams spacerlp = new LinearLayout.LayoutParams(
+                90, ViewGroup.LayoutParams.MATCH_PARENT);
         LinearLayout.LayoutParams separatorlp = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, 1);
         LinearLayout.LayoutParams textlp = new LinearLayout.LayoutParams(0,
@@ -218,6 +229,66 @@ public class SettingsView extends LinearLayout implements View.OnClickListener {
                 ll.addView(toggle, switchlp);
                 ll.setId(4);
                 ll.setOnClickListener(this);
+            } else if (settingsRow[i].contains(BUTTON_MEDIA)) {
+                float screenDensity = getResources().getDisplayMetrics().density;
+                if (screenDensity == 1.0f) {
+                    View spacer = new View(context);
+                    ll.addView(spacer, spacerlp);
+                }
+                icon.setImageResource(R.drawable.stat_media_previous);
+                icon.setId(5);
+                icon.setOnClickListener(this);
+                icon.setBackgroundResource(R.drawable.expanded_settings_background);
+                ll.addView(icon, iconlp);
+                ImageView iconTwo = new ImageView(context);
+                iconTwo.setScaleType(ImageView.ScaleType.CENTER);
+                iconTwo.setImageResource(R.drawable.stat_media_pause);
+                iconTwo.setId(6);
+                iconTwo.setOnClickListener(this);
+                iconTwo.setBackgroundResource(R.drawable.expanded_settings_background);
+                ll.addView(iconTwo, iconlp);
+                ImageView iconThree = new ImageView(context);
+                iconThree.setScaleType(ImageView.ScaleType.CENTER);
+                iconThree.setImageResource(R.drawable.stat_media_play);
+                iconThree.setId(7);
+                iconThree.setOnClickListener(this);
+                iconThree.setBackgroundResource(R.drawable.expanded_settings_background);
+                ll.addView(iconThree, iconlp);
+                ImageView iconFour = new ImageView(context);
+                iconFour.setScaleType(ImageView.ScaleType.CENTER);
+                iconFour.setImageResource(R.drawable.stat_media_next);
+                iconFour.setId(8);
+                iconFour.setOnClickListener(this);
+                iconFour.setBackgroundResource(R.drawable.expanded_settings_background);
+                ll.addView(iconFour, iconlp);
+            } else if (settingsRow[i].contains(BUTTON_MOBILEDATA)) {
+                icon.setImageResource(R.drawable.stat_data_on);
+                ll.addView(icon, iconlp);
+                TextView text = new TextView(context);
+                text.setText(R.string.status_bar_settings_data_button);
+                text.setGravity(Gravity.CENTER_VERTICAL);
+                text.setTextSize(18);
+                ll.addView(text, textlp);
+                Switch toggle = new Switch(context);
+                toggle.setGravity(Gravity.CENTER_VERTICAL);
+                mData = new MobileDataController(context, toggle);
+                ll.addView(toggle, switchlp);
+                ll.setId(9);
+                ll.setOnClickListener(this);
+            } else if (settingsRow[i].contains(BUTTON_LOCKSCREEN)) {
+                icon.setImageResource(R.drawable.stat_lock_screen_on);
+                ll.addView(icon, iconlp);
+                TextView text = new TextView(context);
+                text.setText(R.string.status_bar_settings_lockscreen_button);
+                text.setGravity(Gravity.CENTER_VERTICAL);
+                text.setTextSize(18);
+                ll.addView(text, textlp);
+                Switch toggle = new Switch(context);
+                toggle.setGravity(Gravity.CENTER_VERTICAL);
+                mLock = new LockScreenController(context, toggle);
+                ll.addView(toggle, switchlp);
+                ll.setId(10);
+                ll.setOnClickListener(this);
             }
 
             addView(ll, lp);
@@ -247,6 +318,24 @@ public class SettingsView extends LinearLayout implements View.OnClickListener {
                 break;
             case 4:
                 onClickGPS();
+                break;
+            case 5:
+                onClickMedia(1);
+                break;
+            case 6:
+                onClickMedia(2);
+                break;
+            case 7:
+                onClickMedia(3);
+                break;
+            case 8:
+                onClickMedia(4);
+                break;
+            case 9:
+                onClickMobileData();
+                break;
+            case 10:
+                onClickLockScreen();
                 break;
         }
     }
@@ -283,6 +372,58 @@ public class SettingsView extends LinearLayout implements View.OnClickListener {
     // ----------------------------
     private void onClickGPS() {
         Intent intent = new Intent("android.settings.LOCATION_SOURCE_SETTINGS");
+        intent.addCategory(Intent.CATEGORY_DEFAULT);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        getContext().startActivity(intent);
+        getStatusBarManager().collapse();
+    }
+
+    // Media
+    // ----------------------------
+    private void onClickMedia(int index) {
+        long eventtime = SystemClock.uptimeMillis();
+        int code = 0;
+
+        switch (index) {
+            case 1:
+                code = KeyEvent.KEYCODE_MEDIA_PREVIOUS;
+                break;
+            case 2:
+                code = KeyEvent.KEYCODE_MEDIA_PAUSE;
+                break;
+            case 3:
+                code = KeyEvent.KEYCODE_MEDIA_PLAY;
+                break;
+            case 4:
+                code = KeyEvent.KEYCODE_MEDIA_NEXT;
+                break;
+        }
+
+        Intent downIntent = new Intent(Intent.ACTION_MEDIA_BUTTON, null);
+        KeyEvent downEvent = new KeyEvent(eventtime, eventtime, KeyEvent.ACTION_DOWN, code, 0);
+        downIntent.putExtra(Intent.EXTRA_KEY_EVENT, downEvent);
+        getContext().sendOrderedBroadcast(downIntent, null);
+
+        Intent upIntent = new Intent(Intent.ACTION_MEDIA_BUTTON, null);
+        KeyEvent upEvent = new KeyEvent(eventtime, eventtime, KeyEvent.ACTION_UP, code, 0);
+        upIntent.putExtra(Intent.EXTRA_KEY_EVENT, upEvent);
+        getContext().sendOrderedBroadcast(upIntent, null);
+    }
+
+    // Mobile data
+    // ----------------------------
+    private void onClickMobileData() {
+        Intent intent = new Intent("android.settings.DATA_USAGE");
+        intent.addCategory(Intent.CATEGORY_DEFAULT);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        getContext().startActivity(intent);
+        getStatusBarManager().collapse();
+    }
+
+    // Lock screen
+    // ----------------------------
+    private void onClickLockScreen() {
+        Intent intent = new Intent("android.settings.SECURITY_SETTINGS");
         intent.addCategory(Intent.CATEGORY_DEFAULT);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         getContext().startActivity(intent);

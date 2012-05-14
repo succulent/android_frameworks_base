@@ -319,7 +319,9 @@ public class NotificationPanel extends RelativeLayout implements StatusBarPanel,
         // if there are no settings do not swap panels
         String rows = Settings.System.getString(getContext().getContentResolver(),
                 Settings.System.COMBINED_BAR_SETTINGS);
-        if (rows.length() < 10) return;
+        if (rows != null) {
+            if (rows.length() < 7) return;
+        }
 
         final View toShow, toHide;
         if (mSettingsView == null) {
