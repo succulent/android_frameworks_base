@@ -91,6 +91,7 @@ import com.android.systemui.statusbar.policy.BatteryController;
 import com.android.systemui.statusbar.policy.DockBatteryController;
 import com.android.systemui.statusbar.policy.BluetoothController;
 import com.android.systemui.statusbar.policy.CompatModeButton;
+import com.android.systemui.statusbar.policy.KeyButtonView;
 import com.android.systemui.statusbar.policy.LocationController;
 import com.android.systemui.statusbar.policy.NetworkController;
 import com.android.systemui.statusbar.policy.Prefs;
@@ -124,6 +125,7 @@ public class TabletStatusBar extends StatusBar implements
     public static final int MSG_BUTTON_COLOR = 3005;
     public static final int MSG_EXPANDED_TRANSPARENCY = 3006;
     public static final int MSG_STATUS_BAR_COLOR = 3007;
+    public static final int MSG_BUTTON_GLOW = 3008;
 
     // Fitts' Law assistance for LatinIME; see policy.EventHole
     private static final boolean FAKE_SPACE_BAR = true;
@@ -168,10 +170,10 @@ public class TabletStatusBar extends StatusBar implements
     boolean mNotificationDNDMode;
     NotificationData.Entry mNotificationDNDDummyEntry;
 
-    ImageView mBackButton;
-    ImageView mHomeButton;
-    ImageView mMenuButton;
-    ImageView mRecentButton;
+    KeyButtonView mBackButton;
+    KeyButtonView mHomeButton;
+    KeyButtonView mMenuButton;
+    KeyButtonView mRecentButton;
 
     boolean mHideMenuButton;
     boolean mHideBackButton;
@@ -618,11 +620,11 @@ public class TabletStatusBar extends StatusBar implements
         mNetworkController.addSignalCluster(signalCluster);
 
         // The navigation buttons
-        mBackButton = (ImageView) sb.findViewById(R.id.back);
+        mBackButton = (KeyButtonView) sb.findViewById(R.id.back);
         mNavigationArea = (ViewGroup) sb.findViewById(R.id.navigationArea);
-        mHomeButton = (ImageView) mNavigationArea.findViewById(R.id.home);
-        mMenuButton = (ImageView) mNavigationArea.findViewById(R.id.menu);
-        mRecentButton = (ImageView) mNavigationArea.findViewById(R.id.recent_apps);
+        mHomeButton = (KeyButtonView) mNavigationArea.findViewById(R.id.home);
+        mMenuButton = (KeyButtonView) mNavigationArea.findViewById(R.id.menu);
+        mRecentButton = (KeyButtonView) mNavigationArea.findViewById(R.id.recent_apps);
         mRecentButton.setOnClickListener(mOnClickListener);
 
         LayoutTransition lt = new LayoutTransition();
@@ -738,6 +740,7 @@ public class TabletStatusBar extends StatusBar implements
         updateClockColorSettings();
         updateExpandedTransparency();
         updateStatusBarColor();
+        updateButtonGlowSettings();
 
         return sb;
     }
@@ -921,6 +924,9 @@ public class TabletStatusBar extends StatusBar implements
                     break;
                 case MSG_BUTTON_COLOR:
                     updateButtonColorSettings();
+                    break;
+                case MSG_BUTTON_GLOW:
+                    updateButtonGlowSettings();
                     break;
                 case MSG_CLOCK_COLOR:
                     updateClockColorSettings();
@@ -1196,6 +1202,16 @@ public class TabletStatusBar extends StatusBar implements
                 View.INVISIBLE));
 
         setNavigationVisibility(StatusBarManager.DISABLE_NONE);
+    }
+
+    private void updateButtonGlowSettings() {
+        boolean glow = Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.COMBINED_BAR_NAVIGATION_GLOW, 1) == 1;
+
+        mBackButton.setGlowBG(glow);
+        mHomeButton.setGlowBG(glow);
+        mRecentButton.setGlowBG(glow);
+        mMenuButton.setGlowBG(glow);
     }
 
     private void updateClockVisibilitySettings() {
@@ -2238,6 +2254,8 @@ public class TabletStatusBar extends StatusBar implements
                     Settings.System.COMBINED_BAR_COLOR), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.COMBINED_BAR_EXPANDED_TRANSPARENCY), false, this);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.COMBINED_BAR_NAVIGATION_GLOW), false, this);
         }
 
         @Override
@@ -2265,6 +2283,10 @@ public class TabletStatusBar extends StatusBar implements
                     Settings.System.COMBINED_BAR_NAVIGATION_COLOR))) {
                 mHandler.removeMessages(MSG_BUTTON_COLOR);
                 mHandler.sendEmptyMessage(MSG_BUTTON_COLOR);
+            } else if (uri.equals(Settings.System.getUriFor(
+                    Settings.System.COMBINED_BAR_NAVIGATION_GLOW))) {
+                mHandler.removeMessages(MSG_BUTTON_GLOW);
+                mHandler.sendEmptyMessage(MSG_BUTTON_GLOW);
             } else if (uri.equals(Settings.System.getUriFor(
                     Settings.System.COMBINED_BAR_COLOR))) {
                 mHandler.removeMessages(MSG_STATUS_BAR_COLOR);

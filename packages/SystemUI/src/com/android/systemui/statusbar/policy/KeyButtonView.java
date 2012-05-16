@@ -52,6 +52,7 @@ public class KeyButtonView extends ImageView {
     int mCode;
     int mTouchSlop;
     Drawable mGlowBG;
+    Drawable mOriginalGlowBG;
     float mGlowAlpha = 0f, mGlowScale = 1f, mDrawingAlpha = 1f;
     boolean mSupportsLongpress = true;
     RectF mRect = new RectF(0f,0f,0f,0f);
@@ -82,14 +83,17 @@ public class KeyButtonView extends ImageView {
                 defStyle, 0);
 
         mCode = a.getInteger(R.styleable.KeyButtonView_keyCode, 0);
-        
+
         mSupportsLongpress = a.getBoolean(R.styleable.KeyButtonView_keyRepeat, true);
 
-        mGlowBG = a.getDrawable(R.styleable.KeyButtonView_glowBackground);
-        if (mGlowBG != null) {
+        mOriginalGlowBG = a.getDrawable(R.styleable.KeyButtonView_glowBackground);
+        if (mOriginalGlowBG != null) {
             mDrawingAlpha = BUTTON_QUIESCENT_ALPHA;
+            mGlowBG = mOriginalGlowBG;
         }
-        
+
+
+
         a.recycle();
 
         mWindowManager = IWindowManager.Stub.asInterface(
@@ -118,6 +122,10 @@ public class KeyButtonView extends ImageView {
         if (mGlowBG != null) {
             canvas.restore();
         }
+    }
+
+    public void setGlowBG(boolean glow) {
+        mGlowBG = glow ? mOriginalGlowBG : null;
     }
 
     public float getDrawingAlpha() {
