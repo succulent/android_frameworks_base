@@ -1259,8 +1259,6 @@ public class TabletStatusBar extends StatusBar implements
             mRecentButton.clearColorFilter();
             mMenuButton.clearColorFilter();
         }
-
-        mStatusBarView.setBackgroundColor(buttonColor);
     }
 
     private void updateStatusBarColor() {
