@@ -38,13 +38,17 @@ import com.android.systemui.statusbar.policy.AirplaneModeController;
 import com.android.systemui.statusbar.policy.AutoRotateController;
 import com.android.systemui.statusbar.policy.BrightnessController;
 import com.android.systemui.statusbar.policy.BluetoothController;
+import com.android.systemui.statusbar.policy.BluetoothTetherController;
 import com.android.systemui.statusbar.policy.DoNotDisturbController;
 import com.android.systemui.statusbar.policy.GPSController;
 import com.android.systemui.statusbar.policy.LockScreenController;
 import com.android.systemui.statusbar.policy.MobileDataController;
+import com.android.systemui.statusbar.policy.SleepController;
 import com.android.systemui.statusbar.policy.ToggleSlider;
+import com.android.systemui.statusbar.policy.USBTetherController;
 import com.android.systemui.statusbar.policy.VolumeController;
 import com.android.systemui.statusbar.policy.WifiController;
+import com.android.systemui.statusbar.policy.WifiAPController;
 
 public class SettingsView extends LinearLayout implements View.OnClickListener {
     static final String TAG = "SettingsView";
@@ -61,6 +65,10 @@ public class SettingsView extends LinearLayout implements View.OnClickListener {
     public static final String BUTTON_MEDIA = "toggleMedia";
     public static final String BUTTON_MOBILEDATA = "toggleMobileData";
     public static final String BUTTON_LOCKSCREEN = "toggleLockScreen";
+    public static final String BUTTON_WIFIAP = "toggleApWifi";
+    public static final String BUTTON_TETHERUSB = "toggleTetherUSB";
+    public static final String BUTTON_TETHERBT = "toggleTetherBT";
+    public static final String BUTTON_SLEEP = "toggleSleep";
     public static final String BUTTON_DELIMITER = "|";
     public static final String BUTTONS_DEFAULT = BUTTON_AIRPLANE + BUTTON_DELIMITER +
             BUTTON_WIFI + BUTTON_DELIMITER + BUTTON_BLUETOOTH + BUTTON_DELIMITER +
@@ -70,13 +78,17 @@ public class SettingsView extends LinearLayout implements View.OnClickListener {
 
     AirplaneModeController mAirplane;
     AutoRotateController mRotate;
+    BluetoothTetherController mTetherBT;
     BrightnessController mBrightness;
     DoNotDisturbController mDoNotDisturb;
     BluetoothController mBluetooth;
     GPSController mGPS;
     LockScreenController mLock;
     MobileDataController mData;
+    SleepController mSleep;
+    USBTetherController mTetherUSB;
     WifiController mWifi;
+    WifiAPController mWifiAP;
     VolumeController mVolume;
 
     public SettingsView(Context context, AttributeSet attrs) {
@@ -169,6 +181,14 @@ public class SettingsView extends LinearLayout implements View.OnClickListener {
                 toggle.setLabel(R.string.status_bar_settings_mute_label);
                 mVolume = new VolumeController(context, toggle);
                 ll.addView(toggle, sliderlp);
+            } else if (settingsRow[i].contains(BUTTON_SLEEP)) {
+                icon.setImageResource(R.drawable.stat_screen_timeout_on);
+                ll.addView(icon, iconlp);
+                TextView text = new TextView(context);
+                text.setGravity(Gravity.CENTER_VERTICAL);
+                text.setTextSize(18);
+                mSleep = new SleepController(context, text);
+                ll.addView(text, textlp);
             } else if (settingsRow[i].contains(BUTTON_NOTIFICATIONS)) {
                 icon.setImageResource(R.drawable.ic_notification_open);
                 ll.addView(icon, iconlp);
@@ -289,6 +309,48 @@ public class SettingsView extends LinearLayout implements View.OnClickListener {
                 ll.addView(toggle, switchlp);
                 ll.setId(10);
                 ll.setOnClickListener(this);
+            } else if (settingsRow[i].contains(BUTTON_WIFIAP)) {
+                icon.setImageResource(R.drawable.stat_wifi_ap_on);
+                ll.addView(icon, iconlp);
+                TextView text = new TextView(context);
+                text.setText(R.string.status_bar_settings_wifiap_button);
+                text.setGravity(Gravity.CENTER_VERTICAL);
+                text.setTextSize(18);
+                ll.addView(text, textlp);
+                Switch toggle = new Switch(context);
+                toggle.setGravity(Gravity.CENTER_VERTICAL);
+                mWifiAP = new WifiAPController(context, toggle);
+                ll.addView(toggle, switchlp);
+                ll.setId(11);
+                ll.setOnClickListener(this);
+            } else if (settingsRow[i].contains(BUTTON_TETHERUSB)) {
+                icon.setImageResource(com.android.internal.R.drawable.stat_sys_tether_usb);
+                ll.addView(icon, iconlp);
+                TextView text = new TextView(context);
+                text.setText(R.string.status_bar_settings_usbtether_button);
+                text.setGravity(Gravity.CENTER_VERTICAL);
+                text.setTextSize(18);
+                ll.addView(text, textlp);
+                Switch toggle = new Switch(context);
+                toggle.setGravity(Gravity.CENTER_VERTICAL);
+                mTetherUSB = new USBTetherController(context, toggle);
+                ll.addView(toggle, switchlp);
+                ll.setId(12);
+                ll.setOnClickListener(this);
+            } else if (settingsRow[i].contains(BUTTON_TETHERBT)) {
+                icon.setImageResource(com.android.internal.R.drawable.stat_sys_tether_bluetooth);
+                ll.addView(icon, iconlp);
+                TextView text = new TextView(context);
+                text.setText(R.string.status_bar_settings_bttether_button);
+                text.setGravity(Gravity.CENTER_VERTICAL);
+                text.setTextSize(18);
+                ll.addView(text, textlp);
+                Switch toggle = new Switch(context);
+                toggle.setGravity(Gravity.CENTER_VERTICAL);
+                mTetherBT = new BluetoothTetherController(context, toggle);
+                ll.addView(toggle, switchlp);
+                ll.setId(13);
+                ll.setOnClickListener(this);
             }
 
             addView(ll, lp);
@@ -336,6 +398,11 @@ public class SettingsView extends LinearLayout implements View.OnClickListener {
                 break;
             case 10:
                 onClickLockScreen();
+                break;
+            case 11:
+            case 12:
+            case 13:
+                onClickTether();
                 break;
         }
     }
@@ -429,5 +496,14 @@ public class SettingsView extends LinearLayout implements View.OnClickListener {
         getContext().startActivity(intent);
         getStatusBarManager().collapse();
     }
-}
 
+    // Tethering
+    // ----------------------------
+    private void onClickTether() {
+        Intent intent = new Intent("android.settings.TETHER_SETTINGS");
+        intent.addCategory(Intent.CATEGORY_DEFAULT);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        getContext().startActivity(intent);
+        getStatusBarManager().collapse();
+    }
+}
