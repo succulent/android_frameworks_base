@@ -2223,6 +2223,12 @@ public final class Settings {
         public static final String COMBINED_BAR_NAVIGATION_COLOR = "combined_bar_navigation_color";
 
         /**
+        * CombinedBar navigation glow on tablets.
+        * @hide
+        */
+        public static final String COMBINED_BAR_NAVIGATION_GLOW = "combined_bar_navigation_glow";
+
+        /**
          * String for combined bar settings.
          * @hide
          */
