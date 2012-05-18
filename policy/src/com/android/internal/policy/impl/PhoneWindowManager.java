@@ -296,6 +296,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     WindowState mNavigationBar = null;
     boolean mHasNavigationBar = false;
     int mNavigationBarWidth = 0, mNavigationBarHeight = 0;
+    boolean mNavigationBarLeft = false;
 
     WindowState mKeyguard = null;
     KeyguardViewMediator mKeyguardMediator;
@@ -506,6 +507,10 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     "fancy_rotation_anim"), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.ACCELEROMETER_ROTATION_ANGLES), false, this);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.PHONE_NAVIGATION_CONTROL), false, this);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.PHONE_NAVIGATION_CONTROL_LEFT), false, this);
             updateSettings();
         }
 
@@ -1066,6 +1071,22 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 mHasSoftInput = hasSoftInput;
                 updateRotation = true;
             }
+
+            mHasNavigationBar = (Settings.System.getInt(mContext.getContentResolver(),
+                    Settings.System.PHONE_NAVIGATION_CONTROL, 0) == 1) && mStatusBarCanHide;
+
+            mNavigationBarLeft = (Settings.System.getInt(mContext.getContentResolver(),
+                    Settings.System.PHONE_NAVIGATION_CONTROL_LEFT, 0) == 1);
+
+            mNavigationBarHeight = mHasNavigationBar
+                    ? mContext.getResources().getDimensionPixelSize(
+                    com.android.internal.R.dimen.navigation_bar_height)
+                    : 0;
+            mNavigationBarWidth = mHasNavigationBar
+                    ? mContext.getResources().getDimensionPixelSize(
+                    com.android.internal.R.dimen.navigation_bar_width)
+                    : 0;
+
         }
         if (updateRotation) {
             updateRotation(true);
@@ -2080,16 +2101,23 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     }
                 } else {
                     // Landscape screen; nav bar goes to the right.
-                    mTmpNavigationFrame.set(displayWidth-mNavigationBarWidth, 0,
+                    mTmpNavigationFrame.set(mNavigationBarLeft ? 0 : displayWidth -
+                            mNavigationBarWidth, 0, mNavigationBarLeft ? mNavigationBarWidth :
                             displayWidth, displayHeight);
                     if (navVisible) {
-                        mDockRight = mTmpNavigationFrame.left;
+                        if (!mNavigationBarLeft) {
+                            mDockRight = mTmpNavigationFrame.left;
+                        } else {
+                            mDockLeft = mTmpNavigationFrame.right;
+                            mRestrictedScreenLeft = mTmpNavigationFrame.right;
+                        }
                         mRestrictedScreenWidth = mDockRight - mDockLeft;
                     } else {
                         // We currently want to hide the navigation UI.  Do this by just
                         // moving it off the screen, so it can still receive input events
                         // to know when to be re-shown.
-                        mTmpNavigationFrame.offset(mNavigationBarWidth, 0);
+                        mTmpNavigationFrame.offset(mNavigationBarLeft ? -mNavigationBarWidth
+                                : mNavigationBarWidth, 0);
                     }
                 }
                 // Make sure the content and current rectangles are updated to
@@ -2217,12 +2245,12 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
         final int fl = attrs.flags;
         final int sim = attrs.softInputMode;
-        
+
         final Rect pf = mTmpParentFrame;
         final Rect df = mTmpDisplayFrame;
         final Rect cf = mTmpContentFrame;
         final Rect vf = mTmpVisibleFrame;
-        
+
         final boolean hasNavBar = (mHasNavigationBar 
                 && mNavigationBar != null && mNavigationBar.isVisibleLw());
 

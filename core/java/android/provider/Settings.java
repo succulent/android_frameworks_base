@@ -2413,6 +2413,12 @@ public final class Settings {
         public static final String PHONE_NAVIGATION_CONTROL = "phone_navigation_control";
 
         /**
+         * Whether to show the left phone navigation controls.  The value is boolean (1 or 0).
+         * @hide
+         */
+        public static final String PHONE_NAVIGATION_CONTROL_LEFT = "phone_navigation_control_left";
+
+        /**
          * Whether to show notification peeks.  The value is boolean (1 or 0).
          * @hide
          */
