@@ -54,6 +54,8 @@ public class VolumeController implements ToggleSlider.Listener,
         // receive broadcasts
         IntentFilter filter = new IntentFilter();
         filter.addAction(AudioManager.VOLUME_CHANGED_ACTION);
+        filter.addAction(AudioManager.RINGER_MODE_CHANGED_ACTION);
+        filter.addAction(AudioManager.ACTION_AUDIO_BECOMING_NOISY);
         context.registerReceiver(mBroadcastReceiver, filter);
     }
 
@@ -96,7 +98,9 @@ public class VolumeController implements ToggleSlider.Listener,
 
     private BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
         public void onReceive(Context context, Intent intent) {
-            mVolume = intent.getIntExtra(AudioManager.EXTRA_VOLUME_STREAM_VALUE, mVolume);
+            if (intent.getAction().equals(AudioManager.VOLUME_CHANGED_ACTION)) {
+                mVolume = intent.getIntExtra(AudioManager.EXTRA_VOLUME_STREAM_VALUE, mVolume);
+            }
             setupVolume();
         }
     };
