@@ -43,7 +43,6 @@ import com.android.systemui.statusbar.policy.DoNotDisturbController;
 import com.android.systemui.statusbar.policy.GPSController;
 import com.android.systemui.statusbar.policy.LockScreenController;
 import com.android.systemui.statusbar.policy.MobileDataController;
-import com.android.systemui.statusbar.policy.SleepController;
 import com.android.systemui.statusbar.policy.ToggleSlider;
 import com.android.systemui.statusbar.policy.USBTetherController;
 import com.android.systemui.statusbar.policy.VolumeController;
@@ -103,11 +102,11 @@ public class SettingsView extends LinearLayout implements View.OnClickListener,
     GPSController mGPS;
     LockScreenController mLock;
     MobileDataController mData;
-    SleepController mSleep;
     USBTetherController mTetherUSB;
     WifiController mWifi;
     WifiAPController mWifiAP;
     VolumeController mVolume;
+    TextView mSleepText;
 
     public SettingsView(Context context, AttributeSet attrs) {
         this(context, attrs, 0);
@@ -199,11 +198,12 @@ public class SettingsView extends LinearLayout implements View.OnClickListener,
             } else if (settingsRow[i].contains(BUTTON_SLEEP)) {
                 icon.setImageResource(R.drawable.stat_screen_timeout_on);
                 ll.addView(icon, iconlp);
-                TextView text = makeTextView(0);
-                mSleep = new SleepController(context, text);
-                ll.addView(text, textlp);
+                mSleepText = makeTextView(0);
+                ll.addView(mSleepText, textlp);
                 ll.setId(SLEEP);
+                ll.setOnClickListener(this);
                 ll.setOnLongClickListener(this);
+                updateSleepSummary();
             } else if (settingsRow[i].contains(BUTTON_NOTIFICATIONS)) {
                 icon.setImageResource(R.drawable.ic_notification_open);
                 ll.addView(icon, iconlp);
@@ -247,11 +247,6 @@ public class SettingsView extends LinearLayout implements View.OnClickListener,
                 ll.setId(GPS);
                 ll.setOnLongClickListener(this);
             } else if (settingsRow[i].contains(BUTTON_MEDIA)) {
-                //float screenDensity = getResources().getDisplayMetrics().density;
-                //if (screenDensity == 1.0f) {
-                //    View spacer = new View(context);
-                //    ll.addView(spacer, spacerlp);
-                //}
                 LinearLayout.LayoutParams medialp = new LinearLayout.LayoutParams(
                         0, ViewGroup.LayoutParams.MATCH_PARENT, 1f);
                 icon.setImageResource(R.drawable.stat_media_previous);
@@ -360,6 +355,9 @@ public class SettingsView extends LinearLayout implements View.OnClickListener,
         switch (v.getId()) {
             case SETTINGS:
                 onClickSettings();
+                break;
+            case SLEEP:
+                onClickSleep();
                 break;
             case MEDIA_PREVIOUS:
                 onClickMedia(MEDIA_PREVIOUS);
@@ -515,5 +513,41 @@ public class SettingsView extends LinearLayout implements View.OnClickListener,
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         getContext().startActivity(intent);
         getStatusBarManager().collapse();
+    }
+
+    // Sleep
+    // ----------------------------
+    private void onClickSleep() {
+        int value = Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.SCREEN_OFF_TIMEOUT, 60000);
+        String[] entries = mContext.getResources().getStringArray(R.array.screen_timeout_entries);
+        String[] values = mContext.getResources().getStringArray(R.array.screen_timeout_values);
+        int best = 0;
+        for (int i = 0; i < values.length; i++) {
+            int timeout = Integer.parseInt(values[i].toString());
+            if (value >= timeout) {
+                best = i;
+            }
+        }
+        value = Integer.parseInt(values[values.length - 1 == best ? 0 : best + 1].toString());
+        Settings.System.putInt(mContext.getContentResolver(),
+                Settings.System.SCREEN_OFF_TIMEOUT, value);
+        updateSleepSummary();
+    }
+
+    private void updateSleepSummary() {
+        int value = Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.SCREEN_OFF_TIMEOUT, 60000);
+        String[] entries = mContext.getResources().getStringArray(R.array.screen_timeout_entries);
+        String[] values = mContext.getResources().getStringArray(R.array.screen_timeout_values);
+        int best = 0;
+        for (int i = 0; i < values.length; i++) {
+            int timeout = Integer.parseInt(values[i].toString());
+            if (value >= timeout) {
+                best = i;
+            }
+        }
+        mSleepText.setText(mContext.getString(R.string.status_bar_screen_timeout,
+                entries[best]));
     }
 }
