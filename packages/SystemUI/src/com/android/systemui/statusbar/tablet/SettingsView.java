@@ -50,7 +50,8 @@ import com.android.systemui.statusbar.policy.VolumeController;
 import com.android.systemui.statusbar.policy.WifiController;
 import com.android.systemui.statusbar.policy.WifiAPController;
 
-public class SettingsView extends LinearLayout implements View.OnClickListener {
+public class SettingsView extends LinearLayout implements View.OnClickListener,
+        View.OnLongClickListener {
     static final String TAG = "SettingsView";
 
     public static final String BUTTON_WIFI = "toggleWifi";
@@ -75,6 +76,23 @@ public class SettingsView extends LinearLayout implements View.OnClickListener {
             BUTTON_BRIGHTNESS + BUTTON_DELIMITER + BUTTON_SOUND + BUTTON_DELIMITER +
             BUTTON_AUTOROTATE + BUTTON_DELIMITER + BUTTON_NOTIFICATIONS + BUTTON_DELIMITER +
             BUTTON_SETTINGS;
+
+    public static final int WIFI = 1;
+    public static final int BLUETOOTH = 2;
+    public static final int SETTINGS = 3;
+    public static final int GPS = 4;
+    public static final int MEDIA_PREVIOUS = 5;
+    public static final int MEDIA_PAUSE = 6;
+    public static final int MEDIA_PLAY = 7;
+    public static final int MEDIA_NEXT = 8;
+    public static final int MOBILEDATA = 9;
+    public static final int LOCKSCREEN = 10;
+    public static final int WIFIAP = 11;
+    public static final int TETHERUSB = 12;
+    public static final int TETHERBT = 13;
+    public static final int BRIGHTNESS = 14;
+    public static final int SLEEP = 15;
+    public static final int AUTOROTATE = 16;
 
     AirplaneModeController mAirplane;
     AutoRotateController mRotate;
@@ -122,7 +140,7 @@ public class SettingsView extends LinearLayout implements View.OnClickListener {
         LinearLayout.LayoutParams iconlp = new LinearLayout.LayoutParams(
                 64, ViewGroup.LayoutParams.MATCH_PARENT);
         LinearLayout.LayoutParams spacerlp = new LinearLayout.LayoutParams(
-                90, ViewGroup.LayoutParams.MATCH_PARENT);
+                45, ViewGroup.LayoutParams.MATCH_PARENT);
         LinearLayout.LayoutParams separatorlp = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, 1);
         LinearLayout.LayoutParams textlp = new LinearLayout.LayoutParams(0,
@@ -130,43 +148,38 @@ public class SettingsView extends LinearLayout implements View.OnClickListener {
         textlp.gravity = Gravity.LEFT | Gravity.CENTER_VERTICAL;
         LinearLayout.LayoutParams sliderlp = new LinearLayout.LayoutParams(0,
                 ViewGroup.LayoutParams.MATCH_PARENT, 1f);
+        sliderlp.setMargins(0, 0, 2, 0);
         LinearLayout.LayoutParams switchlp = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         switchlp.gravity = Gravity.CENTER_VERTICAL;
+        switchlp.setMargins(0, 0, 5, 0);
         for (int i = 0; i < settingsRow.length; i++) {
             LinearLayout ll = new LinearLayout(context);
             ll.setOrientation(LinearLayout.HORIZONTAL);
             ll.setPadding(0, 0, 64, 0);
+            ll.setBackgroundResource(com.android.internal.R.drawable.list_selector_holo_dark);
             ImageView icon = new ImageView(context);
             icon.setScaleType(ImageView.ScaleType.CENTER);
             if (settingsRow[i].contains(BUTTON_WIFI)) {
                 icon.setImageResource(R.drawable.ic_sysbar_wifi_on);
                 ll.addView(icon, iconlp);
-                TextView text = new TextView(context);
-                text.setText(R.string.status_bar_settings_wifi_button);
-                text.setGravity(Gravity.CENTER_VERTICAL);
-                text.setTextSize(18);
-                ll.addView(text, textlp);
+                ll.addView(makeTextView(R.string.status_bar_settings_wifi_button), textlp);
                 Switch toggle = new Switch(context);
                 toggle.setGravity(Gravity.CENTER_VERTICAL);
                 mWifi = new WifiController(context, toggle);
                 ll.addView(toggle, switchlp);
-                ll.setId(1);
-                ll.setOnClickListener(this);
+                ll.setId(WIFI);
+                ll.setOnLongClickListener(this);
             } else if (settingsRow[i].contains(BUTTON_BLUETOOTH)) {
                 icon.setImageResource(R.drawable.stat_sys_data_bluetooth);
                 ll.addView(icon, iconlp);
-                TextView text = new TextView(context);
-                text.setText(R.string.status_bar_settings_bluetooth_button);
-                text.setGravity(Gravity.CENTER_VERTICAL);
-                text.setTextSize(18);
-                ll.addView(text, textlp);
+                ll.addView(makeTextView(R.string.status_bar_settings_bluetooth_button), textlp);
                 Switch toggle = new Switch(context);
                 toggle.setGravity(Gravity.CENTER_VERTICAL);
                 mBluetooth = new BluetoothController(context, toggle);
                 ll.addView(toggle, switchlp);
-                ll.setId(2);
-                ll.setOnClickListener(this);
+                ll.setId(BLUETOOTH);
+                ll.setOnLongClickListener(this);
             } else if (settingsRow[i].contains(BUTTON_BRIGHTNESS)) {
                 icon.setImageResource(R.drawable.ic_sysbar_brightness);
                 ll.addView(icon, iconlp);
@@ -174,6 +187,8 @@ public class SettingsView extends LinearLayout implements View.OnClickListener {
                 toggle.setLabel(R.string.status_bar_settings_auto_brightness_label);
                 mBrightness = new BrightnessController(context, toggle);
                 ll.addView(toggle, sliderlp);
+                ll.setId(BRIGHTNESS);
+                ll.setOnLongClickListener(this);
             } else if (settingsRow[i].contains(BUTTON_SOUND)) {
                 icon.setImageResource(R.drawable.stat_ring_on);
                 ll.addView(icon, iconlp);
@@ -184,19 +199,15 @@ public class SettingsView extends LinearLayout implements View.OnClickListener {
             } else if (settingsRow[i].contains(BUTTON_SLEEP)) {
                 icon.setImageResource(R.drawable.stat_screen_timeout_on);
                 ll.addView(icon, iconlp);
-                TextView text = new TextView(context);
-                text.setGravity(Gravity.CENTER_VERTICAL);
-                text.setTextSize(18);
+                TextView text = makeTextView(0);
                 mSleep = new SleepController(context, text);
                 ll.addView(text, textlp);
+                ll.setId(SLEEP);
+                ll.setOnLongClickListener(this);
             } else if (settingsRow[i].contains(BUTTON_NOTIFICATIONS)) {
                 icon.setImageResource(R.drawable.ic_notification_open);
                 ll.addView(icon, iconlp);
-                TextView text = new TextView(context);
-                text.setText(R.string.status_bar_settings_notifications);
-                text.setGravity(Gravity.CENTER_VERTICAL);
-                text.setTextSize(18);
-                ll.addView(text, textlp);
+                ll.addView(makeTextView(R.string.status_bar_settings_notifications), textlp);
                 Switch toggle = new Switch(context);
                 toggle.setGravity(Gravity.CENTER_VERTICAL);
                 mDoNotDisturb = new DoNotDisturbController(context, toggle);
@@ -204,33 +215,23 @@ public class SettingsView extends LinearLayout implements View.OnClickListener {
             } else if (settingsRow[i].contains(BUTTON_SETTINGS)) {
                 icon.setImageResource(R.drawable.ic_sysbar_quicksettings);
                 ll.addView(icon, iconlp);
-                TextView text = new TextView(context);
-                text.setText(R.string.status_bar_settings_settings_button);
-                text.setGravity(Gravity.CENTER_VERTICAL);
-                text.setTextSize(18);
-                ll.addView(text, textlp);
-                ll.setId(3);
+                ll.addView(makeTextView(R.string.status_bar_settings_settings_button), textlp);
+                ll.setId(SETTINGS);
                 ll.setOnClickListener(this);
             } else if (settingsRow[i].contains(BUTTON_AUTOROTATE)) {
                 icon.setImageResource(R.drawable.ic_sysbar_rotate_on);
                 ll.addView(icon, iconlp);
-                TextView text = new TextView(context);
-                text.setText(R.string.status_bar_settings_auto_rotation);
-                text.setGravity(Gravity.CENTER_VERTICAL);
-                text.setTextSize(18);
-                ll.addView(text, textlp);
+                ll.addView(makeTextView(R.string.status_bar_settings_auto_rotation), textlp);
                 Switch toggle = new Switch(context);
                 toggle.setGravity(Gravity.CENTER_VERTICAL);
                 mRotate = new AutoRotateController(context, toggle);
                 ll.addView(toggle, switchlp);
+                ll.setId(AUTOROTATE);
+                ll.setOnLongClickListener(this);
             } else if (settingsRow[i].contains(BUTTON_AIRPLANE)) {
                 icon.setImageResource(R.drawable.ic_sysbar_airplane_on);
                 ll.addView(icon, iconlp);
-                TextView text = new TextView(context);
-                text.setText(R.string.status_bar_settings_airplane);
-                text.setGravity(Gravity.CENTER_VERTICAL);
-                text.setTextSize(18);
-                ll.addView(text, textlp);
+                ll.addView(makeTextView(R.string.status_bar_settings_airplane), textlp);
                 Switch toggle = new Switch(context);
                 toggle.setGravity(Gravity.CENTER_VERTICAL);
                 mAirplane = new AirplaneModeController(context, toggle);
@@ -238,119 +239,97 @@ public class SettingsView extends LinearLayout implements View.OnClickListener {
             } else if (settingsRow[i].contains(BUTTON_GPS)) {
                 icon.setImageResource(R.drawable.stat_gps_on);
                 ll.addView(icon, iconlp);
-                TextView text = new TextView(context);
-                text.setText(R.string.status_bar_settings_gps_button);
-                text.setGravity(Gravity.CENTER_VERTICAL);
-                text.setTextSize(18);
-                ll.addView(text, textlp);
+                ll.addView(makeTextView(R.string.status_bar_settings_gps_button), textlp);
                 Switch toggle = new Switch(context);
                 toggle.setGravity(Gravity.CENTER_VERTICAL);
                 mGPS = new GPSController(context, toggle);
                 ll.addView(toggle, switchlp);
-                ll.setId(4);
-                ll.setOnClickListener(this);
+                ll.setId(GPS);
+                ll.setOnLongClickListener(this);
             } else if (settingsRow[i].contains(BUTTON_MEDIA)) {
-                float screenDensity = getResources().getDisplayMetrics().density;
-                if (screenDensity == 1.0f) {
-                    View spacer = new View(context);
-                    ll.addView(spacer, spacerlp);
-                }
+                //float screenDensity = getResources().getDisplayMetrics().density;
+                //if (screenDensity == 1.0f) {
+                //    View spacer = new View(context);
+                //    ll.addView(spacer, spacerlp);
+                //}
+                LinearLayout.LayoutParams medialp = new LinearLayout.LayoutParams(
+                        0, ViewGroup.LayoutParams.MATCH_PARENT, 1f);
                 icon.setImageResource(R.drawable.stat_media_previous);
-                icon.setId(5);
+                icon.setId(MEDIA_PREVIOUS);
                 icon.setOnClickListener(this);
                 icon.setBackgroundResource(R.drawable.expanded_settings_background);
-                ll.addView(icon, iconlp);
+                ll.addView(icon, medialp);
                 ImageView iconTwo = new ImageView(context);
                 iconTwo.setScaleType(ImageView.ScaleType.CENTER);
                 iconTwo.setImageResource(R.drawable.stat_media_pause);
-                iconTwo.setId(6);
+                iconTwo.setId(MEDIA_PAUSE);
                 iconTwo.setOnClickListener(this);
                 iconTwo.setBackgroundResource(R.drawable.expanded_settings_background);
-                ll.addView(iconTwo, iconlp);
+                ll.addView(iconTwo, medialp);
                 ImageView iconThree = new ImageView(context);
                 iconThree.setScaleType(ImageView.ScaleType.CENTER);
                 iconThree.setImageResource(R.drawable.stat_media_play);
-                iconThree.setId(7);
+                iconThree.setId(MEDIA_PLAY);
                 iconThree.setOnClickListener(this);
                 iconThree.setBackgroundResource(R.drawable.expanded_settings_background);
-                ll.addView(iconThree, iconlp);
+                ll.addView(iconThree, medialp);
                 ImageView iconFour = new ImageView(context);
                 iconFour.setScaleType(ImageView.ScaleType.CENTER);
                 iconFour.setImageResource(R.drawable.stat_media_next);
-                iconFour.setId(8);
+                iconFour.setId(MEDIA_NEXT);
                 iconFour.setOnClickListener(this);
                 iconFour.setBackgroundResource(R.drawable.expanded_settings_background);
-                ll.addView(iconFour, iconlp);
+                ll.addView(iconFour, medialp);
             } else if (settingsRow[i].contains(BUTTON_MOBILEDATA)) {
                 icon.setImageResource(R.drawable.stat_data_on);
                 ll.addView(icon, iconlp);
-                TextView text = new TextView(context);
-                text.setText(R.string.status_bar_settings_data_button);
-                text.setGravity(Gravity.CENTER_VERTICAL);
-                text.setTextSize(18);
-                ll.addView(text, textlp);
+                ll.addView(makeTextView(R.string.status_bar_settings_data_button), textlp);
                 Switch toggle = new Switch(context);
                 toggle.setGravity(Gravity.CENTER_VERTICAL);
                 mData = new MobileDataController(context, toggle);
                 ll.addView(toggle, switchlp);
-                ll.setId(9);
-                ll.setOnClickListener(this);
+                ll.setId(MOBILEDATA);
+                ll.setOnLongClickListener(this);
             } else if (settingsRow[i].contains(BUTTON_LOCKSCREEN)) {
                 icon.setImageResource(R.drawable.stat_lock_screen_on);
                 ll.addView(icon, iconlp);
-                TextView text = new TextView(context);
-                text.setText(R.string.status_bar_settings_lockscreen_button);
-                text.setGravity(Gravity.CENTER_VERTICAL);
-                text.setTextSize(18);
-                ll.addView(text, textlp);
+                ll.addView(makeTextView(R.string.status_bar_settings_lockscreen_button), textlp);
                 Switch toggle = new Switch(context);
                 toggle.setGravity(Gravity.CENTER_VERTICAL);
                 mLock = new LockScreenController(context, toggle);
                 ll.addView(toggle, switchlp);
-                ll.setId(10);
-                ll.setOnClickListener(this);
+                ll.setId(LOCKSCREEN);
+                ll.setOnLongClickListener(this);
             } else if (settingsRow[i].contains(BUTTON_WIFIAP)) {
                 icon.setImageResource(R.drawable.stat_wifi_ap_on);
                 ll.addView(icon, iconlp);
-                TextView text = new TextView(context);
-                text.setText(R.string.status_bar_settings_wifiap_button);
-                text.setGravity(Gravity.CENTER_VERTICAL);
-                text.setTextSize(18);
-                ll.addView(text, textlp);
+                ll.addView(makeTextView(R.string.status_bar_settings_wifiap_button), textlp);
                 Switch toggle = new Switch(context);
                 toggle.setGravity(Gravity.CENTER_VERTICAL);
                 mWifiAP = new WifiAPController(context, toggle);
                 ll.addView(toggle, switchlp);
-                ll.setId(11);
-                ll.setOnClickListener(this);
+                ll.setId(WIFIAP);
+                ll.setOnLongClickListener(this);
             } else if (settingsRow[i].contains(BUTTON_TETHERUSB)) {
-                icon.setImageResource(com.android.internal.R.drawable.stat_sys_tether_usb);
+                icon.setImageResource(R.drawable.stat_sys_tether_usb);
                 ll.addView(icon, iconlp);
-                TextView text = new TextView(context);
-                text.setText(R.string.status_bar_settings_usbtether_button);
-                text.setGravity(Gravity.CENTER_VERTICAL);
-                text.setTextSize(18);
-                ll.addView(text, textlp);
+                ll.addView(makeTextView(R.string.status_bar_settings_usbtether_button), textlp);
                 Switch toggle = new Switch(context);
                 toggle.setGravity(Gravity.CENTER_VERTICAL);
                 mTetherUSB = new USBTetherController(context, toggle);
                 ll.addView(toggle, switchlp);
-                ll.setId(12);
-                ll.setOnClickListener(this);
+                ll.setId(TETHERUSB);
+                ll.setOnLongClickListener(this);
             } else if (settingsRow[i].contains(BUTTON_TETHERBT)) {
-                icon.setImageResource(com.android.internal.R.drawable.stat_sys_tether_bluetooth);
+                icon.setImageResource(R.drawable.stat_sys_tether_bluetooth);
                 ll.addView(icon, iconlp);
-                TextView text = new TextView(context);
-                text.setText(R.string.status_bar_settings_bttether_button);
-                text.setGravity(Gravity.CENTER_VERTICAL);
-                text.setTextSize(18);
-                ll.addView(text, textlp);
+                ll.addView(makeTextView(R.string.status_bar_settings_bttether_button), textlp);
                 Switch toggle = new Switch(context);
                 toggle.setGravity(Gravity.CENTER_VERTICAL);
                 mTetherBT = new BluetoothTetherController(context, toggle);
                 ll.addView(toggle, switchlp);
-                ll.setId(13);
-                ll.setOnClickListener(this);
+                ll.setId(TETHERBT);
+                ll.setOnLongClickListener(this);
             }
 
             addView(ll, lp);
@@ -358,6 +337,16 @@ public class SettingsView extends LinearLayout implements View.OnClickListener {
             separator.setBackgroundResource(com.android.internal.R.drawable.divider_horizontal_dark);
             addView(separator, separatorlp);
         }
+    }
+
+    private TextView makeTextView(int resource) {
+        TextView text = new TextView(getContext());
+        if (resource != 0) text.setText(resource);
+        text.setGravity(Gravity.CENTER_VERTICAL);
+        text.setTextSize(18);
+        text.setTextColor(getResources()
+                .getColor(com.android.internal.R.color.primary_text_holo_dark));
+        return text;
     }
 
     @Override
@@ -369,42 +358,53 @@ public class SettingsView extends LinearLayout implements View.OnClickListener {
 
     public void onClick(View v) {
         switch (v.getId()) {
-            case 1:
-                onClickNetwork();
-                break;
-            case 2:
-                onClickBluetooth();
-                break;
-            case 3:
+            case SETTINGS:
                 onClickSettings();
                 break;
-            case 4:
-                onClickGPS();
+            case MEDIA_PREVIOUS:
+                onClickMedia(MEDIA_PREVIOUS);
                 break;
-            case 5:
-                onClickMedia(1);
+            case MEDIA_PAUSE:
+                onClickMedia(MEDIA_PAUSE);
                 break;
-            case 6:
-                onClickMedia(2);
+            case MEDIA_PLAY:
+                onClickMedia(MEDIA_PLAY);
                 break;
-            case 7:
-                onClickMedia(3);
-                break;
-            case 8:
-                onClickMedia(4);
-                break;
-            case 9:
-                onClickMobileData();
-                break;
-            case 10:
-                onClickLockScreen();
-                break;
-            case 11:
-            case 12:
-            case 13:
-                onClickTether();
+            case MEDIA_NEXT:
+                onClickMedia(MEDIA_NEXT);
                 break;
         }
+    }
+
+    public boolean onLongClick(View v) {
+        switch (v.getId()) {
+            case WIFI:
+                onClickNetwork();
+                return true;
+            case BLUETOOTH:
+                onClickBluetooth();
+                return true;
+            case GPS:
+                onClickGPS();
+                return true;
+            case MOBILEDATA:
+                onClickMobileData();
+                return true;
+            case LOCKSCREEN:
+                onClickLockScreen();
+                return true;
+            case WIFIAP:
+            case TETHERUSB:
+            case TETHERBT:
+                onClickTether();
+                return true;
+            case SLEEP:
+            case BRIGHTNESS:
+            case AUTOROTATE:
+                onClickDisplay();
+                return true;
+        }
+        return false;
     }
 
     private StatusBarManager getStatusBarManager() {
@@ -419,7 +419,7 @@ public class SettingsView extends LinearLayout implements View.OnClickListener {
         getStatusBarManager().collapse();
     }
 
-// Bluetooth
+    // Bluetooth
     // ----------------------------
     private void onClickBluetooth() {
         getContext().startActivity(new Intent(Settings.ACTION_BLUETOOTH_SETTINGS)
@@ -452,16 +452,16 @@ public class SettingsView extends LinearLayout implements View.OnClickListener {
         int code = 0;
 
         switch (index) {
-            case 1:
+            case MEDIA_PREVIOUS:
                 code = KeyEvent.KEYCODE_MEDIA_PREVIOUS;
                 break;
-            case 2:
+            case MEDIA_PAUSE:
                 code = KeyEvent.KEYCODE_MEDIA_PAUSE;
                 break;
-            case 3:
+            case MEDIA_PLAY:
                 code = KeyEvent.KEYCODE_MEDIA_PLAY;
                 break;
-            case 4:
+            case MEDIA_NEXT:
                 code = KeyEvent.KEYCODE_MEDIA_NEXT;
                 break;
         }
@@ -501,6 +501,16 @@ public class SettingsView extends LinearLayout implements View.OnClickListener {
     // ----------------------------
     private void onClickTether() {
         Intent intent = new Intent("android.settings.TETHER_SETTINGS");
+        intent.addCategory(Intent.CATEGORY_DEFAULT);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        getContext().startActivity(intent);
+        getStatusBarManager().collapse();
+    }
+
+    // Display
+    // ----------------------------
+    private void onClickDisplay() {
+        Intent intent = new Intent("android.settings.DISPLAY_SETTINGS");
         intent.addCategory(Intent.CATEGORY_DEFAULT);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         getContext().startActivity(intent);

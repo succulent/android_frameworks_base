@@ -17,6 +17,7 @@
 package com.android.systemui.statusbar.policy;
 
 import android.content.Context;
+import android.net.ConnectivityManager;
 import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.provider.Settings;
@@ -36,8 +37,14 @@ public class WifiAPController implements CompoundButton.OnCheckedChangeListener 
 
         boolean enabled = state == WifiManager.WIFI_AP_STATE_ENABLED;
         checkbox.setChecked(enabled);
-        checkbox.setEnabled(wifiManager != null);
+        checkbox.setEnabled(wifiManager != null && getDataState(context));
         checkbox.setOnCheckedChangeListener(this);
+    }
+
+    private static boolean getDataState(Context context) {
+        ConnectivityManager cm = (ConnectivityManager) context
+            .getSystemService(Context.CONNECTIVITY_SERVICE);
+        return cm.getMobileDataEnabled();
     }
 
     public void onCheckedChanged(CompoundButton view, boolean checked) {
@@ -47,7 +54,7 @@ public class WifiAPController implements CompoundButton.OnCheckedChangeListener 
         if (wifiManager == null) {
             return;
         }
-
+        if (checked) wifiManager.setWifiEnabled(true);
         // Actually request the Wi-Fi AP change and persistent
         // settings write off the UI thread, as it can take a
         // user-noticeable amount of time, especially if there's
@@ -65,6 +72,7 @@ public class WifiAPController implements CompoundButton.OnCheckedChangeListener 
                 }
 
                 wifiManager.setWifiApEnabled(null, desiredState);
+                if (!desiredState) wifiManager.setWifiEnabled(true);
                 return null;
             }
         }.execute();
