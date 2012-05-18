@@ -132,7 +132,7 @@
     </string>
 
     <!-- Name of the button that links to the GPS settings screen. [CHAR LIMIT=NONE] -->
-    <string name="status_bar_settings_gps_button">GPS</string>
+    <string name="status_bar_settings_gps_button">GPS location</string>
 
     <!-- Name of the button that links to the mobile data screen. [CHAR LIMIT=NONE] -->
     <string name="status_bar_settings_data_button">Mobile data</string>
@@ -144,10 +144,10 @@
     <string name="status_bar_settings_wifiap_button">Wi-Fi access point</string>
 
     <!-- Name of the button that links to the Tether settings screen. [CHAR LIMIT=NONE] -->
-    <string name="status_bar_settings_usbtether_button">USB tethering</string>
+    <string name="status_bar_settings_usbtether_button">USB tether</string>
 
     <!-- Name of the button that links to the Tether settings screen. [CHAR LIMIT=NONE] -->
-    <string name="status_bar_settings_bttether_button">Bluetooth tethering</string>
+    <string name="status_bar_settings_bttether_button">Bluetooth tether</string>
 
     <string name="status_bar_screen_timeout"><xliff:g id="timeout_description">%1$s</xliff:g> screen timeout</string>
 

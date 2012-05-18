@@ -71,6 +71,8 @@ public class ToggleSlider extends RelativeLayout
 
         mLabel = (TextView)findViewById(R.id.label);
         mLabel.setText(a.getString(R.styleable.ToggleSlider_text));
+        mLabel.setTextColor(res
+                .getColor(com.android.internal.R.color.primary_text_holo_dark));
 
         a.recycle();
     }
