@@ -2265,6 +2265,18 @@ public final class Settings {
         public static final String COMBINED_BAR_NAVIGATION_GLOW = "combined_bar_navigation_glow";
 
         /**
+        * CombinedBar navigation glow time on tablets.
+        * @hide
+        */
+        public static final String COMBINED_BAR_NAVIGATION_GLOW_TIME = "combined_bar_navigation_glow_time";
+
+        /**
+        * CombinedBar navigation glow color on tablets.
+        * @hide
+        */
+        public static final String COMBINED_BAR_NAVIGATION_GLOW_COLOR = "combined_bar_navigation_glow_color";
+
+        /**
          * String for combined bar settings.
          * @hide
          */
