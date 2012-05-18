@@ -22,6 +22,7 @@ import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.drawable.Drawable;
 import android.graphics.Canvas;
+import android.graphics.PorterDuff;
 import android.graphics.RectF;
 import android.os.RemoteException;
 import android.os.SystemClock;
@@ -56,6 +57,8 @@ public class KeyButtonView extends ImageView {
     float mGlowAlpha = 0f, mGlowScale = 1f, mDrawingAlpha = 1f;
     boolean mSupportsLongpress = true;
     RectF mRect = new RectF(0f,0f,0f,0f);
+    int mGlowBGColor;
+    boolean mQuickGlow = false;
 
     Runnable mCheckLongPress = new Runnable() {
         public void run() {
@@ -92,8 +95,6 @@ public class KeyButtonView extends ImageView {
             mGlowBG = mOriginalGlowBG;
         }
 
-
-
         a.recycle();
 
         mWindowManager = IWindowManager.Stub.asInterface(
@@ -112,6 +113,7 @@ public class KeyButtonView extends ImageView {
             canvas.scale(mGlowScale, mGlowScale, w*0.5f, h*0.5f);
             mGlowBG.setBounds(0, 0, w, h);
             mGlowBG.setAlpha((int)(mGlowAlpha * 255));
+            mGlowBG.setColorFilter(mGlowBGColor, PorterDuff.Mode.SRC_ATOP);
             mGlowBG.draw(canvas);
             canvas.restore();
             mRect.right = w;
@@ -126,6 +128,14 @@ public class KeyButtonView extends ImageView {
 
     public void setGlowBG(boolean glow) {
         mGlowBG = glow ? mOriginalGlowBG : null;
+    }
+
+    public void setGlowBGColor(int color) {
+        mGlowBGColor = color;
+    }
+
+    public void setGlowBGTime(boolean quickGlow) {
+        mQuickGlow = quickGlow;
     }
 
     public float getDrawingAlpha() {
@@ -193,14 +203,14 @@ public class KeyButtonView extends ImageView {
                         ObjectAnimator.ofFloat(this, "glowAlpha", 1f),
                         ObjectAnimator.ofFloat(this, "glowScale", GLOW_MAX_SCALE_FACTOR)
                     );
-                    as.setDuration(50);
+                    as.setDuration(mQuickGlow ? 10 : 50);
                 } else {
                     as.playTogether(
                         ObjectAnimator.ofFloat(this, "glowAlpha", 0f),
                         ObjectAnimator.ofFloat(this, "glowScale", 1f),
                         ObjectAnimator.ofFloat(this, "drawingAlpha", BUTTON_QUIESCENT_ALPHA)
                     );
-                    as.setDuration(500);
+                    as.setDuration(mQuickGlow ? 100 : 500);
                 }
                 as.start();
             }

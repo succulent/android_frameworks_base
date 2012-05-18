@@ -40,8 +40,10 @@ import android.content.res.CustomTheme;
 import android.content.res.Resources;
 import android.database.ContentObserver;
 import android.inputmethodservice.InputMethodService;
+import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.graphics.Point;
+import android.graphics.PorterDuff;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.LayerDrawable;
@@ -1212,6 +1214,23 @@ public class TabletStatusBar extends StatusBar implements
         mHomeButton.setGlowBG(glow);
         mRecentButton.setGlowBG(glow);
         mMenuButton.setGlowBG(glow);
+
+        boolean glowTime = Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.COMBINED_BAR_NAVIGATION_GLOW_TIME, 0) == 1;
+
+        mBackButton.setGlowBGTime(glowTime);
+        mHomeButton.setGlowBGTime(glowTime);
+        mRecentButton.setGlowBGTime(glowTime);
+        mMenuButton.setGlowBGTime(glowTime);
+
+        int glowColor = Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.COMBINED_BAR_NAVIGATION_GLOW_COLOR, mContext.getResources().getColor(
+                com.android.internal.R.color.holo_blue_light));
+
+        mBackButton.setGlowBGColor(glowColor);
+        mHomeButton.setGlowBGColor(glowColor);
+        mRecentButton.setGlowBGColor(glowColor);
+        mMenuButton.setGlowBGColor(glowColor);
     }
 
     private void updateClockVisibilitySettings() {
@@ -1249,15 +1268,23 @@ public class TabletStatusBar extends StatusBar implements
                 Settings.System.COMBINED_BAR_NAVIGATION_COLOR, 0x00000000);
 
         if (buttonColor != 0x00000000) {
-            mBackButton.setColorFilter(buttonColor);
-            mHomeButton.setColorFilter(buttonColor);
-            mRecentButton.setColorFilter(buttonColor);
-            mMenuButton.setColorFilter(buttonColor);
+            mBackButton.setColorFilter(buttonColor, PorterDuff.Mode.SRC_ATOP);
+            mHomeButton.setColorFilter(buttonColor, PorterDuff.Mode.SRC_ATOP);
+            mRecentButton.setColorFilter(buttonColor, PorterDuff.Mode.SRC_ATOP);
+            mMenuButton.setColorFilter(buttonColor, PorterDuff.Mode.SRC_ATOP);
+            mBackButton.setAlpha(Color.alpha(buttonColor));
+            mHomeButton.setAlpha(Color.alpha(buttonColor));
+            mRecentButton.setAlpha(Color.alpha(buttonColor));
+            mMenuButton.setAlpha(Color.alpha(buttonColor));
         } else {
             mBackButton.clearColorFilter();
             mHomeButton.clearColorFilter();
             mRecentButton.clearColorFilter();
             mMenuButton.clearColorFilter();
+            mBackButton.setAlpha(255);
+            mHomeButton.setAlpha(255);
+            mRecentButton.setAlpha(255);
+            mMenuButton.setAlpha(255);
         }
     }
 
@@ -2254,6 +2281,10 @@ public class TabletStatusBar extends StatusBar implements
                     Settings.System.COMBINED_BAR_EXPANDED_TRANSPARENCY), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.COMBINED_BAR_NAVIGATION_GLOW), false, this);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.COMBINED_BAR_NAVIGATION_GLOW_COLOR), false, this);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.COMBINED_BAR_NAVIGATION_GLOW_TIME), false, this);
         }
 
         @Override
@@ -2283,6 +2314,14 @@ public class TabletStatusBar extends StatusBar implements
                 mHandler.sendEmptyMessage(MSG_BUTTON_COLOR);
             } else if (uri.equals(Settings.System.getUriFor(
                     Settings.System.COMBINED_BAR_NAVIGATION_GLOW))) {
+                mHandler.removeMessages(MSG_BUTTON_GLOW);
+                mHandler.sendEmptyMessage(MSG_BUTTON_GLOW);
+            } else if (uri.equals(Settings.System.getUriFor(
+                    Settings.System.COMBINED_BAR_NAVIGATION_GLOW_COLOR))) {
+                mHandler.removeMessages(MSG_BUTTON_GLOW);
+                mHandler.sendEmptyMessage(MSG_BUTTON_GLOW);
+            } else if (uri.equals(Settings.System.getUriFor(
+                    Settings.System.COMBINED_BAR_NAVIGATION_GLOW_TIME))) {
                 mHandler.removeMessages(MSG_BUTTON_GLOW);
                 mHandler.sendEmptyMessage(MSG_BUTTON_GLOW);
             } else if (uri.equals(Settings.System.getUriFor(
