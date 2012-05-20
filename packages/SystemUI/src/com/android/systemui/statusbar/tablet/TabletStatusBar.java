@@ -244,6 +244,7 @@ public class TabletStatusBar extends StatusBar implements
     // to some other configuration change).
     CustomTheme mCurrentTheme;
     private boolean mRecreating = false;
+    private boolean mWidthSet = false;
 
     protected void addPanelWindows() {
         final Context context = mContext;
@@ -853,6 +854,10 @@ public class TabletStatusBar extends StatusBar implements
                         if (mShowPeeks) {
                             mNotificationPeekWindow.setVisibility(View.GONE);
                         }
+                        if (!mWidthSet) {
+                            mNotificationPanel.mPowerWidget.setupWidget();
+                            mWidthSet = true;
+                        }
                         mNotificationPanel.show(true, true);
                         mNotificationArea.setVisibility(View.INVISIBLE);
                         mTicker.halt();
@@ -1199,7 +1204,6 @@ public class TabletStatusBar extends StatusBar implements
 
         mForceMenuButton = (Settings.System.getInt(mContext.getContentResolver(),
                 Settings.System.FORCE_SOFT_MENU_BUTTON, 0) == 1);
-
         mMenuButton.setVisibility(mHideMenuButton ? View.GONE : (mForceMenuButton ? View.VISIBLE :
                 View.INVISIBLE));
 
@@ -1209,7 +1213,6 @@ public class TabletStatusBar extends StatusBar implements
     private void updateButtonGlowSettings() {
         boolean glow = Settings.System.getInt(mContext.getContentResolver(),
                 Settings.System.COMBINED_BAR_NAVIGATION_GLOW, 1) == 1;
-
         mBackButton.setGlowBG(glow);
         mHomeButton.setGlowBG(glow);
         mRecentButton.setGlowBG(glow);
@@ -1217,7 +1220,6 @@ public class TabletStatusBar extends StatusBar implements
 
         boolean glowTime = Settings.System.getInt(mContext.getContentResolver(),
                 Settings.System.COMBINED_BAR_NAVIGATION_GLOW_TIME, 0) == 1;
-
         mBackButton.setGlowBGTime(glowTime);
         mHomeButton.setGlowBGTime(glowTime);
         mRecentButton.setGlowBGTime(glowTime);
@@ -1226,7 +1228,6 @@ public class TabletStatusBar extends StatusBar implements
         int glowColor = Settings.System.getInt(mContext.getContentResolver(),
                 Settings.System.COMBINED_BAR_NAVIGATION_GLOW_COLOR, mContext.getResources().getColor(
                 com.android.internal.R.color.holo_blue_light));
-
         mBackButton.setGlowBGColor(glowColor);
         mHomeButton.setGlowBGColor(glowColor);
         mRecentButton.setGlowBGColor(glowColor);
@@ -1235,10 +1236,8 @@ public class TabletStatusBar extends StatusBar implements
 
     private void updateClockVisibilitySettings() {
         ContentResolver resolver = mContext.getContentResolver();
-
         mShowClock = (Settings.System.getInt(resolver,
                 Settings.System.STATUS_BAR_CLOCK, 1) == 1);
-
         View clock = mBarContents.findViewById(R.id.clock);
         if (clock != null) {
             clock.setVisibility(mShowClock ? View.VISIBLE : View.GONE);
@@ -1247,10 +1246,8 @@ public class TabletStatusBar extends StatusBar implements
 
     private void updateClockColorSettings() {
         ContentResolver resolver = mContext.getContentResolver();
-
         int clockColor = Settings.System.getInt(resolver,
                 Settings.System.STATUS_BAR_CLOCK_COLOR, 0xFF33B5E5);
-
         TextView clockText = (TextView) mBarContents.findViewById(R.id.time_solid);
         if (clockText != null) {
             if (clockColor != 0x00000000) {
@@ -1263,10 +1260,8 @@ public class TabletStatusBar extends StatusBar implements
 
     private void updateButtonColorSettings() {
         ContentResolver resolver = mContext.getContentResolver();
-
         int buttonColor = Settings.System.getInt(resolver,
                 Settings.System.COMBINED_BAR_NAVIGATION_COLOR, 0x00000000);
-
         if (buttonColor != 0x00000000) {
             mBackButton.setColorFilter(buttonColor, PorterDuff.Mode.SRC_ATOP);
             mHomeButton.setColorFilter(buttonColor, PorterDuff.Mode.SRC_ATOP);
@@ -1293,27 +1288,33 @@ public class TabletStatusBar extends StatusBar implements
 
         int color = Settings.System.getInt(resolver,
                 Settings.System.COMBINED_BAR_COLOR, 0xFF000000);
-
         mStatusBarView.setBackgroundColor(color);
     }
 
     private void updateExpandedTransparency() {
         ContentResolver resolver = mContext.getContentResolver();
-
         int transparency = Settings.System.getInt(resolver,
                 Settings.System.COMBINED_BAR_EXPANDED_TRANSPARENCY, 255);
-
         if (mExpandedTransparency != transparency) {
-            Drawable background = mContext.getResources().getDrawable(mRightButtons ?
-                    R.drawable.notify_panel_clock_bg_normal_flipped :
-                    R.drawable.notify_panel_clock_bg_normal);
-            background.setAlpha(transparency);
-            mNotificationPanel.mTitleArea.setBackgroundDrawable(background);
-            Drawable notifyBackground = mContext.getResources().getDrawable(mRightButtons ?
-                    R.drawable.notify_panel_notify_bg_flipped :
-                    R.drawable.notify_panel_notify_bg);
-            notifyBackground.setAlpha(transparency);
-            mNotificationPanel.mContentFrame.setBackgroundDrawable(notifyBackground);
+            if (transparency != 255) {
+                Drawable background = mContext.getResources().getDrawable(mRightButtons ?
+                        R.drawable.notify_panel_clock_bg_normal_flipped :
+                        R.drawable.notify_panel_clock_bg_normal);
+                background.setAlpha(transparency);
+                mNotificationPanel.mTitleArea.setBackgroundDrawable(background);
+                Drawable notifyBackground = mContext.getResources().getDrawable(mRightButtons ?
+                        R.drawable.notify_panel_notify_bg_flipped :
+                        R.drawable.notify_panel_notify_bg);
+                notifyBackground.setAlpha(transparency);
+                mNotificationPanel.mContentFrame.setBackgroundDrawable(notifyBackground);
+            } else {
+                mNotificationPanel.mTitleArea.setBackgroundResource(mRightButtons ?
+                        R.drawable.notify_panel_clock_bg_flipped :
+                        R.drawable.notify_panel_clock_bg);
+                mNotificationPanel.mContentFrame.setBackgroundResource(mRightButtons ?
+                        R.drawable.notify_panel_notify_bg_flipped :
+                        R.drawable.notify_panel_notify_bg);
+            }
         }
         mExpandedTransparency = transparency;
     }
