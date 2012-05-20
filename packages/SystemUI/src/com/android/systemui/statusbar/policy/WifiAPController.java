@@ -72,7 +72,6 @@ public class WifiAPController implements CompoundButton.OnCheckedChangeListener 
                 }
 
                 wifiManager.setWifiApEnabled(null, desiredState);
-                if (!desiredState) wifiManager.setWifiEnabled(true);
                 return null;
             }
         }.execute();
