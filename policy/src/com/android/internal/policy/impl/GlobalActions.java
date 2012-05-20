@@ -101,6 +101,7 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
     private final boolean mTabletStatusBar;
 
     private StatusBarManager mStatusBarManager;
+    private boolean mStatusBarDisabled = false;
 
     private Profile mChosenProfile;
 
@@ -293,7 +294,8 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
                 new SinglePressAction(com.android.internal.R.drawable.ic_menu_copy,
                         R.string.global_actions_toggle_statusbar) {
                     public void onPress() {
-
+                        mStatusBarManager.disable(mStatusBarDisabled ? 0x00000000 : 0x10000000);
+                        mStatusBarDisabled = !mStatusBarDisabled;
                     }
 
                     public boolean showDuringKeyguard() {
