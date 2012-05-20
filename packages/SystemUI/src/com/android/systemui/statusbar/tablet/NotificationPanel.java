@@ -75,6 +75,7 @@ public class NotificationPanel extends RelativeLayout implements StatusBarPanel,
     PowerWidget mPowerWidget;
     Handler mHandler = new Handler();
     boolean mDisplayPowerWidget;
+    boolean mDisplayPowerWidgetBottom;
 
     // amount to slide mContentParent down by when mContentFrame is missing
     float mContentFrameMissingTranslation;
@@ -381,7 +382,10 @@ public class NotificationPanel extends RelativeLayout implements StatusBarPanel,
 
     public void updatePowerWidgetVisibility() {
         mDisplayPowerWidget = Settings.System.getInt(mContext.getContentResolver(),
-                   Settings.System.EXPANDED_VIEW_WIDGET, 1) == 1;
+                Settings.System.EXPANDED_VIEW_WIDGET, 1) == 1;
+        mDisplayPowerWidgetBottom = Settings.System.getInt(getContext().getContentResolver(),
+                Settings.System.EXPANDED_VIEW_WIDGET_BOTTOM, 0) == 1;
+        setNotificationScrollerHeight();
     }
 
     public boolean isInContentArea(int x, int y) {
@@ -424,12 +428,16 @@ public class NotificationPanel extends RelativeLayout implements StatusBarPanel,
                 ViewGroup.LayoutParams.MATCH_PARENT, currentHeight));
         mSettingsView.setVisibility(View.GONE);
         mContentFrame.addView(mSettingsView);
+        if (mDisplayPowerWidgetBottom) {
+            mContentFrame.removeView(mPowerWidget);
+            mContentFrame.addView(mPowerWidget, mContentFrame.getChildCount());
+        }
     }
 
     private void setNotificationScrollerHeight() {
         mNotificationScroller.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
         int currentHeight = mNotificationScroller.getMeasuredHeight();
-        WindowManager wm = (WindowManager)getContext().getSystemService(Context.WINDOW_SERVICE);
+        WindowManager wm = (WindowManager) getContext().getSystemService(Context.WINDOW_SERVICE);
         Display d = wm.getDefaultDisplay();
         int maxHeight = d.getHeight() - mTitleArea.getHeight() - (mDisplayPowerWidget ?
                 mPowerWidget.getHeight() : 0);
@@ -438,6 +446,10 @@ public class NotificationPanel extends RelativeLayout implements StatusBarPanel,
                 ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f));
         mContentFrame.removeView(mNotificationScroller);
         mContentFrame.addView(mNotificationScroller);
+        if (mDisplayPowerWidgetBottom) {
+            mContentFrame.removeView(mPowerWidget);
+            mContentFrame.addView(mPowerWidget, mContentFrame.getChildCount());
+        }
     }
 
     @Override
