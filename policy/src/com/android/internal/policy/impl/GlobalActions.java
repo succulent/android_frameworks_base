@@ -45,6 +45,7 @@ import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import com.android.internal.R;
 import com.android.internal.app.ShutdownThread;
@@ -97,6 +98,7 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
     private ToggleAction.State mAirplaneState = ToggleAction.State.Off;
     private boolean mIsWaitingForEcmExit = false;
     private boolean mCondensedDialog;
+    private final boolean mTabletStatusBar;
 
     private StatusBarManager mStatusBarManager;
 
@@ -112,6 +114,7 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
                 mContext.getSystemService(Context.STATUS_BAR_SERVICE);
         mCondensedDialog = Settings.System.getInt(mContext.getContentResolver(),
                 Settings.System.CONDENSED_GLOBAL_ACTIONS, 0) == 1;
+        mTabletStatusBar = context.getResources().getConfiguration().smallestScreenWidthDp >= 600;
 
         // receive broadcasts
         IntentFilter filter = new IntentFilter();
@@ -286,7 +289,7 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
             mItems.add(mAirplaneModeOn);
 
             // next: statusbar
-            mItems.add(
+            if (mTabletStatusBar) mItems.add(
                 new SinglePressAction(com.android.internal.R.drawable.ic_menu_copy,
                         R.string.global_actions_toggle_statusbar) {
                     public void onPress() {
@@ -932,10 +935,14 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
             View v = inflater.inflate(R.layout.global_actions_condensed_mode_row_two, parent, false);
 
             for (int i = 0; i < 3; i++) {
-                View itemView = v.findViewById(ITEM_IDS[i]);
+                LinearLayout itemView = (LinearLayout) v.findViewById(ITEM_IDS[i]);
                 // Set up click handler
                 itemView.setTag(i);
                 itemView.setOnClickListener(this);
+                if (i == 1 && v.getContext().getResources().getConfiguration().smallestScreenWidthDp < 600) {
+                    ImageView image = (ImageView) itemView.getChildAt(0);
+                    image.setImageResource(R.drawable.ic_lock_airplane_mode_off);
+                }
             }
             return v;
         }
@@ -967,8 +974,12 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
                     mHandler.sendEmptyMessage(MESSAGE_SCREENSHOT);
                     break;
                 case 1:
-                    mStatusBarManager.disable(mStatusBarDisabled ? 0x00000000 : 0x10000000);
-                    mStatusBarDisabled = !mStatusBarDisabled;
+                    if (v.getContext().getResources().getConfiguration().smallestScreenWidthDp >= 600) {
+                        mStatusBarManager.disable(mStatusBarDisabled ? 0x00000000 : 0x10000000);
+                        mStatusBarDisabled = !mStatusBarDisabled;
+                    } else {
+                        changeAirplaneModeSystemSetting(v.getContext());
+                    }
                     break;
                 case 2:
                     Intent intent = new Intent("android.intent.action.MAIN");
@@ -1061,5 +1072,23 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
         intent.addFlags(Intent.FLAG_RECEIVER_REPLACE_PENDING);
         intent.putExtra("state", on);
         mContext.sendBroadcast(intent);
+    }
+
+    /**
+     * Change the airplane mode system setting
+     */
+    private static void changeAirplaneModeSystemSetting(Context context) {
+        boolean on = Settings.System.getInt(
+                context.getContentResolver(),
+                Settings.System.AIRPLANE_MODE_ON,
+                0) == 1;
+        Settings.System.putInt(
+                context.getContentResolver(),
+                Settings.System.AIRPLANE_MODE_ON,
+                !on ? 1 : 0);
+        Intent intent = new Intent(Intent.ACTION_AIRPLANE_MODE_CHANGED);
+        intent.addFlags(Intent.FLAG_RECEIVER_REPLACE_PENDING);
+        intent.putExtra("state", !on);
+        context.sendBroadcast(intent);
     }
 }
