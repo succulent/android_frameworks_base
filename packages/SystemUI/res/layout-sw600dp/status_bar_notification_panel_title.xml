@@ -50,7 +50,7 @@
                     android:id="@+id/bluetooth"
                     android:layout_height="wrap_content"
                     android:layout_width="wrap_content"
-                    android:paddingRight="6dp"
+                    android:paddingRight="12dp"
                     android:visibility="gone"
                     android:contentDescription="@null"
                     android:layout_gravity="center_vertical"
@@ -85,11 +85,11 @@
                 android:id="@+id/mobile_text"
                 style="@style/StatusBarNotificationText"
                 android:layout_gravity="left|center_vertical"
-                android:layout_width="85dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:paddingRight="12dp"
                 android:singleLine="true"
-                android:ellipsize="marquee"
+                android:ellipsize="end"
                 android:text="@string/status_bar_settings_settings_button"
                 />
 
@@ -121,11 +121,11 @@
                 android:id="@+id/wifi_text"
                 style="@style/StatusBarNotificationText"
                 android:layout_gravity="left|center_vertical"
-                android:layout_width="85dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:paddingRight="12dp"
                 android:singleLine="true"
-                android:ellipsize="marquee"
+                android:ellipsize="end"
                 android:text="@string/status_bar_settings_settings_button"
                 />
 
@@ -197,15 +197,6 @@
 
         </TableRow>
     </TableLayout>
-
-    <com.android.systemui.statusbar.powerwidget.PowerWidget android:id="@+id/exp_power_stat"
-        android:layout_width="184dp"
-        android:layout_height="wrap_content"
-        android:layout_marginRight="18dp"
-        android:layout_marginBottom="16dp"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentBottom="true"
-    />
 
     <com.android.systemui.statusbar.tablet.HoloClock
         android:id="@+id/clock"

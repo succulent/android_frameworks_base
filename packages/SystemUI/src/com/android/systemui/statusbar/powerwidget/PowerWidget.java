@@ -54,19 +54,21 @@ public class PowerWidget extends FrameLayout {
 
     private static final FrameLayout.LayoutParams WIDGET_LAYOUT_PARAMS =
             new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
-            ViewGroup.LayoutParams.WRAP_CONTENT);
+            ViewGroup.LayoutParams.MATCH_PARENT);
 
     private static final LinearLayout.LayoutParams BUTTON_LAYOUT_PARAMS =
             new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
-            ViewGroup.LayoutParams.MATCH_PARENT, 1.0f);
+            ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f);
 
-    private static final int LAYOUT_SCROLL_BUTTON_WIDTH = 184;
+    private static final LinearLayout.LayoutParams SEPARATOR_LAYOUT_PARAMS =
+            new LinearLayout.LayoutParams(1, ViewGroup.LayoutParams.MATCH_PARENT);
 
     private Context mContext;
     private LayoutInflater mInflater;
     private WidgetBroadcastReceiver mBroadcastReceiver = null;
     private WidgetSettingsObserver mObserver = null;
     private int mScrollButtonThreshold;
+    private boolean mTabletStatusBar;
 
     private HorizontalScrollView mScrollView;
 
@@ -76,11 +78,11 @@ public class PowerWidget extends FrameLayout {
         mContext = context;
         mInflater = (LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 
-        mScrollButtonThreshold = getResources().getConfiguration().smallestScreenWidthDp < 600
-                ? 6 : 4;
+        mTabletStatusBar = getResources().getConfiguration().smallestScreenWidthDp >= 600;
+
+        mScrollButtonThreshold = mTabletStatusBar ? 4 : 6;
 
         // get an initial width
-        updateButtonLayoutWidth();
         setupWidget();
         updateVisibility();
     }
@@ -120,6 +122,8 @@ public class PowerWidget extends FrameLayout {
         }
         Log.i(TAG, "Button list: " + buttons);
 
+        updateButtonLayoutWidth();
+
         // create a linearlayout to hold our buttons
         LinearLayout ll = new LinearLayout(mContext);
         ll.setOrientation(LinearLayout.HORIZONTAL);
@@ -135,6 +139,12 @@ public class PowerWidget extends FrameLayout {
                 // add the button here
                 ll.addView(buttonView, BUTTON_LAYOUT_PARAMS);
                 buttonCount++;
+                if (buttonCount < buttons.split("\\|").length) {
+                    View separator = new View(mContext);
+                    separator.setBackgroundResource(
+                            com.android.internal.R.drawable.divider_horizontal_dark);
+                    ll.addView(separator, SEPARATOR_LAYOUT_PARAMS);
+                }
             } else {
                 Log.e(TAG, "Error setting up button: " + button);
             }
@@ -145,18 +155,17 @@ public class PowerWidget extends FrameLayout {
             // we need our horizontal scroll view to wrap the linear layout
             mScrollView = new HorizontalScrollView(mContext);
             // make the fading edge the size of a button (makes it more noticible that we can scroll
-            boolean notLarge = getResources().getConfiguration().smallestScreenWidthDp < 600;
-            if (notLarge) {
+            if (!mTabletStatusBar) {
                 mScrollView.setFadingEdgeLength(mContext.getResources().getDisplayMetrics()
                         .widthPixels / mScrollButtonThreshold);
             } else {
-                mScrollView.setFadingEdgeLength(LAYOUT_SCROLL_BUTTON_WIDTH /
+                mScrollView.setFadingEdgeLength(getWidth() /
                         mScrollButtonThreshold);
             }
             mScrollView.setScrollBarStyle(View.SCROLLBARS_INSIDE_INSET);
             mScrollView.setOverScrollMode(View.OVER_SCROLL_NEVER);
             // set the padding on the linear layout to the size of our scrollbar
-            if (notLarge) {
+            if (!mTabletStatusBar) {
                 ll.setPadding(ll.getPaddingLeft(), ll.getPaddingTop(), ll.getPaddingRight(),
                         mScrollView.getVerticalScrollbarWidth());
             }
@@ -209,12 +218,12 @@ public class PowerWidget extends FrameLayout {
 
     private void updateButtonLayoutWidth() {
         // use our context to set a valid button width
-        if (getResources().getConfiguration().smallestScreenWidthDp < 600) {
+        if (!mTabletStatusBar) {
             BUTTON_LAYOUT_PARAMS.width = mContext.getResources().getDisplayMetrics().widthPixels
                     / mScrollButtonThreshold;
         } else {
-            BUTTON_LAYOUT_PARAMS.width = LAYOUT_SCROLL_BUTTON_WIDTH
-                    / mScrollButtonThreshold;
+            BUTTON_LAYOUT_PARAMS.width = getWidth() / mScrollButtonThreshold;
+            BUTTON_LAYOUT_PARAMS.height = ViewGroup.LayoutParams.MATCH_PARENT;
         }
     }
 
@@ -240,7 +249,6 @@ public class PowerWidget extends FrameLayout {
     private class WidgetBroadcastReceiver extends BroadcastReceiver {
         public void onReceive(Context context, Intent intent) {
             if(intent.getAction().equals(Intent.ACTION_CONFIGURATION_CHANGED)) {
-                updateButtonLayoutWidth();
                 setupWidget();
             } else {
                 // handle the intent through our power buttons

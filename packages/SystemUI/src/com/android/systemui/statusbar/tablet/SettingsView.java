@@ -138,8 +138,6 @@ public class SettingsView extends LinearLayout implements View.OnClickListener,
                 ViewGroup.LayoutParams.MATCH_PARENT, 64);
         LinearLayout.LayoutParams iconlp = new LinearLayout.LayoutParams(
                 64, ViewGroup.LayoutParams.MATCH_PARENT);
-        LinearLayout.LayoutParams spacerlp = new LinearLayout.LayoutParams(
-                45, ViewGroup.LayoutParams.MATCH_PARENT);
         LinearLayout.LayoutParams separatorlp = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, 1);
         LinearLayout.LayoutParams textlp = new LinearLayout.LayoutParams(0,

@@ -22,6 +22,7 @@ import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.graphics.Rect;
 import android.os.Handler;
 import android.provider.Settings;
@@ -38,6 +39,7 @@ import android.view.WindowManager;
 import android.view.animation.AccelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
 import android.view.animation.Interpolator;
+import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -114,8 +116,6 @@ public class NotificationPanel extends RelativeLayout implements StatusBarPanel,
         mClearButton = findViewById(R.id.clear_all_button);
         mClearButton.setOnClickListener(mClearButtonListener);
 
-        updatePowerWidgetVisibility();
-
         mPowerWidget = (PowerWidget) findViewById(R.id.exp_power_stat);
         if (mPowerWidget != null) {
             mPowerWidget.setupSettingsObserver(mHandler);
@@ -136,6 +136,7 @@ public class NotificationPanel extends RelativeLayout implements StatusBarPanel,
                     }
                 });
             mPowerWidget.setupWidget();
+            updatePowerWidgetVisibility();
         }
 
         mShowing = false;
@@ -182,13 +183,6 @@ public class NotificationPanel extends RelativeLayout implements StatusBarPanel,
         } else {
             mShowing = show;
             setVisibility(show ? View.VISIBLE : View.GONE);
-        }
-
-        if (show) {
-            TextView wifiText = (TextView) findViewById(R.id.wifi_text);
-            TextView mobileText = (TextView) findViewById(R.id.mobile_text);
-            if (wifiText.getVisibility() == View.VISIBLE) wifiText.setSelected(true);
-            else if (mobileText.getVisibility() == View.VISIBLE) mobileText.setSelected(true);
         }
     }
 
@@ -267,6 +261,7 @@ public class NotificationPanel extends RelativeLayout implements StatusBarPanel,
 
     public void setNotificationCount(int n) {
 //        Slog.d(TAG, "notificationCount=" + n);
+        setNotificationScrollerHeight();
         if (!mShowing) {
             // just do it, already
             setContentFrameVisible(n > 0, false);
@@ -279,7 +274,9 @@ public class NotificationPanel extends RelativeLayout implements StatusBarPanel,
         mNotificationCount = n;
     }
 
-    public void setContentFrameVisible(final boolean showing, boolean animate) {
+    public void setContentFrameVisible(boolean show, boolean animate) {
+        if (mDisplayPowerWidget) show = true;
+        final boolean showing  = show;
         if (!animate) {
             mContentFrame.setVisibility(showing ? View.VISIBLE : View.GONE);
             mContentFrame.setAlpha(1f);
@@ -377,23 +374,14 @@ public class NotificationPanel extends RelativeLayout implements StatusBarPanel,
     }
 
     public void updatePanelModeButtons() {
-        if (!mDisplayPowerWidget) {
-            final boolean settingsVisible = (mSettingsView != null);
-            mSettingsButton.setVisibility(!settingsVisible ? View.VISIBLE : View.INVISIBLE);
-            mNotificationButton.setVisibility(settingsVisible ? View.VISIBLE : View.INVISIBLE);
-        }
-    }
-
-    private void hidePanelModeButtons() {
-        mSettingsButton.setVisibility(View.GONE);
-        mNotificationButton.setVisibility(View.GONE);
+        final boolean settingsVisible = (mSettingsView != null);
+        mSettingsButton.setVisibility(!settingsVisible ? View.VISIBLE : View.INVISIBLE);
+        mNotificationButton.setVisibility(settingsVisible ? View.VISIBLE : View.INVISIBLE);
     }
 
     public void updatePowerWidgetVisibility() {
         mDisplayPowerWidget = Settings.System.getInt(mContext.getContentResolver(),
                    Settings.System.EXPANDED_VIEW_WIDGET, 1) == 1;
-        updatePanelModeButtons();
-        if (mDisplayPowerWidget) hidePanelModeButtons();
     }
 
     public boolean isInContentArea(int x, int y) {
@@ -427,13 +415,39 @@ public class NotificationPanel extends RelativeLayout implements StatusBarPanel,
         int currentHeight = mSettingsView.getMeasuredHeight();
         WindowManager wm = (WindowManager)getContext().getSystemService(Context.WINDOW_SERVICE);
         Display d = wm.getDefaultDisplay();
-        int maxHeight = d.getHeight() - mTitleArea.getHeight();
+        int maxHeight = d.getHeight() - mTitleArea.getHeight() - (mDisplayPowerWidget ?
+                mPowerWidget.getHeight() : 0);
         if (currentHeight > maxHeight) {
             currentHeight = maxHeight;
         }
-        mSettingsView.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, currentHeight));
+        mSettingsView.setLayoutParams(new ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, currentHeight));
         mSettingsView.setVisibility(View.GONE);
         mContentFrame.addView(mSettingsView);
+    }
+
+    private void setNotificationScrollerHeight() {
+        mNotificationScroller.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
+        int currentHeight = mNotificationScroller.getMeasuredHeight();
+        WindowManager wm = (WindowManager)getContext().getSystemService(Context.WINDOW_SERVICE);
+        Display d = wm.getDefaultDisplay();
+        int maxHeight = d.getHeight() - mTitleArea.getHeight() - (mDisplayPowerWidget ?
+                mPowerWidget.getHeight() : 0);
+        mNotificationScroller.setLayoutParams(new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, currentHeight > maxHeight ? maxHeight :
+                ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f));
+        mContentFrame.removeView(mNotificationScroller);
+        mContentFrame.addView(mNotificationScroller);
+    }
+
+    @Override
+    protected void onConfigurationChanged(Configuration newConfig) {
+        setNotificationScrollerHeight();
+        if (mSettingsView != null) {
+            mContentFrame.removeView(mSettingsView);
+            addSettingsView();
+            mSettingsView.setVisibility(View.VISIBLE);
+        }
     }
 
     private class Choreographer implements Animator.AnimatorListener {
