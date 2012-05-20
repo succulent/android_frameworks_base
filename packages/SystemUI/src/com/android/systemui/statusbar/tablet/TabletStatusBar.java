@@ -2275,6 +2275,8 @@ public class TabletStatusBar extends StatusBar implements
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.EXPANDED_VIEW_WIDGET), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.EXPANDED_VIEW_WIDGET_BOTTOM), false, this);
+            resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.STATUS_BAR_CLOCK_COLOR), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.COMBINED_BAR_COLOR), false, this);
@@ -2299,6 +2301,10 @@ public class TabletStatusBar extends StatusBar implements
                 mHandler.sendEmptyMessage(MSG_LARGE_THUMBS);
             } else if (uri.equals(Settings.System.getUriFor(
                     Settings.System.EXPANDED_VIEW_WIDGET))) {
+                mHandler.removeMessages(MSG_POWER_WIDGET);
+                mHandler.sendEmptyMessage(MSG_POWER_WIDGET);
+            } else if (uri.equals(Settings.System.getUriFor(
+                    Settings.System.EXPANDED_VIEW_WIDGET_BOTTOM))) {
                 mHandler.removeMessages(MSG_POWER_WIDGET);
                 mHandler.sendEmptyMessage(MSG_POWER_WIDGET);
             } else if (uri.equals(Settings.System.getUriFor(

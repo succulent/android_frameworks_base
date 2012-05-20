@@ -124,6 +124,15 @@ public class PowerWidget extends FrameLayout {
 
         updateButtonLayoutWidth();
 
+        if (mTabletStatusBar) {
+            LinearLayout.LayoutParams separatorlp = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, 1);
+            View separator = new View(mContext);
+            separator.setBackgroundResource(
+                    com.android.internal.R.drawable.divider_horizontal_dark);
+            addView(separator, separatorlp);
+        }
+
         // create a linearlayout to hold our buttons
         LinearLayout ll = new LinearLayout(mContext);
         ll.setOrientation(LinearLayout.HORIZONTAL);

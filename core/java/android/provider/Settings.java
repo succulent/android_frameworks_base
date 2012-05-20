@@ -2142,6 +2142,13 @@ public final class Settings {
         public static final String EXPANDED_VIEW_WIDGET = "expanded_view_widget";
 
         /**
+         * Use the Notification Power Widget on the bottom in tablet ui
+         *
+         * @hide
+         */
+        public static final String EXPANDED_VIEW_WIDGET_BOTTOM = "expanded_view_widget_bottom";
+
+        /**
          * Whether to hide the notification screen after clicking on a widget
          * button
          *
