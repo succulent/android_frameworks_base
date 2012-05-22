@@ -84,7 +84,7 @@ public class VolumeController implements ToggleSlider.Listener,
                     mAudioManager.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
                     return;
                 } else {
-                    mAudioManager.setStreamMute(mStream, mute);
+                    mAudioManager.setStreamVolume(mStream, mute ? 0 : mVolume, 0);
                     return;
                 }
             }
