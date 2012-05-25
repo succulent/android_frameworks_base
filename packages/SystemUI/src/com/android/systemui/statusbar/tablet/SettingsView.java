@@ -16,9 +16,11 @@
 
 package com.android.systemui.statusbar.tablet;
 
+import android.app.ActivityManagerNative;
 import android.app.StatusBarManager;
 import android.content.Context;
 import android.content.Intent;
+import android.os.RemoteException;
 import android.os.SystemClock;
 import android.provider.Settings;
 import android.util.AttributeSet;
@@ -387,6 +389,10 @@ public class SettingsView extends LinearLayout implements View.OnClickListener,
     }
 
     public boolean onLongClick(View v) {
+        try {
+            ActivityManagerNative.getDefault().dismissKeyguardOnNextActivity();
+        } catch (RemoteException e) {
+        }
         switch (v.getId()) {
             case WIFI:
                 onClickNetwork();
@@ -440,6 +446,10 @@ public class SettingsView extends LinearLayout implements View.OnClickListener,
     // Settings
     // ----------------------------
     private void onClickSettings() {
+        try {
+            ActivityManagerNative.getDefault().dismissKeyguardOnNextActivity();
+        } catch (RemoteException e) {
+        }
         getContext().startActivity(new Intent(Settings.ACTION_SETTINGS)
                 .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
         getStatusBarManager().collapse();
