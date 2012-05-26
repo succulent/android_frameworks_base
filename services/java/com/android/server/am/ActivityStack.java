@@ -848,14 +848,10 @@ final class ActivityStack {
             boolean largeThumbnail = Settings.System.getInt(mContext.getContentResolver(),
                     Settings.System.LARGE_RECENT_THUMBNAILS, 0) == 1;
             if (largeThumbnail) {
-                final int screenSize = Resources.getSystem().getConfiguration().screenLayout &
-                        Configuration.SCREENLAYOUT_SIZE_MASK;
-                boolean isScreenLarge = (screenSize == Configuration.SCREENLAYOUT_SIZE_LARGE ||
-                        screenSize == Configuration.SCREENLAYOUT_SIZE_XLARGE) &&
-                        res.getDisplayMetrics().density <= 1f;
+                boolean isScreenLarge = res.getConfiguration().smallestScreenWidthDp >= 600;
                 if (isScreenLarge) {
-                    w = w * 3 / 2;
-                    h = h * 3 / 2;
+                    w = (int) (w * 1.5f);
+                    h = (int) (h * 1.5f);
                 }
             }
             return mService.mWindowManager.screenshotApplications(who.appToken, w, h);

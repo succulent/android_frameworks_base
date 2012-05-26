@@ -94,8 +94,8 @@ public class RecentTasksLoader {
         boolean largeThumbnail = Settings.System.getInt(mContext.getContentResolver(),
                 Settings.System.LARGE_RECENT_THUMBNAILS, 0) == 1;
         if (largeThumbnail) {
-            width = width * 3 / 2;
-            height = height * 3 / 2;
+            width = (int) (width * 1.5f);
+            height = (int) (height * 1.5f);
         }
 
         mDefaultThumbnailBackground = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);

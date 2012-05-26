@@ -78,18 +78,13 @@ public class VolumeController implements ToggleSlider.Listener,
             if (mute && !mAudioManager.isMusicActive()) {
                 mAudioManager.setRingerMode(mVibeInSilent ? AudioManager.RINGER_MODE_VIBRATE
                         : AudioManager.RINGER_MODE_SILENT);
-                return;
             } else {
                 if (!mAudioManager.isMusicActive()) {
                     mAudioManager.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
-                    return;
-                } else {
-                    mAudioManager.setStreamVolume(mStream, mute ? 0 : mVolume, 0);
-                    return;
                 }
             }
         }
-        if (!mute) mAudioManager.setStreamVolume(mStream, level, 0);
+        mAudioManager.setStreamVolume(mStream, mute ? 0 : level, 0);
     }
 
     public void onAudioFocusChange(int focusChange) {

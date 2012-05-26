@@ -1758,9 +1758,9 @@ public class PowerManagerService extends IPowerManager.Stub
                     mKeyboardLight.turnOff();
                     // clear current value so we will update based on the new conditions
                     // when the sensor is reenabled.
-                    mLightSensorValue = -1;
+                    //mLightSensorValue = -1;
                     // reset our highest light sensor value when the screen turns off
-                    mHighestLightSensorValue = -1;
+                    //mHighestLightSensorValue = -1;
                     lightFilterStop();
                     resetLastLightValues();
                 }
@@ -2695,7 +2695,7 @@ public class PowerManagerService extends IPowerManager.Stub
             if ((mPowerState & SCREEN_ON_BIT) != 0) {
                 // force lights recalculation
                 int value = (int)mLightSensorValue;
-                mLightSensorValue = -1;
+                //mLightSensorValue = -1;
                 resetLastLightValues();
                 lightSensorChangedLocked(value);
                 lightFilterReset((int)mLightSensorValue);
@@ -2918,7 +2918,7 @@ public class PowerManagerService extends IPowerManager.Stub
                         // force recompute of backlight values
                         if (mLightSensorValue >= 0) {
                             int value = (int)mLightSensorValue;
-                            mLightSensorValue = -1;
+                            //mLightSensorValue = -1;
                             lightSensorChangedLocked(value);
                             lightFilterReset((int)mLightSensorValue);
                         }
@@ -2956,7 +2956,7 @@ public class PowerManagerService extends IPowerManager.Stub
                 // force recompute of backlight values
                 if (mLightSensorValue >= 0) {
                     int value = (int)mLightSensorValue;
-                    mLightSensorValue = -1;
+                    //mLightSensorValue = -1;
                     resetLastLightValues();
                     lightSensorChangedLocked(value);
                 }
@@ -3070,7 +3070,7 @@ public class PowerManagerService extends IPowerManager.Stub
                 // force recompute of backlight values
                 if (mLightSensorValue >= 0) {
                     int value = (int)mLightSensorValue;
-                    mLightSensorValue = -1;
+                    //mLightSensorValue = -1;
                     resetLastLightValues();
                     lightSensorChangedLocked(value);
                 }
@@ -3428,8 +3428,8 @@ public class PowerManagerService extends IPowerManager.Stub
             mLightSensorEnabled = enable;
             // clear previous values so we will adjust to current brightness when
             // auto-brightness is reenabled
-            mHighestLightSensorValue = -1;
-            mLightSensorValue = -1;
+            //mHighestLightSensorValue = -1;
+            //mLightSensorValue = -1;
 
             // clear calling identity so sensor manager battery stats are accurate
             long identity = Binder.clearCallingIdentity();
