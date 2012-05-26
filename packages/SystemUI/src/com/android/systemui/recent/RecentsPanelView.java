@@ -67,13 +67,13 @@ public class RecentsPanelView extends RelativeLayout implements OnItemClickListe
     static final boolean DEBUG = TabletStatusBar.DEBUG || PhoneStatusBar.DEBUG || false;
     private Context mContext;
     private StatusBar mBar;
-    public View mRecentsScrim;
+    private View mRecentsScrim;
     private View mRecentsNoApps;
-    public ViewGroup mRecentsContainer;
+    private ViewGroup mRecentsContainer;
 
     private boolean mShowing;
     private Choreographer mChoreo;
-    public View mRecentsDismissButton;
+    private View mRecentsDismissButton;
 
     private RecentTasksLoader mRecentTasksLoader;
     private ArrayList<TaskDescription> mRecentTaskDescriptions;
@@ -81,7 +81,6 @@ public class RecentsPanelView extends RelativeLayout implements OnItemClickListe
     private boolean mRecentTasksDirty = true;
     private TaskDescriptionAdapter mListAdapter;
     private int mThumbnailWidth;
-    private int mThumbnailHeight;
     private boolean mFitThumbnailToXY;
     private boolean mRightButtons;
     private boolean mLargeThumbnail;
@@ -139,7 +138,6 @@ public class RecentsPanelView extends RelativeLayout implements OnItemClickListe
                 holder.thumbnailView = convertView.findViewById(R.id.app_thumbnail);
                 holder.thumbnailViewImage = (ImageView) convertView.findViewById(
                         R.id.app_thumbnail_image);
-
                 // If we set the default thumbnail now, we avoid an onLayout when we update
                 // the thumbnail later (if they both have the same dimensions)
                 updateThumbnail(holder, mRecentTasksLoader.getDefaultThumbnail(), false, false);
@@ -342,15 +340,10 @@ public class RecentsPanelView extends RelativeLayout implements OnItemClickListe
     public void updateValuesFromResources() {
         final Resources res = mContext.getResources();
         mThumbnailWidth = Math.round(res.getDimension(R.dimen.status_bar_recents_thumbnail_width));
-        mThumbnailHeight = Math.round(res.getDimension(R.dimen.status_bar_recents_thumbnail_height));
         mFitThumbnailToXY = res.getBoolean(R.bool.config_recents_thumbnail_image_fits_to_xy);
         mRightButtons = (Settings.System.getInt(mContext.getContentResolver(),
                 Settings.System.RIGHT_SOFT_BUTTONS, 0) == 1);
-        final int screenSize = Resources.getSystem().getConfiguration().screenLayout &
-                Configuration.SCREENLAYOUT_SIZE_MASK;
-        boolean isScreenLarge = (screenSize == Configuration.SCREENLAYOUT_SIZE_LARGE ||
-                screenSize == Configuration.SCREENLAYOUT_SIZE_XLARGE) &&
-                getResources().getDisplayMetrics().density <= 1f;
+        final boolean isScreenLarge = res.getConfiguration().smallestScreenWidthDp >= 600;
         mLargeThumbnail = (Settings.System.getInt(mContext.getContentResolver(),
                     Settings.System.LARGE_RECENT_THUMBNAILS, 0) == 1) && isScreenLarge;
     }
@@ -430,7 +423,8 @@ public class RecentsPanelView extends RelativeLayout implements OnItemClickListe
 
             if (mLargeThumbnail) {
                 h.thumbnailViewImage.setLayoutParams(new FrameLayout.LayoutParams(
-                        mThumbnailWidth * 3 / 2, mThumbnailHeight * 3 / 2));
+                        ViewGroup.LayoutParams.WRAP_CONTENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT));
             }
             h.thumbnailViewImage.setImageBitmap(thumbnail);
 
@@ -443,7 +437,7 @@ public class RecentsPanelView extends RelativeLayout implements OnItemClickListe
                     h.thumbnailViewImage.setScaleType(ScaleType.FIT_XY);
                 } else {
                     Matrix scaleMatrix = new Matrix();
-                    float scale = (mLargeThumbnail ? mThumbnailWidth * 3 / 2 : mThumbnailWidth) /
+                    float scale = (mLargeThumbnail ? mThumbnailWidth * 1.5f : mThumbnailWidth) /
                             (float) thumbnail.getWidth();
                     scaleMatrix.setScale(scale, scale);
                     h.thumbnailViewImage.setScaleType(ScaleType.MATRIX);

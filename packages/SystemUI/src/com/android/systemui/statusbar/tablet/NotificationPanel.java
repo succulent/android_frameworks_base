@@ -382,8 +382,8 @@ public class NotificationPanel extends RelativeLayout implements StatusBarPanel,
 
     public void updatePanelModeButtons() {
         final boolean settingsVisible = (mSettingsView != null);
-        mSettingsButton.setVisibility(!settingsVisible ? View.VISIBLE : View.INVISIBLE);
-        mNotificationButton.setVisibility(settingsVisible ? View.VISIBLE : View.INVISIBLE);
+        mSettingsButton.setVisibility(!settingsVisible ? View.VISIBLE : View.GONE);
+        mNotificationButton.setVisibility(settingsVisible ? View.VISIBLE : View.GONE);
     }
 
     public void updatePowerWidgetVisibility() {
