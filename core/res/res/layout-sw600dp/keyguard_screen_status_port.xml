@@ -45,6 +45,7 @@
         android:id="@+id/weather_panel"
         android:layout_height="wrap_content"
         android:layout_width="fill_parent"
+        android:gravity="right"
         android:orientation="horizontal" >
 
         <ImageView
@@ -53,6 +54,7 @@
             android:layout_height="wrap_content"
             android:layout_centerHorizontal="true"
             android:layout_centerVertical="true"
+            android:paddingTop="8dip"
             android:paddingLeft="8dip"
             android:paddingRight="8dip"
             android:src="@android:drawable/ic_dialog_alert" />
@@ -62,14 +64,14 @@
             android:layout_height="wrap_content"
             android:layout_centerVertical="true"
             android:layout_toLeftOf="@id/weather_image"
-            android:orientation="horizontal"
-            android:padding="4dip" >
+            android:orientation="horizontal">
 
             <TextView
                 android:id="@+id/weather_city"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="14sp"
+                android:gravity="right"
+                android:textSize="16sp"
                 android:textStyle="bold"
                 android:layout_alignParentRight="true"
                 android:textColor="?android:attr/textColorPrimary"/>
@@ -80,7 +82,8 @@
                 android:layout_height="wrap_content"
                 android:layout_below="@id/weather_city"
                 android:layout_alignParentRight="true"
-                android:textSize="12sp"
+                android:gravity="right"
+                android:textSize="14sp"
                 android:textColor="?android:attr/textColorPrimary" />
 
             <TextView
@@ -89,7 +92,8 @@
                 android:layout_height="wrap_content"
                 android:layout_below="@id/weather_condition"
                 android:layout_alignParentRight="true"
-                android:textSize="6sp"
+                android:gravity="right"
+                android:textSize="8sp"
                 android:textColor="?android:attr/textColorSecondary" />
 
         </RelativeLayout>
@@ -106,7 +110,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerHorizontal="true"
-                android:textSize="20sp"
+                android:textSize="24sp"
                 android:textColor="?android:attr/textColorPrimary" />
 
             <View
@@ -114,6 +118,7 @@
                 android:layout_below="@id/weather_temp"
                 android:layout_width="44dip"
                 android:layout_height="1dip"
+                android:layout_centerHorizontal="true"
                 android:background="@android:drawable/divider_horizontal_dark" />
 
             <TextView
@@ -123,7 +128,7 @@
                 android:layout_below="@id/weather_divider"
                 android:layout_centerHorizontal="true"
                 android:paddingTop="2dip"
-                android:textSize="12sp"
+                android:textSize="14sp"
                 android:textColor="?android:attr/textColorPrimary" />
 
         </RelativeLayout>
