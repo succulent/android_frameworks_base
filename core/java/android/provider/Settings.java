@@ -2261,6 +2261,24 @@ public final class Settings {
         public static final String LOCKSCREEN_COLOR = "lockscreen_color";
 
         /**
+        * Lockscreen recent button.
+        * @hide
+        */
+        public static final String LOCKSCREEN_RECENTS = "lockscreen_recents";
+
+        /**
+        * Lockscreen timeout.
+        * @hide
+        */
+        public static final String LOCKSCREEN_TIMEOUT = "lockscreen_timeout";
+
+        /**
+        * Lockscreen alignment.
+        * @hide
+        */
+        public static final String LOCKSCREEN_ALIGNMENT = "lockscreen_alignment";
+
+        /**
         * CombinedBar navigation visibility on tablets.
         * String of visible navigation elements seperated by the | character
         * back: Shows back button

@@ -36,10 +36,12 @@ import android.provider.Settings;
 import android.text.TextUtils;
 import android.text.format.DateFormat;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
@@ -87,7 +89,7 @@ class KeyguardStatusViewManager implements OnClickListener {
     private TextView mOwnerInfoView;
     private TextView mAlarmStatusView;
     private TransportControlView mTransportView;
-    private RelativeLayout mWeatherPanel;
+    private LinearLayout mWeatherPanel;
     private TextView mWeatherCity, mWeatherCondition, mWeatherLowHigh, mWeatherTemp, mUpdateTime;
     private ImageView mWeatherImage;
 
@@ -201,7 +203,7 @@ class KeyguardStatusViewManager implements OnClickListener {
         mEmergencyCallButtonEnabledInScreen = emergencyButtonEnabledInScreen;
 
         // Weather panel
-        mWeatherPanel = (RelativeLayout) findViewById(R.id.weather_panel);
+        mWeatherPanel = (LinearLayout) findViewById(R.id.weather_panel);
         mWeatherCity = (TextView) findViewById(R.id.weather_city);
         mWeatherCondition = (TextView) findViewById(R.id.weather_condition);
         mWeatherImage = (ImageView) findViewById(R.id.weather_image);
@@ -244,6 +246,30 @@ class KeyguardStatusViewManager implements OnClickListener {
                 v.setSelected(true);
             }
         }
+
+        int alignment = Settings.System.getInt(getContext().getContentResolver(),
+                Settings.System.LOCKSCREEN_ALIGNMENT, 0);
+        int weatherGravity = 0;
+        int panelGravity = 0;
+        switch (alignment) {
+            case 0:
+                weatherGravity = Gravity.RIGHT | Gravity.CENTER_VERTICAL;
+                panelGravity = Gravity.RIGHT;
+                break;
+            case 1:
+                weatherGravity = Gravity.CENTER;
+                panelGravity = Gravity.CENTER_HORIZONTAL;
+                break;
+            case 2:
+                weatherGravity = Gravity.LEFT | Gravity.CENTER_VERTICAL;
+                panelGravity = Gravity.LEFT;
+                break;
+        }
+        if (mWeatherPanel != null) mWeatherPanel.setGravity(weatherGravity);
+        LinearLayout landStatus = (LinearLayout) findViewById(R.id.screen_status_land);
+        if (landStatus != null) landStatus.setGravity(panelGravity);
+        LinearLayout portStatus = (LinearLayout) findViewById(R.id.screen_status_port);
+        if (portStatus != null) portStatus.setGravity(panelGravity);
     }
 
     /*

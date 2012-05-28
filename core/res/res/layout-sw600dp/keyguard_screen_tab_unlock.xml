@@ -62,7 +62,6 @@
                 android:layout_marginRight="64dip"
                 android:layout_alignParentTop="true"
                 android:layout_alignParentRight="true"/>
-
         </RelativeLayout>
 
     </RelativeLayout>
@@ -81,6 +80,7 @@
             android:textAppearance="?android:attr/textAppearanceMedium"
             android:layout_marginTop="12dip"
             android:drawablePadding="4dip"
+            android:visibility="gone"
             />
 
         <com.android.internal.widget.multiwaveview.MultiWaveView
@@ -101,7 +101,7 @@
             android:hitRadius="@dimen/multiwaveview_hit_radius"
             android:rightChevronDrawable="@drawable/ic_lockscreen_chevron_right"
             android:horizontalOffset="0dip"
-            android:verticalOffset="60dip"
+            android:verticalOffset="0dip"
             android:feedbackCount="3"
             android:vibrationDuration="20"
             />
