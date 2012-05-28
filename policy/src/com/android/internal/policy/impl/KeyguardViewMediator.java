@@ -951,8 +951,8 @@ public class KeyguardViewMediator implements KeyguardViewCallback,
 
     /** {@inheritDoc} */
     public void pokeWakelock() {
-        pokeWakelock(mKeyboardOpen ?
-                AWAKE_INTERVAL_DEFAULT_KEYBOARD_OPEN_MS : AWAKE_INTERVAL_DEFAULT_MS);
+        pokeWakelock(Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.LOCKSCREEN_TIMEOUT, AWAKE_INTERVAL_DEFAULT_MS));
     }
 
     /** {@inheritDoc} */
@@ -1248,7 +1248,10 @@ public class KeyguardViewMediator implements KeyguardViewCallback,
             int flags = StatusBarManager.DISABLE_NONE;
             if (mShowing) {
                 // disable navigation status bar components (home, recents) if lock screen is up
-                flags |= StatusBarManager.DISABLE_RECENT;
+                if (isSecure() || Settings.System.getInt(mContext.getContentResolver(),
+                        Settings.System.LOCKSCREEN_RECENTS, 0) == 0) {
+                    flags |= StatusBarManager.DISABLE_RECENT;
+                }
                 if (isSecure() || !ENABLE_INSECURE_STATUS_BAR_EXPAND) {
                     // showing secure lockscreen; disable expanding.
                     flags |= StatusBarManager.DISABLE_EXPAND;

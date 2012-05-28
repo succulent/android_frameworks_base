@@ -2261,6 +2261,24 @@ public final class Settings {
         public static final String LOCKSCREEN_COLOR = "lockscreen_color";
 
         /**
+        * Lockscreen recent button.
+        * @hide
+        */
+        public static final String LOCKSCREEN_RECENTS = "lockscreen_recents";
+
+        /**
+        * Lockscreen timeout.
+        * @hide
+        */
+        public static final String LOCKSCREEN_TIMEOUT = "lockscreen_timeout";
+
+        /**
+        * Lockscreen alignment.
+        * @hide
+        */
+        public static final String LOCKSCREEN_ALIGNMENT = "lockscreen_alignment";
+
+        /**
         * CombinedBar navigation visibility on tablets.
         * String of visible navigation elements seperated by the | character
         * back: Shows back button
@@ -2522,6 +2540,48 @@ public final class Settings {
          * @hide
          */
         public static final String QUIET_HOURS_DIM = "quiet_hours_dim";
+
+        /**
+         * Show the weather on the lock screen
+         * @hide
+         */
+        public static final String LOCKSCREEN_WEATHER = "lockscreen_weather";
+
+        /**
+         * Show the current weather location on the lock screen
+         * @hide
+         */
+        public static final String WEATHER_SHOW_LOCATION = "weather_show_location";
+
+        /**
+         * Show the current weather location on the lock screen
+         * @hide
+         */
+        public static final String WEATHER_SHOW_TIMESTAMP = "weather_show_timestamp";
+
+        /**
+         * Use the custom/manually configured weather location
+         * @hide
+         */
+        public static final String WEATHER_USE_CUSTOM_LOCATION = "weather_use_custom_location";
+
+        /**
+         * Stores the custom/manually configured weather location
+         * @hide
+         */
+        public static final String WEATHER_CUSTOM_LOCATION = "weather_custom_location";
+
+        /**
+         * Stores the weather update frequency
+         * @hide
+         */
+        public static final String WEATHER_UPDATE_INTERVAL = "weather_update_interval";
+
+        /**
+         * Use Metric measurements (celcius, km/h) for weather data
+         * @hide
+         */
+        public static final String WEATHER_USE_METRIC = "weather_use_metric";
 
         /**
          * Settings to backup. This is here so that it's in the same place as the settings
@@ -3297,6 +3357,14 @@ public final class Settings {
          */
         public static final String LOCK_SCREEN_OWNER_INFO_ENABLED =
             "lock_screen_owner_info_enabled";
+
+        /**
+         * Whether the unsecure widget screen will be shown before a secure
+         * lock screen
+         * @hide
+         */
+        public static final String LOCK_BEFORE_UNLOCK =
+            "lock_before_unlock";
 
         /**
          * The saved value for WindowManagerService.setForcedDisplaySize().

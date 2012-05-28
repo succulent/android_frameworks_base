@@ -291,7 +291,7 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
 
             // next: statusbar
             if (mTabletStatusBar) mItems.add(
-                new SinglePressAction(com.android.internal.R.drawable.ic_menu_copy,
+                new SinglePressAction(com.android.internal.R.drawable.ic_lock_hide_statusbar,
                         R.string.global_actions_toggle_statusbar) {
                     public void onPress() {
                         mStatusBarManager.disable(mStatusBarDisabled ? 0x00000000 : 0x10000000);
