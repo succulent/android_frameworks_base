@@ -90,6 +90,7 @@ class KeyguardStatusViewManager implements OnClickListener {
     private TextView mAlarmStatusView;
     private TransportControlView mTransportView;
     private LinearLayout mWeatherPanel;
+    private RelativeLayout mWeatherPanelPhone;
     private TextView mWeatherCity, mWeatherCondition, mWeatherLowHigh, mWeatherTemp, mUpdateTime;
     private ImageView mWeatherImage;
 
@@ -203,7 +204,11 @@ class KeyguardStatusViewManager implements OnClickListener {
         mEmergencyCallButtonEnabledInScreen = emergencyButtonEnabledInScreen;
 
         // Weather panel
-        mWeatherPanel = (LinearLayout) findViewById(R.id.weather_panel);
+        if (getContext().getResources().getConfiguration().smallestScreenWidthDp >= 600) {
+            mWeatherPanel = (LinearLayout) findViewById(R.id.weather_panel);
+        } else {
+            mWeatherPanelPhone = (RelativeLayout) findViewById(R.id.weather_panel);
+        }
         mWeatherCity = (TextView) findViewById(R.id.weather_city);
         mWeatherCondition = (TextView) findViewById(R.id.weather_condition);
         mWeatherImage = (ImageView) findViewById(R.id.weather_image);
@@ -215,6 +220,12 @@ class KeyguardStatusViewManager implements OnClickListener {
         if (mWeatherPanel != null) {
             mWeatherPanel.setVisibility(View.GONE);
             mWeatherPanel.setOnClickListener(this);
+        }
+
+        // Hide Weather panel view until we know we need to show it.
+        if (mWeatherPanelPhone != null) {
+            mWeatherPanelPhone.setVisibility(View.GONE);
+            mWeatherPanelPhone.setOnClickListener(this);
         }
 
         // Hide transport control view until we know we need to show it.
@@ -385,6 +396,10 @@ class KeyguardStatusViewManager implements OnClickListener {
             if (mWeatherPanel != null) {
                 mWeatherPanel.setVisibility(View.GONE);
             }
+            // Hide the Weather panel view
+            if (mWeatherPanelPhone != null) {
+                mWeatherPanelPhone.setVisibility(View.GONE);
+            }
         }
     }
 
@@ -402,7 +417,7 @@ class KeyguardStatusViewManager implements OnClickListener {
         boolean invertLowhigh = Settings.System.getInt(resolver,
                 Settings.System.WEATHER_INVERT_LOWHIGH, 0) == 1;
 
-        if (mWeatherPanel != null) {
+        if (mWeatherPanel != null || mWeatherPanelPhone != null) {
             if (mWeatherCity != null) {
                 mWeatherCity.setText(w.city);
                 mWeatherCity.setVisibility(showLocation ? View.VISIBLE : View.GONE);
@@ -441,7 +456,8 @@ class KeyguardStatusViewManager implements OnClickListener {
             }
 
             // Show the Weather panel view
-            mWeatherPanel.setVisibility(View.VISIBLE);
+            if (mWeatherPanel != null) mWeatherPanel.setVisibility(View.VISIBLE);
+            if (mWeatherPanelPhone != null) mWeatherPanelPhone.setVisibility(View.VISIBLE);
         }
     }
 
@@ -454,7 +470,7 @@ class KeyguardStatusViewManager implements OnClickListener {
         boolean useMetric = Settings.System.getInt(resolver,
                 Settings.System.WEATHER_USE_METRIC, 1) == 1;
 
-        if (mWeatherPanel != null) {
+        if (mWeatherPanel != null || mWeatherPanelPhone != null) {
             if (mWeatherCity != null) {
                 mWeatherCity.setText("CM Weather");  //Hard coding this on purpose
                 mWeatherCity.setVisibility(View.VISIBLE);
@@ -476,7 +492,8 @@ class KeyguardStatusViewManager implements OnClickListener {
             }
 
             // Show the Weather panel view
-            mWeatherPanel.setVisibility(View.VISIBLE);
+            if (mWeatherPanel != null) mWeatherPanel.setVisibility(View.VISIBLE);
+            if (mWeatherPanelPhone != null) mWeatherPanelPhone.setVisibility(View.VISIBLE);
         }
     }
 
@@ -655,7 +672,7 @@ class KeyguardStatusViewManager implements OnClickListener {
             CharSequence string = getPriorityTextMessage(icon);
             mStatus1View.setText(string);
             mStatus1View.setCompoundDrawablesWithIntrinsicBounds(icon.value, 0, 0, 0);
-            mStatus1View.setVisibility(mShowingStatus ? View.VISIBLE : View.INVISIBLE);
+            mStatus1View.setVisibility(string != null ? View.VISIBLE : View.GONE);
         }
     }
 
@@ -971,7 +988,7 @@ class KeyguardStatusViewManager implements OnClickListener {
     public void onClick(View v) {
         if (v == mEmergencyCallButton) {
             mCallback.takeEmergencyCallAction();
-        } else if (v == mWeatherPanel) {
+        } else if (v == mWeatherPanel || v == mWeatherPanelPhone) {
             if (!mHandler.hasMessages(QUERY_WEATHER)) {
                 mHandler.sendEmptyMessage(QUERY_WEATHER);
             }
