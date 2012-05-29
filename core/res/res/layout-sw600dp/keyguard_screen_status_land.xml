@@ -2,6 +2,7 @@
 <!--
 **
 ** Copyright 2010, The Android Open Source Project
+** Copyright 2012, The CyanogenMod Project (Weather, Calendar)
 **
 ** Licensed under the Apache License, Version 2.0 (the "License")
 ** you may not use this file except in compliance with the License.
@@ -193,9 +194,44 @@
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceMedium"
         android:textSize="16sp"
-        android:layout_marginTop="20dip"
+        android:layout_marginTop="10dip"
         android:singleLine="false"
         android:textColor="@color/lockscreen_owner_info"
         android:visibility="invisible"
         />
+
+    <!-- CyanogenMod Calendar Panel -->
+    <LinearLayout
+        android:id="@+id/calendar_panel"
+        android:orientation="vertical"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dip" >
+
+        <TextView
+            android:id="@+id/calendar_event_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:singleLine="true"
+            android:textSize="16sp"
+            android:textColor="?android:attr/textColorPrimary"
+            android:ellipsize="marquee"
+            android:fadingEdge="horizontal" />
+
+        <TextView
+            android:id="@+id/calendar_event_details"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="12sp"
+            android:singleLine="true"
+            android:ellipsize="marquee"
+            android:marqueeRepeatLimit="marquee_forever"
+            android:scrollHorizontally="true"
+            android:focusable="true"
+            android:focusableInTouchMode="true"
+            android:fadingEdge="horizontal"
+            android:textColor="?android:attr/textColorSecondary" />
+
+    </LinearLayout>
+
 </LinearLayout>
