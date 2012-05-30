@@ -207,9 +207,9 @@
     <LinearLayout
         android:id="@+id/calendar_panel"
         android:orientation="vertical"
-        android:layout_width="wrap_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dip" >
+        android:layout_marginTop="2dip" >
 
         <TextView
             android:id="@+id/calendar_event_title"
@@ -225,7 +225,7 @@
             android:id="@+id/calendar_event_details"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="12sp"
+            android:textSize="14sp"
             android:singleLine="true"
             android:ellipsize="marquee"
             android:marqueeRepeatLimit="marquee_forever"

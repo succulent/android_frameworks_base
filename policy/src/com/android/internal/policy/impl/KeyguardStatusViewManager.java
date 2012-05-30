@@ -17,14 +17,17 @@
 
 package com.android.internal.policy.impl;
 
+import android.app.ActivityManagerNative;
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.Intent;
 import android.content.res.Resources;
 import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Handler;
 import android.os.Message;
+import android.os.RemoteException;
 import android.provider.Settings;
 import android.text.TextUtils;
 import android.text.format.DateFormat;
@@ -206,8 +209,11 @@ class KeyguardStatusViewManager implements OnClickListener {
         mEmergencyCallButton = (Button) findViewById(R.id.emergencyCallButton);
         mEmergencyCallButtonEnabledInScreen = emergencyButtonEnabledInScreen;
 
+        boolean tabletUI =
+                getContext().getResources().getConfiguration().smallestScreenWidthDp >= 600;
+
         // Weather panel
-        if (getContext().getResources().getConfiguration().smallestScreenWidthDp >= 600) {
+        if (tabletUI) {
             mWeatherPanel = (LinearLayout) findViewById(R.id.weather_panel);
         } else {
             mWeatherPanelPhone = (RelativeLayout) findViewById(R.id.weather_panel);
@@ -229,9 +235,11 @@ class KeyguardStatusViewManager implements OnClickListener {
         if (mWeatherPanelPhone != null) {
             mWeatherPanelPhone.setVisibility(View.GONE);
             mWeatherPanelPhone.setOnClickListener(this);
+        }
 
         // Calendar panel
         mCalendarPanel = (LinearLayout) findViewById(R.id.calendar_panel);
+        mCalendarPanel.setOnClickListener(this);
         mCalendarEventTitle = (TextView) findViewById(R.id.calendar_event_title);
         mCalendarEventDetails = (TextView) findViewById(R.id.calendar_event_details);
 
@@ -294,6 +302,9 @@ class KeyguardStatusViewManager implements OnClickListener {
         if (landStatus != null) landStatus.setGravity(panelGravity);
         LinearLayout portStatus = (LinearLayout) findViewById(R.id.screen_status_port);
         if (portStatus != null) portStatus.setGravity(panelGravity);
+        if (tabletUI) {
+            mCalendarPanel.setGravity(panelGravity);
+        }
     }
 
     /*
@@ -1054,6 +1065,15 @@ class KeyguardStatusViewManager implements OnClickListener {
             if (!mHandler.hasMessages(QUERY_WEATHER)) {
                 mHandler.sendEmptyMessage(QUERY_WEATHER);
             }
+        } else if (v == mCalendarPanel) {
+            try {
+                ActivityManagerNative.getDefault().dismissKeyguardOnNextActivity();
+            } catch (RemoteException e) {
+            }
+            Intent intent = new Intent();
+            intent.setClassName("com.android.calendar","com.android.calendar.AllInOneActivity");
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            getContext().startActivity(intent);
         }
     }
 
