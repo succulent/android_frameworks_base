@@ -268,7 +268,7 @@ public class NotificationPanel extends RelativeLayout implements StatusBarPanel,
 
     public void setNotificationCount(int n) {
 //        Slog.d(TAG, "notificationCount=" + n);
-        setNotificationScrollerHeight();
+
         if (!mShowing) {
             // just do it, already
             setContentFrameVisible(n > 0, false);
@@ -343,13 +343,13 @@ public class NotificationPanel extends RelativeLayout implements StatusBarPanel,
             public void onAnimationEnd(Animator _a) {
                 toHide.setVisibility(View.GONE);
                 if (toShow != null) {
-                    if (mNotificationCount == 0) {
+                    if (mNotificationCount == 0 && !mDisplayPowerWidget) {
                         // show the frame for settings, hide for notifications
                         setContentFrameVisible(toShow == mSettingsView, true);
                     }
 
                     toShow.setVisibility(View.VISIBLE);
-                    if (toShow == mSettingsView || mNotificationCount > 0) {
+                    if (toShow == mSettingsView || mNotificationCount > 0 || mDisplayPowerWidget) {
                         ObjectAnimator.ofFloat(toShow, "alpha", 0f, 1f)
                                 .setDuration(PANEL_FADE_DURATION)
                                 .start();
@@ -391,7 +391,19 @@ public class NotificationPanel extends RelativeLayout implements StatusBarPanel,
                 Settings.System.EXPANDED_VIEW_WIDGET, 1) == 1;
         mDisplayPowerWidgetBottom = Settings.System.getInt(getContext().getContentResolver(),
                 Settings.System.EXPANDED_VIEW_WIDGET_BOTTOM, 0) == 1;
-        setNotificationScrollerHeight();
+        updatePowerWidgetPosition();
+    }
+
+    private void updatePowerWidgetPosition() {
+        if (mDisplayPowerWidget && mDisplayPowerWidgetBottom) {
+            mContentFrame.removeView(mPowerWidget);
+            mContentFrame.addView(mPowerWidget, mContentFrame.getChildCount());
+        } else if (mDisplayPowerWidget) {
+            mContentFrame.removeAllViews();
+            mContentFrame.addView(mPowerWidget);
+            mContentFrame.addView(mNotificationScroller);
+            if (mSettingsView != null) mContentFrame.addView(mSettingsView);
+        }
     }
 
     public boolean isInContentArea(int x, int y) {
@@ -419,53 +431,9 @@ public class NotificationPanel extends RelativeLayout implements StatusBarPanel,
     void addSettingsView() {
         LayoutInflater infl = LayoutInflater.from(getContext());
         mSettingsView = infl.inflate(R.layout.status_bar_settings_view, mContentFrame, false);
-
-        // set height
-        mSettingsView.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
-        int currentHeight = mSettingsView.getMeasuredHeight();
-        WindowManager wm = (WindowManager)getContext().getSystemService(Context.WINDOW_SERVICE);
-        Display d = wm.getDefaultDisplay();
-        int maxHeight = d.getHeight() - mTitleArea.getHeight() - (mDisplayPowerWidget ?
-                mPowerWidget.getHeight() : 0);
-        if (currentHeight > maxHeight) {
-            currentHeight = maxHeight;
-        }
-        mSettingsView.setLayoutParams(new ViewGroup.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, currentHeight));
         mSettingsView.setVisibility(View.GONE);
         mContentFrame.addView(mSettingsView);
-        if (mDisplayPowerWidgetBottom) {
-            mContentFrame.removeView(mPowerWidget);
-            mContentFrame.addView(mPowerWidget, mContentFrame.getChildCount());
-        }
-    }
-
-    private void setNotificationScrollerHeight() {
-        mNotificationScroller.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
-        int currentHeight = mNotificationScroller.getMeasuredHeight();
-        WindowManager wm = (WindowManager) getContext().getSystemService(Context.WINDOW_SERVICE);
-        Display d = wm.getDefaultDisplay();
-        int maxHeight = d.getHeight() - mTitleArea.getHeight() - (mDisplayPowerWidget ?
-                mPowerWidget.getHeight() : 0);
-        mNotificationScroller.setLayoutParams(new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, currentHeight > maxHeight ? maxHeight :
-                ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f));
-        mContentFrame.removeView(mNotificationScroller);
-        mContentFrame.addView(mNotificationScroller);
-        if (mDisplayPowerWidgetBottom) {
-            mContentFrame.removeView(mPowerWidget);
-            mContentFrame.addView(mPowerWidget, mContentFrame.getChildCount());
-        }
-    }
-
-    @Override
-    protected void onConfigurationChanged(Configuration newConfig) {
-        setNotificationScrollerHeight();
-        if (mSettingsView != null) {
-            mContentFrame.removeView(mSettingsView);
-            addSettingsView();
-            mSettingsView.setVisibility(View.VISIBLE);
-        }
+        updatePowerWidgetPosition();
     }
 
     private class Choreographer implements Animator.AnimatorListener {

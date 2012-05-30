@@ -443,7 +443,7 @@ public class TabletStatusBar extends StatusBar implements
         final Display d = WindowManagerImpl.getDefault().getDefaultDisplay();
         final Point size = new Point();
         d.getRealSize(size);
-        return Math.max(res.getDimensionPixelSize(R.dimen.notification_panel_min_height), size.y);
+        return size.y;
     }
 
     @Override
@@ -1024,7 +1024,9 @@ public class TabletStatusBar extends StatusBar implements
                 && !TextUtils.equals(notification.notification.tickerText,
                         oldEntry.notification.notification.tickerText);
         boolean isLastAnyway = rowParent.indexOfChild(oldEntry.row) == rowParent.getChildCount()-1;
-        if (contentsUnchanged && (orderUnchanged || isLastAnyway)) {
+        boolean isDownloading = contentView.getPackage().equals("com.android.providers.downloads")
+                && notification.priority == oldNotification.priority;
+        if (isDownloading || contentsUnchanged && (orderUnchanged || isLastAnyway)) {
             if (DEBUG) Slog.d(TAG, "reusing notification for key: " + key);
             oldEntry.notification = notification;
             try {
