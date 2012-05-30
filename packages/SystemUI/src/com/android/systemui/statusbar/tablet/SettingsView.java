@@ -110,6 +110,9 @@ public class SettingsView extends LinearLayout implements View.OnClickListener,
     VolumeController mVolume;
     TextView mSleepText;
 
+    boolean mAirplaneInitialized = false;
+    boolean mDNDInitialized = false;
+
     public SettingsView(Context context, AttributeSet attrs) {
         this(context, attrs, 0);
     }
@@ -213,6 +216,7 @@ public class SettingsView extends LinearLayout implements View.OnClickListener,
                 Switch toggle = new Switch(context);
                 toggle.setGravity(Gravity.CENTER_VERTICAL);
                 mDoNotDisturb = new DoNotDisturbController(context, toggle);
+                mDNDInitialized = true;
                 ll.addView(toggle, switchlp);
             } else if (settingsRow[i].contains(BUTTON_SETTINGS)) {
                 icon.setImageResource(R.drawable.ic_sysbar_quicksettings);
@@ -237,6 +241,7 @@ public class SettingsView extends LinearLayout implements View.OnClickListener,
                 Switch toggle = new Switch(context);
                 toggle.setGravity(Gravity.CENTER_VERTICAL);
                 mAirplane = new AirplaneModeController(context, toggle);
+                mAirplaneInitialized = true;
                 ll.addView(toggle, switchlp);
             } else if (settingsRow[i].contains(BUTTON_GPS)) {
                 icon.setImageResource(R.drawable.stat_gps_on);
@@ -361,8 +366,14 @@ public class SettingsView extends LinearLayout implements View.OnClickListener,
     @Override
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
-        if (mAirplane != null) mAirplane.release();
-        if (mDoNotDisturb != null) mDoNotDisturb.release();
+        if (mAirplane != null && mAirplaneInitialized) {
+            mAirplane.release();
+            mAirplaneInitialized = false;
+        }
+        if (mDoNotDisturb != null && mDNDInitialized) {
+            mDoNotDisturb.release();
+            mDNDInitialized = false;
+        }
     }
 
     public void onClick(View v) {
