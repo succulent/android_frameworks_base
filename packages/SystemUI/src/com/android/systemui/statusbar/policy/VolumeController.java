@@ -73,18 +73,21 @@ public class VolumeController implements ToggleSlider.Listener,
     }
 
     public void onChanged(ToggleSlider view, boolean tracking, boolean mute, int level) {
-        int mStream = mAudioManager.isMusicActive() ? STREAM_MUSIC : STREAM_NOTIFICATION;
+        mStream = mAudioManager.isMusicActive() ? STREAM_MUSIC : STREAM_NOTIFICATION;
+        if (level == 0) mute = true;
+        mMute = mute;
         if (!tracking) {
             if (mute && !mAudioManager.isMusicActive()) {
                 mAudioManager.setRingerMode(mVibeInSilent ? AudioManager.RINGER_MODE_VIBRATE
                         : AudioManager.RINGER_MODE_SILENT);
+            } else if (mAudioManager.isMusicActive()) {
+                mAudioManager.setStreamMute(mStream, mute);
             } else {
-                if (!mAudioManager.isMusicActive()) {
-                    mAudioManager.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
-                }
+                mAudioManager.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
             }
+        } else {
+            mAudioManager.setStreamVolume(mStream, level, 0);
         }
-        mAudioManager.setStreamVolume(mStream, mute ? 0 : level, 0);
     }
 
     public void onAudioFocusChange(int focusChange) {
@@ -94,9 +97,15 @@ public class VolumeController implements ToggleSlider.Listener,
     private BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
         public void onReceive(Context context, Intent intent) {
             if (intent.getAction().equals(AudioManager.VOLUME_CHANGED_ACTION)) {
+                mStream = mAudioManager.isMusicActive() ? STREAM_MUSIC : STREAM_NOTIFICATION;
                 mVolume = intent.getIntExtra(AudioManager.EXTRA_VOLUME_STREAM_VALUE, mVolume);
+                if (mVolume > 0 && mMute) {
+                    mAudioManager.setStreamMute(mStream, false);
+                    mMute = false;
+                }
+                mControl.setValue(mVolume);
+                mControl.setChecked(mMute);
             }
-            setupVolume();
         }
     };
 }
