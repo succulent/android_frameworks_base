@@ -45,6 +45,7 @@ import com.android.systemui.statusbar.policy.DoNotDisturbController;
 import com.android.systemui.statusbar.policy.GPSController;
 import com.android.systemui.statusbar.policy.LockScreenController;
 import com.android.systemui.statusbar.policy.MobileDataController;
+import com.android.systemui.statusbar.policy.NotificationVolumeController;
 import com.android.systemui.statusbar.policy.ToggleSlider;
 import com.android.systemui.statusbar.policy.USBTetherController;
 import com.android.systemui.statusbar.policy.VolumeController;
@@ -71,11 +72,14 @@ public class SettingsView extends LinearLayout implements View.OnClickListener,
     public static final String BUTTON_TETHERUSB = "toggleTetherUSB";
     public static final String BUTTON_TETHERBT = "toggleTetherBT";
     public static final String BUTTON_SLEEP = "toggleSleep";
+    public static final String BUTTON_NOTIFICATION_VOLUME = "toggleNotificationVolume";
     public static final String BUTTON_DELIMITER = "|";
-    public static final String BUTTONS_DEFAULT = BUTTON_AIRPLANE + BUTTON_DELIMITER +
-            BUTTON_WIFI + BUTTON_DELIMITER + BUTTON_BLUETOOTH + BUTTON_DELIMITER +
-            BUTTON_BRIGHTNESS + BUTTON_DELIMITER + BUTTON_SOUND + BUTTON_DELIMITER +
-            BUTTON_AUTOROTATE + BUTTON_DELIMITER + BUTTON_NOTIFICATIONS + BUTTON_DELIMITER +
+    public static final String BUTTONS_DEFAULT = BUTTON_MEDIA + BUTTON_DELIMITER +
+            BUTTON_BRIGHTNESS + BUTTON_DELIMITER +
+            BUTTON_SOUND + BUTTON_DELIMITER +
+            BUTTON_NOTIFICATION_VOLUME + BUTTON_DELIMITER +
+            BUTTON_AUTOROTATE + BUTTON_DELIMITER +
+            BUTTON_NOTIFICATIONS + BUTTON_DELIMITER +
             BUTTON_SETTINGS;
 
     public static final int WIFI = 1;
@@ -94,6 +98,8 @@ public class SettingsView extends LinearLayout implements View.OnClickListener,
     public static final int BRIGHTNESS = 14;
     public static final int SLEEP = 15;
     public static final int AUTOROTATE = 16;
+    public static final int MEDIA_VOLUME = 17;
+    public static final int NOTIFICATION_VOLUME = 18;
 
     AirplaneModeController mAirplane;
     AutoRotateController mRotate;
@@ -104,6 +110,7 @@ public class SettingsView extends LinearLayout implements View.OnClickListener,
     GPSController mGPS;
     LockScreenController mLock;
     MobileDataController mData;
+    NotificationVolumeController mNotificationVolume;
     USBTetherController mTetherUSB;
     WifiController mWifi;
     WifiAPController mWifiAP;
@@ -200,6 +207,17 @@ public class SettingsView extends LinearLayout implements View.OnClickListener,
                 toggle.setLabel(R.string.status_bar_settings_mute_label);
                 mVolume = new VolumeController(context, toggle);
                 ll.addView(toggle, sliderlp);
+                ll.setId(MEDIA_VOLUME);
+                ll.setOnLongClickListener(this);
+            } else if (settingsRow[i].contains(BUTTON_NOTIFICATION_VOLUME)) {
+                icon.setImageResource(R.drawable.ic_audio_ring_notif);
+                ll.addView(icon, iconlp);
+                ToggleSlider toggle = new ToggleSlider(context);
+                toggle.setLabel(R.string.status_bar_settings_mute_label);
+                mNotificationVolume = new NotificationVolumeController(context, toggle);
+                ll.addView(toggle, sliderlp);
+                ll.setId(NOTIFICATION_VOLUME);
+                ll.setOnLongClickListener(this);
             } else if (settingsRow[i].contains(BUTTON_SLEEP)) {
                 icon.setImageResource(R.drawable.stat_screen_timeout_on);
                 ll.addView(icon, iconlp);
@@ -430,6 +448,10 @@ public class SettingsView extends LinearLayout implements View.OnClickListener,
             case AUTOROTATE:
                 onClickDisplay();
                 return true;
+            case MEDIA_VOLUME:
+            case NOTIFICATION_VOLUME:
+                onClickVolume();
+                return true;
         }
         return false;
     }
@@ -542,6 +564,16 @@ public class SettingsView extends LinearLayout implements View.OnClickListener,
     // ----------------------------
     private void onClickDisplay() {
         Intent intent = new Intent("android.settings.DISPLAY_SETTINGS");
+        intent.addCategory(Intent.CATEGORY_DEFAULT);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        getContext().startActivity(intent);
+        getStatusBarManager().collapse();
+    }
+
+    // Volume
+    // ----------------------------
+    private void onClickVolume() {
+        Intent intent = new Intent("android.settings.SOUND_SETTINGS");
         intent.addCategory(Intent.CATEGORY_DEFAULT);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         getContext().startActivity(intent);
