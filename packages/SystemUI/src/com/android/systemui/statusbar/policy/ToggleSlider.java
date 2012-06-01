@@ -146,7 +146,8 @@ public class ToggleSlider extends RelativeLayout
     }
 
     public void hideToggle() {
-        mToggle.setVisibility(View.GONE);
+        mToggle.setVisibility(View.INVISIBLE);
+        mLabel.setVisibility(View.INVISIBLE);
     }
 }
 
