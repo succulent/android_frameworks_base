@@ -39,6 +39,7 @@ import android.util.Log;
 import android.view.KeyEvent;
 import android.view.VolumePanel;
 
+import java.lang.reflect.Method;
 import java.util.Iterator;
 import java.util.HashMap;
 
@@ -401,6 +402,15 @@ public class AudioManager {
      * @hide
      */
     public void handleKeyDown(int keyCode, int stream) {
+        if (mContext.getResources().getConfiguration().smallestScreenWidthDp >= 600) {
+            try {
+                Object service  = mContext.getSystemService("statusbar");
+                Class<?> statusbarManager = Class.forName("android.app.StatusBarManager");
+                Method expand = statusbarManager.getMethod("collapse");
+                expand.invoke(service);
+            } catch (Exception e) {
+            }
+        }
         switch (keyCode) {
             case KeyEvent.KEYCODE_VOLUME_UP:
             case KeyEvent.KEYCODE_VOLUME_DOWN:
