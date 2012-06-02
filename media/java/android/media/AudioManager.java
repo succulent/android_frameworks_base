@@ -447,7 +447,8 @@ public class AudioManager {
                  * Play a sound. This is done on key up since we don't want the
                  * sound to play when a user holds down volume down to mute.
                  */
-                int flags = FLAG_PLAY_SOUND;
+                int flags = Settings.System.getInt(mContext.getContentResolver(),
+                        Settings.System.VOLUME_CHANGE_BEEP, 1) == 1 ? FLAG_PLAY_SOUND : 0;
                 if (mVolumeControlStream != -1) {
                     stream = mVolumeControlStream;
                     flags |= FLAG_FORCE_STREAM;

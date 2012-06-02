@@ -2249,6 +2249,12 @@ public final class Settings {
         public static final String EXPANDED_FLASH_MODE = "expanded_flash_mode";
 
         /**
+        * Volume change beep.
+        * @hide
+        */
+        public static final String VOLUME_CHANGE_BEEP = "volume_change_beep";
+
+        /**
         * AutoHide CombinedBar on tablets.
         * @hide
         */
