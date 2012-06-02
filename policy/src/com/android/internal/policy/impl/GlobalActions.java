@@ -29,6 +29,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.media.AudioManager;
+import android.net.ConnectivityManager;
 import android.os.Handler;
 import android.os.Message;
 import android.os.SystemProperties;
@@ -99,6 +100,7 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
     private boolean mIsWaitingForEcmExit = false;
     private boolean mCondensedDialog;
     private final boolean mTabletStatusBar;
+    private boolean mAirplaneModeNeeded;
 
     private StatusBarManager mStatusBarManager;
     private boolean mStatusBarDisabled = false;
@@ -116,6 +118,9 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
         mCondensedDialog = Settings.System.getInt(mContext.getContentResolver(),
                 Settings.System.CONDENSED_GLOBAL_ACTIONS, 0) == 1;
         mTabletStatusBar = context.getResources().getConfiguration().smallestScreenWidthDp >= 600;
+        ConnectivityManager cm = (ConnectivityManager) context
+                .getSystemService(Context.CONNECTIVITY_SERVICE);
+        mAirplaneModeNeeded = cm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) != null;
 
         // receive broadcasts
         IntentFilter filter = new IntentFilter();
@@ -287,7 +292,7 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
                 });
 
             // next: airplane mode
-            mItems.add(mAirplaneModeOn);
+            if (mAirplaneModeNeeded) mItems.add(mAirplaneModeOn);
 
             // next: statusbar
             if (mTabletStatusBar) mItems.add(

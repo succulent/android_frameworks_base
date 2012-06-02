@@ -60,8 +60,13 @@ public class NotificationVolumeController implements ToggleSlider.Listener {
                                      : AudioManager.RINGER_MODE_SILENT);
                 mControl.setChecked(true);
             } else {
-                mAudioManager.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
-                mAudioManager.setStreamVolume(STREAM, level, 0);
+                int flags = Settings.System.getInt(mContext.getContentResolver(),
+                        Settings.System.VOLUME_CHANGE_BEEP, 1) == 1 ?
+                        AudioManager.FLAG_PLAY_SOUND : 0;
+                mAudioManager.setStreamVolume(STREAM, level, flags);
+                if (mAudioManager.getRingerMode() != AudioManager.RINGER_MODE_NORMAL) {
+                    mAudioManager.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
+                }
             }
         }
     }
