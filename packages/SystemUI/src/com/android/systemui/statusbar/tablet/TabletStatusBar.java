@@ -1112,15 +1112,15 @@ public class TabletStatusBar extends StatusBar implements
         }
     }
 
+    public void toggleVisibility() {
+        boolean visible = mStatusBarContainer.getVisibility() == View.VISIBLE;
+        mStatusBarContainer.setVisibility(visible ? View.GONE : View.VISIBLE);
+    }
+
     public void disable(int state) {
         int old = mDisabled;
         int diff = state ^ old;
         mDisabled = state;
-
-        boolean visible = mStatusBarContainer.getVisibility() == View.VISIBLE;
-        if ((diff & 0x10000000) != 0) {
-            mStatusBarContainer.setVisibility(visible ? View.GONE : View.VISIBLE);
-        }
 
         // act accordingly
         if ((diff & StatusBarManager.DISABLE_CLOCK) != 0) {
