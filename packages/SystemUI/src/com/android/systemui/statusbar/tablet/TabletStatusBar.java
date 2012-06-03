@@ -243,7 +243,6 @@ public class TabletStatusBar extends StatusBar implements
     // last theme that was applied in order to detect theme change (as opposed
     // to some other configuration change).
     CustomTheme mCurrentTheme;
-    private boolean mRecreating = false;
     private boolean mWidthSet = false;
 
     protected void addPanelWindows() {
@@ -463,27 +462,7 @@ public class TabletStatusBar extends StatusBar implements
     }
 
     private void recreateStatusBar() {
-        mRecreating = true;
-        mStatusBarContainer.removeAllViews();
-
-        // extract notifications.
-        int nNotifs = mNotificationData.size();
-        ArrayList<Pair<IBinder, StatusBarNotification>> notifications =
-                new ArrayList<Pair<IBinder, StatusBarNotification>>(nNotifs);
-        copyNotifications(notifications, mNotificationData);
-        mNotificationData.clear();
-
-        mStatusBarContainer.addView(makeStatusBarView());
-
-        // recreate notifications.
-        for (int i = 0; i < nNotifs; i++) {
-            Pair<IBinder, StatusBarNotification> notifData = notifications.get(i);
-            addNotificationViews(notifData.first, notifData.second);
-        }
-
-        setAreThereNotifications();
-
-        mRecreating = false;
+        android.os.Process.killProcess(android.os.Process.myPid());
     }
 
     @Override
@@ -980,7 +959,7 @@ public class TabletStatusBar extends StatusBar implements
                 notification.notification.fullScreenIntent.send();
             } catch (PendingIntent.CanceledException e) {
             }
-        } else if (!mRecreating) {
+        } else {
             tick(key, notification, true);
         }
 
