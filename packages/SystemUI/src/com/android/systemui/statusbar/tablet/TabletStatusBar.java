@@ -266,6 +266,8 @@ public class TabletStatusBar extends StatusBar implements
 
         if (mHasDockBattery) {
             mDockBatteryController.addIconView((ImageView)mNotificationPanel.findViewById(R.id.dock_battery));
+            mDockBatteryController.addLabelView(
+                    (TextView)mNotificationPanel.findViewById(R.id.dock_battery_text));
         }
         // Bt
         mBluetoothController.addIconView(
@@ -612,6 +614,8 @@ public class TabletStatusBar extends StatusBar implements
         if (mHasDockBattery) {
             mDockBatteryController = new DockBatteryController(mContext);
             mDockBatteryController.addIconView((ImageView)sb.findViewById(R.id.dock_battery));
+            mDockBatteryController.addLabelView(
+                    (TextView)sb.findViewById(R.id.dock_battery_text));
         }
 
         mBluetoothController = new BluetoothController(mContext);
@@ -1108,15 +1112,15 @@ public class TabletStatusBar extends StatusBar implements
         }
     }
 
+    public void toggleVisibility() {
+        boolean visible = mStatusBarContainer.getVisibility() == View.VISIBLE;
+        mStatusBarContainer.setVisibility(visible ? View.GONE : View.VISIBLE);
+    }
+
     public void disable(int state) {
         int old = mDisabled;
         int diff = state ^ old;
         mDisabled = state;
-
-        boolean visible = mStatusBarContainer.getVisibility() == View.VISIBLE;
-        if ((diff & 0x10000000) != 0) {
-            mStatusBarContainer.setVisibility(visible ? View.GONE : View.VISIBLE);
-        }
 
         // act accordingly
         if ((diff & StatusBarManager.DISABLE_CLOCK) != 0) {
