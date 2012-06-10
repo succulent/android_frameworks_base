@@ -2340,12 +2340,6 @@ public final class Settings {
         public static final String COMBINED_BAR_COLOR = "combined_bar_color";
 
         /**
-        * Lockscreen color.
-        * @hide
-        */
-        public static final String LOCKSCREEN_COLOR = "lockscreen_color";
-
-        /**
         * Lockscreen recent button.
         * @hide
         */
