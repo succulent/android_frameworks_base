@@ -1991,6 +1991,10 @@ public class PhoneWindow extends Window implements MenuBuilder.Callback {
         public boolean onInterceptTouchEvent(MotionEvent event) {
             int action = event.getAction();
 
+            int statusBarOffset = mContext.getResources().getDimensionPixelSize(
+                    mContext.getResources().getConfiguration().smallestScreenWidthDp < 600
+                    ? com.android.internal.R.dimen.status_bar_height : 0);
+
             if (mGestureBottom + mGestureLeft + mGestureRight + mGestureTop > 0) {
                 int x = (int)event.getX();
                 int y = (int)event.getY();
@@ -1999,7 +2003,7 @@ public class PhoneWindow extends Window implements MenuBuilder.Callback {
                     if (mGestureBottom > 0 && y > getHeight() - mGestureStart) {
                         mSwipeBottom = true;
                         mSwipeStartBottom = y;
-                    } else if (mGestureTop > 0 && y < mGestureStart) {
+                    } else if (mGestureTop > 0 && y < mGestureStart + statusBarOffset) {
                         mSwipeTop = true;
                         mSwipeStartTop = y;
                     } else if (mGestureRight > 0 && x > getWidth() - mGestureStart) {
