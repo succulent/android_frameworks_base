@@ -297,7 +297,7 @@ public class PhoneStatusBar extends StatusBar {
         ContentResolver resolver = mContext.getContentResolver();
         int color = Settings.System.getInt(resolver,
                 Settings.System.COMBINED_BAR_COLOR, 0xFF000000);
-        mStatusBarView.setBackgroundColor(color);
+        if (color != 0xFF000000) mStatusBarView.setBackgroundColor(color);
         TextView clockText = (TextView) mStatusBarView.findViewById(R.id.clock);
         int clockColor = Settings.System.getInt(resolver,
                 Settings.System.STATUS_BAR_CLOCK_COLOR, 0xFF33B5E5);
@@ -465,13 +465,15 @@ public class PhoneStatusBar extends StatusBar {
         View background = mTrackingView.findViewById(R.id.tracking_background);
         ImageView closeImage = (ImageView) mTrackingView.findViewById(R.id.close_image);
         int color = Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.COMBINED_BAR_COLOR, 0xd8000000);
-        background.setBackgroundColor(color);
-        LinearLayout.LayoutParams closeParams = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, 48);
-        closeParams.gravity = Gravity.BOTTOM;
-        closeImage.setLayoutParams(closeParams);
-        closeImage.setImageDrawable(new ColorDrawable(color));
+                Settings.System.COMBINED_BAR_COLOR, 0xFF000000);
+        if (color != 0xFF000000) {
+            background.setBackgroundColor(color);
+            LinearLayout.LayoutParams closeParams = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT, 48);
+            closeParams.gravity = Gravity.BOTTOM;
+            closeImage.setLayoutParams(closeParams);
+            closeImage.setImageDrawable(new ColorDrawable(color));
+        }
 
         mEdgeBorder = res.getDimensionPixelSize(R.dimen.status_bar_edge_ignore);
 
