@@ -35,7 +35,7 @@
         android:visibility="invisible" />
     <FrameLayout
         android:id="@+id/recents_bg_protect"
-        android:background="@drawable/recents_bg_protect_tile"
+        android:background="@drawable/recents_bg_protect_tile_flipped"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_alignParentBottom="true"
@@ -71,11 +71,11 @@
 
         </com.android.systemui.recent.RecentsVerticalScrollView>
 
-        <include layout="@layout/system_bar_no_recent_apps"
+        <include layout="@layout/system_bar_no_recent_apps_flipped"
             android:id="@+id/recents_no_apps"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_marginLeft="58dip"
+            android:layout_marginRight="58dip"
             android:layout_marginBottom="36dip"
             android:visibility="invisible" />
 

@@ -33,8 +33,10 @@ import com.android.systemui.statusbar.policy.AirplaneModeController;
 import com.android.systemui.statusbar.policy.AutoRotateController;
 import com.android.systemui.statusbar.policy.BrightnessController;
 import com.android.systemui.statusbar.policy.DoNotDisturbController;
+import com.android.systemui.statusbar.policy.NotificationVolumeController;
 import com.android.systemui.statusbar.policy.ToggleSlider;
 import com.android.systemui.statusbar.policy.VolumeController;
+
 
 public class SettingsView extends LinearLayout implements View.OnClickListener {
     static final String TAG = "SettingsView";
@@ -43,6 +45,8 @@ public class SettingsView extends LinearLayout implements View.OnClickListener {
     AutoRotateController mRotate;
     BrightnessController mBrightness;
     DoNotDisturbController mDoNotDisturb;
+    VolumeController mVolume;
+    NotificationVolumeController mNotificationVolume;
     View mRotationLockContainer;
     View mRotationLockSeparator;
 
@@ -81,6 +85,11 @@ public class SettingsView extends LinearLayout implements View.OnClickListener {
         mDoNotDisturb = new DoNotDisturbController(context,
                 (CompoundButton)findViewById(R.id.do_not_disturb_checkbox));
         findViewById(R.id.settings).setOnClickListener(this);
+
+        mVolume = new VolumeController(context,
+                (ToggleSlider)findViewById(R.id.volume));
+        mNotificationVolume = new NotificationVolumeController(context,
+                (ToggleSlider)findViewById(R.id.volume_notification));
     }
 
     @Override

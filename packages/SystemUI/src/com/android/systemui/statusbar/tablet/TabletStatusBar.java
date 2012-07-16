@@ -39,6 +39,8 @@ import android.os.IBinder;
 import android.os.Message;
 import android.os.RemoteException;
 import android.os.ServiceManager;
+import android.os.storage.StorageManager;
+import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.Slog;
 import android.view.Display;
@@ -125,6 +127,8 @@ public class TabletStatusBar extends BaseStatusBar implements
     int mMenuNavIconWidth = -1;
     private int mMaxNotificationIcons = 5;
 
+    private boolean mRightButtons;
+
     IWindowManager mWindowManager;
 
     TabletStatusBarView mStatusBarView;
@@ -191,6 +195,8 @@ public class TabletStatusBar extends BaseStatusBar implements
 
     public Context getContext() { return mContext; }
 
+    private StorageManager mStorageManager;
+
     private Runnable mShowSearchPanel = new Runnable() {
         public void run() {
             showSearchPanel();
@@ -253,8 +259,9 @@ public class TabletStatusBar extends BaseStatusBar implements
         final Resources res = mContext.getResources();
 
         // Notification Panel
-        mNotificationPanel = (NotificationPanel)View.inflate(context,
-                R.layout.system_bar_notification_panel, null);
+        mNotificationPanel = (NotificationPanel)View.inflate(context, (mRightButtons ?
+                R.layout.system_bar_notification_panel_flipped :
+                R.layout.system_bar_notification_panel), null);
         mNotificationPanel.setBar(this);
         mNotificationPanel.show(false, false);
         mNotificationPanel.setOnTouchListener(
@@ -268,6 +275,11 @@ public class TabletStatusBar extends BaseStatusBar implements
         // Bt
         mBluetoothController.addIconView(
                 (ImageView)mNotificationPanel.findViewById(R.id.bluetooth));
+
+        // storage
+        mStorageManager = (StorageManager) context.getSystemService(Context.STORAGE_SERVICE);
+        mStorageManager.registerListener(
+                new com.android.systemui.usb.StorageNotification(context));
 
         // network icons: either a combo icon that switches between mobile and data, or distinct
         // mobile and data icons
@@ -303,7 +315,7 @@ public class TabletStatusBar extends BaseStatusBar implements
                     | WindowManager.LayoutParams.FLAG_SPLIT_TOUCH
                     | WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
                 PixelFormat.TRANSLUCENT);
-        lp.gravity = Gravity.BOTTOM | Gravity.RIGHT;
+        lp.gravity = Gravity.BOTTOM | (mRightButtons ? Gravity.LEFT : Gravity.RIGHT);
         lp.setTitle("NotificationPanel");
         lp.softInputMode = WindowManager.LayoutParams.SOFT_INPUT_STATE_UNCHANGED
                 | WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING;
@@ -338,7 +350,7 @@ public class TabletStatusBar extends BaseStatusBar implements
                     | WindowManager.LayoutParams.FLAG_SPLIT_TOUCH
                     | WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
                 PixelFormat.TRANSLUCENT);
-        lp.gravity = Gravity.BOTTOM | Gravity.RIGHT;
+        lp.gravity = Gravity.BOTTOM | (mRightButtons ? Gravity.LEFT : Gravity.RIGHT);
         lp.setTitle("InputMethodsPanel");
         lp.windowAnimations = R.style.Animation_RecentPanel;
 
@@ -361,7 +373,7 @@ public class TabletStatusBar extends BaseStatusBar implements
                     | WindowManager.LayoutParams.FLAG_SPLIT_TOUCH
                     | WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
                 PixelFormat.TRANSLUCENT);
-        lp.gravity = Gravity.BOTTOM | Gravity.RIGHT;
+        lp.gravity = Gravity.BOTTOM | (mRightButtons ? Gravity.LEFT : Gravity.RIGHT);
         lp.setTitle("CompatModePanel");
         lp.windowAnimations = android.R.style.Animation_Dialog;
 
@@ -460,13 +472,16 @@ public class TabletStatusBar extends BaseStatusBar implements
     protected View makeStatusBarView() {
         final Context context = mContext;
 
+        mRightButtons = (Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.TABLET_FLIPPED, 0) == 1);
+
         mWindowManager = IWindowManager.Stub.asInterface(
                 ServiceManager.getService(Context.WINDOW_SERVICE));
 
         loadDimens();
 
         final TabletStatusBarView sb = (TabletStatusBarView)View.inflate(
-                context, R.layout.system_bar, null);
+                context, mRightButtons ? R.layout.system_bar_flipped : R.layout.system_bar, null);
         mStatusBarView = sb;
 
         sb.setHandler(mHandler);
@@ -633,7 +648,7 @@ public class TabletStatusBar extends BaseStatusBar implements
                 | WindowManager.LayoutParams.FLAG_SPLIT_TOUCH
                 | WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
                 PixelFormat.TRANSLUCENT);
-        lp.gravity = Gravity.BOTTOM | Gravity.LEFT;
+        lp.gravity = Gravity.BOTTOM | Gravity.RIGHT;
         lp.setTitle("RecentsPanel");
         lp.windowAnimations = com.android.internal.R.style.Animation_RecentApplications;
         lp.softInputMode = WindowManager.LayoutParams.SOFT_INPUT_STATE_UNCHANGED
@@ -659,7 +674,7 @@ public class TabletStatusBar extends BaseStatusBar implements
             lp.flags |= WindowManager.LayoutParams.FLAG_DIM_BEHIND;
             lp.dimAmount = 0.7f;
         }
-        lp.gravity = Gravity.BOTTOM | Gravity.LEFT;
+        lp.gravity = Gravity.BOTTOM | Gravity.RIGHT;
         lp.setTitle("SearchPanel");
         // TODO: Define custom animation for Search panel
         lp.windowAnimations = com.android.internal.R.style.Animation_RecentApplications;
@@ -669,7 +684,8 @@ public class TabletStatusBar extends BaseStatusBar implements
     }
 
     protected void updateRecentsPanel() {
-        super.updateRecentsPanel(R.layout.system_bar_recent_panel);
+        super.updateRecentsPanel(mRightButtons ? R.layout.system_bar_recent_panel_flipped :
+                R.layout.system_bar_recent_panel);
         mRecentsPanel.setStatusBarView(mStatusBarView);
     }
 
@@ -968,13 +984,19 @@ public class TabletStatusBar extends BaseStatusBar implements
     }
 
     private void setNavigationVisibility(int visibility) {
+        boolean navControls = Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.NAVIGATION_CONTROLS, 1) == 1;
+
         boolean disableHome = ((visibility & StatusBarManager.DISABLE_HOME) != 0);
         boolean disableRecent = ((visibility & StatusBarManager.DISABLE_RECENT) != 0);
         boolean disableBack = ((visibility & StatusBarManager.DISABLE_BACK) != 0);
 
-        mBackButton.setVisibility(disableBack ? View.INVISIBLE : View.VISIBLE);
-        mHomeButton.setVisibility(disableHome ? View.INVISIBLE : View.VISIBLE);
-        mRecentButton.setVisibility(disableRecent ? View.INVISIBLE : View.VISIBLE);
+        mBackButton.setVisibility(!navControls ? View.GONE :
+                (disableBack ? View.INVISIBLE : View.VISIBLE));
+        mHomeButton.setVisibility(!navControls ? View.GONE :
+                (disableHome ? View.INVISIBLE : View.VISIBLE));
+        mRecentButton.setVisibility(!navControls ? View.GONE :
+                (disableRecent ? View.INVISIBLE : View.VISIBLE));
 
         mInputMethodSwitchButton.setScreenLocked(
                 (visibility & StatusBarManager.DISABLE_SYSTEM_INFO) != 0);
@@ -1117,7 +1139,10 @@ public class TabletStatusBar extends BaseStatusBar implements
         if (DEBUG) {
             Slog.d(TAG, (showMenu?"showing":"hiding") + " the MENU button");
         }
-        mMenuButton.setVisibility(showMenu ? View.VISIBLE : View.GONE);
+
+        boolean navControls = Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.NAVIGATION_CONTROLS, 1) == 1;
+        if (navControls) mMenuButton.setVisibility(showMenu ? View.VISIBLE : View.GONE);
 
         // See above re: lights-out policy for legacy apps.
         if (showMenu) setLightsOn(true);

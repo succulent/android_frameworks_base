@@ -1014,8 +1014,9 @@ public class PhoneStatusBar extends BaseStatusBar {
 
     public void showClock(boolean show) {
         if (mStatusBarView == null) return;
-        View clock = mStatusBarView.findViewById(R.id.clock);
+        TextView clock = (TextView) mStatusBarView.findViewById(R.id.clock);
         if (clock != null) {
+            clock.setTextSize(18);
             clock.setVisibility(show ? View.VISIBLE : View.GONE);
         }
     }
@@ -2023,6 +2024,7 @@ public class PhoneStatusBar extends BaseStatusBar {
 
         makeStatusBarView();
         WindowManagerImpl.getDefault().addView(mStatusBarWindow, lp);
+        showClock(true);
     }
 
     void setNotificationIconVisibility(boolean visible, int anim) {

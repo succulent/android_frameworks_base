@@ -15,6 +15,14 @@
  * limitations under the License.
 -->
 
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_height="wrap_content"
+    android:layout_width="match_parent"
+    android:layout_weight="1"
+    android:visibility="gone"
+    android:id="@+id/scroll_settings" >
+
 <com.android.systemui.statusbar.tablet.SettingsView
         xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:systemui="http://schemas.android.com/apk/res/com.android.systemui"
@@ -22,6 +30,42 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         >
+
+    <!-- Volume controller -->
+    <LinearLayout style="@style/StatusBarPanelSettingsRow" >
+        <ImageView
+                android:id="@+id/volume_icon"
+                style="@style/StatusBarPanelSettingsIcon"
+                android:src="@drawable/ic_audio_vol"
+                />
+        <com.android.systemui.statusbar.policy.ToggleSlider
+                android:id="@+id/volume"
+                android:layout_width="0dp"
+                android:layout_height="fill_parent"
+                android:layout_weight="1"
+                android:layout_marginRight="2dp"
+                systemui:text="@string/status_bar_settings_mute_label"
+                />
+    </LinearLayout>
+    <View style="@style/StatusBarPanelSettingsPanelSeparator" />
+
+    <!-- Volume controller -->
+    <LinearLayout style="@style/StatusBarPanelSettingsRow" >
+        <ImageView
+                android:id="@+id/volume_notification_icon"
+                style="@style/StatusBarPanelSettingsIcon"
+                android:src="@drawable/ic_audio_ring_notif"
+                />
+        <com.android.systemui.statusbar.policy.ToggleSlider
+                android:id="@+id/volume_notification"
+                android:layout_width="0dp"
+                android:layout_height="fill_parent"
+                android:layout_weight="1"
+                android:layout_marginRight="2dp"
+                systemui:text="@string/status_bar_settings_mute_label"
+                />
+    </LinearLayout>
+    <View style="@style/StatusBarPanelSettingsPanelSeparator" />
 
     <!-- Airplane mode -->
     <LinearLayout
@@ -155,3 +199,4 @@
 
 </com.android.systemui.statusbar.tablet.SettingsView>
 
+</ScrollView>
