@@ -3668,5 +3668,6 @@
   <java-symbol type="string" name="reboot_progress" />
   <java-symbol type="drawable" name="ic_lock_screenshot" />
   <java-symbol type="string" name="global_action_screenshot" />
+  <java-symbol type="bool" name="config_autoBrightnessButtonKeyboard" />
 
 </resources>
