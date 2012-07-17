@@ -786,8 +786,10 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     private void handleLongPressOnHome() {
         // We can't initialize this in init() since the configuration hasn't been loaded yet.
         if (mLongPressOnHomeBehavior < 0) {
-            mLongPressOnHomeBehavior
-                    = mContext.getResources().getInteger(R.integer.config_longPressOnHomeBehavior);
+            boolean hasNavigationBar = Settings.System.getInt(mContext.getContentResolver(),
+                        Settings.System.NAVIGATION_CONTROLS, 0) == 1;
+            mLongPressOnHomeBehavior = hasNavigationBar ? LONG_PRESS_HOME_NOTHING :
+                    mContext.getResources().getInteger(R.integer.config_longPressOnHomeBehavior);
             if (mLongPressOnHomeBehavior < LONG_PRESS_HOME_NOTHING ||
                     mLongPressOnHomeBehavior > LONG_PRESS_HOME_RECENT_SYSTEM_UI) {
                 mLongPressOnHomeBehavior = LONG_PRESS_HOME_NOTHING;
@@ -1231,6 +1233,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         } else {
             mCanHideNavigationBar = false;
         }
+
+        mLongPressOnHomeBehavior = -1;
     }
 
     private void enablePointerLocation() {
