@@ -2318,6 +2318,7 @@ public final class Settings {
          */
         public static final String NAVIGATION_CONTROLS = "navigation_controls";
 
+        /**
          * Use the Notification Power Widget? (Who wouldn't!)
          *
          * @hide

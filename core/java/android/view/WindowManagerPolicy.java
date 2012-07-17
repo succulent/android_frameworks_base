@@ -394,7 +394,6 @@ public interface WindowManagerPolicy {
         public void shutdown();
         public void reboot();
         public void rebootSafeMode();
-        public void reboot();
     }
 
     /**
