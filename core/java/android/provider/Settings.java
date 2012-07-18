@@ -2360,6 +2360,11 @@ public final class Settings {
         public static final String EDGE_SWIPE_DISTANCE = "edge_swipe_distance";
 
         /**
+         * @hide
+         */
+        public static final String FORCE_SOFT_MENU_BUTTON = "force_soft_menu_button";
+
+        /**
          * Use the Notification Power Widget? (Who wouldn't!)
          *
          * @hide

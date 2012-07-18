@@ -145,6 +145,7 @@ public class TabletStatusBar extends BaseStatusBar implements
     View mMenuButton;
     View mRecentButton;
     private boolean mAltBackButtonEnabledForIme;
+    boolean mForceMenuButton = false;
 
     ViewGroup mFeedbackIconArea; // notification icons, IME icon, compat icon
     InputMethodButton mInputMethodSwitchButton;
@@ -399,7 +400,7 @@ public class TabletStatusBar extends BaseStatusBar implements
         final Display d = WindowManagerImpl.getDefault().getDefaultDisplay();
         final Point size = new Point();
         d.getRealSize(size);
-        return Math.max(res.getDimensionPixelSize(R.dimen.notification_panel_min_height), size.y);
+        return size.y;
     }
 
     @Override
@@ -997,6 +998,8 @@ public class TabletStatusBar extends BaseStatusBar implements
     private void setNavigationVisibility(int visibility) {
         boolean navControls = Settings.System.getInt(mContext.getContentResolver(),
                 Settings.System.NAVIGATION_CONTROLS, 1) == 1;
+        mForceMenuButton = (Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.FORCE_SOFT_MENU_BUTTON, 0) == 1);
 
         boolean disableHome = ((visibility & StatusBarManager.DISABLE_HOME) != 0);
         boolean disableRecent = ((visibility & StatusBarManager.DISABLE_RECENT) != 0);
@@ -1008,6 +1011,12 @@ public class TabletStatusBar extends BaseStatusBar implements
                 (disableHome ? View.INVISIBLE : View.VISIBLE));
         mRecentButton.setVisibility(!navControls ? View.GONE :
                 (disableRecent ? View.INVISIBLE : View.VISIBLE));
+
+        if (mForceMenuButton) {
+            boolean disableMenu = disableBack && disableHome && disableRecent;
+            mMenuButton.setVisibility(!navControls ? View.GONE : (disableMenu ?
+                    View.INVISIBLE : View.VISIBLE));
+        }
 
         mInputMethodSwitchButton.setScreenLocked(
                 (visibility & StatusBarManager.DISABLE_SYSTEM_INFO) != 0);
@@ -1153,7 +1162,9 @@ public class TabletStatusBar extends BaseStatusBar implements
 
         boolean navControls = Settings.System.getInt(mContext.getContentResolver(),
                 Settings.System.NAVIGATION_CONTROLS, 1) == 1;
-        if (navControls) mMenuButton.setVisibility(showMenu ? View.VISIBLE : View.GONE);
+        if (navControls && !mForceMenuButton) {
+            mMenuButton.setVisibility(showMenu ? View.VISIBLE : View.GONE);
+        }
 
         // See above re: lights-out policy for legacy apps.
         if (showMenu) setLightsOn(true);

@@ -28,6 +28,7 @@ import android.graphics.drawable.Drawable;
 import android.os.Handler;
 import android.os.Message;
 import android.os.ServiceManager;
+import android.provider.Settings;
 import android.util.AttributeSet;
 import android.util.Slog;
 import android.view.animation.AccelerateInterpolator;
@@ -73,6 +74,8 @@ public class NavigationBarView extends LinearLayout {
     boolean mHidden, mLowProfile, mShowMenu;
     int mDisabledFlags = 0;
     int mNavigationIconHints = 0;
+
+    private boolean mForceMenuButton = false;
 
     private Drawable mBackIcon, mBackLandIcon, mBackAltIcon, mBackAltLandIcon;
     
@@ -219,6 +222,9 @@ public class NavigationBarView extends LinearLayout {
     public void setDisabledFlags(int disabledFlags, boolean force) {
         if (!force && mDisabledFlags == disabledFlags) return;
 
+        mForceMenuButton = (Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.FORCE_SOFT_MENU_BUTTON, 0) == 1);
+
         mDisabledFlags = disabledFlags;
 
         final boolean disableHome = ((disabledFlags & View.STATUS_BAR_DISABLE_HOME) != 0);
@@ -230,6 +236,11 @@ public class NavigationBarView extends LinearLayout {
         getBackButton()   .setVisibility(disableBack       ? View.INVISIBLE : View.VISIBLE);
         getHomeButton()   .setVisibility(disableHome       ? View.INVISIBLE : View.VISIBLE);
         getRecentsButton().setVisibility(disableRecent     ? View.INVISIBLE : View.VISIBLE);
+
+        if (mForceMenuButton) {
+            boolean disableMenu = disableBack && disableHome && disableRecent;
+            getMenuButton().setVisibility(disableMenu ? View.INVISIBLE : View.VISIBLE);
+        }
     }
 
     public void setSlippery(boolean newSlippery) {
@@ -255,8 +266,9 @@ public class NavigationBarView extends LinearLayout {
         if (!force && mShowMenu == show) return;
 
         mShowMenu = show;
-
-        getMenuButton().setVisibility(mShowMenu ? View.VISIBLE : View.INVISIBLE);
+        if (!mForceMenuButton) {
+            getMenuButton().setVisibility(mShowMenu ? View.VISIBLE : View.INVISIBLE);
+        }
     }
 
     public void setLowProfile(final boolean lightsOut) {
@@ -330,6 +342,7 @@ public class NavigationBarView extends LinearLayout {
                                                 : findViewById(R.id.rot270);
 
         mCurrentView = mRotatedViews[Surface.ROTATION_0];
+        setDisabledFlags(0);
     }
 
     public void reorient() {
