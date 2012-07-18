@@ -487,6 +487,8 @@ public class PhoneStatusBar extends BaseStatusBar {
         filter.addAction(Intent.ACTION_SCREEN_OFF);
         context.registerReceiver(mBroadcastReceiver, filter);
 
+        showClock(true);
+
         return mStatusBarView;
     }
 
@@ -1014,9 +1016,12 @@ public class PhoneStatusBar extends BaseStatusBar {
 
     public void showClock(boolean show) {
         if (mStatusBarView == null) return;
+        int clockColor = Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.STATUS_BAR_CLOCK_COLOR, 0xFF33B5E5);
         TextView clock = (TextView) mStatusBarView.findViewById(R.id.clock);
         if (clock != null) {
-            clock.setTextSize(18);
+            clock.setTextSize(mContext.getResources().getDimensionPixelSize(R.dimen.status_bar_clock_size));
+            clock.setTextColor(clockColor);
             clock.setVisibility(show ? View.VISIBLE : View.GONE);
         }
     }

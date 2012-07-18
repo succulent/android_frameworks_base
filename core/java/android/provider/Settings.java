@@ -2365,6 +2365,11 @@ public final class Settings {
         public static final String FORCE_SOFT_MENU_BUTTON = "force_soft_menu_button";
 
         /**
+         * @hide
+         */
+        public static final String STATUS_BAR_CLOCK_COLOR = "status_bar_clock_color";
+
+        /**
          * Use the Notification Power Widget? (Who wouldn't!)
          *
          * @hide

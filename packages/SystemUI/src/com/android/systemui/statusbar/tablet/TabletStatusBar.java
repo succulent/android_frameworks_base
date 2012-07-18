@@ -636,6 +636,7 @@ public class TabletStatusBar extends BaseStatusBar implements
         context.registerReceiver(mBroadcastReceiver, filter);
 
         setNavigationVisibility(0);
+        showClock(true);
 
         return sb;
     }
@@ -922,9 +923,13 @@ public class TabletStatusBar extends BaseStatusBar implements
     }
 
     public void showClock(boolean show) {
-        View clock = mBarContents.findViewById(R.id.clock);
+        int clockColor = Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.STATUS_BAR_CLOCK_COLOR, 0xFF33B5E5);
+
+        TextView clock = (TextView) mBarContents.findViewById(R.id.clock);
         View network_text = mBarContents.findViewById(R.id.network_text);
         if (clock != null) {
+            clock.setTextColor(clockColor);
             clock.setVisibility(show ? View.VISIBLE : View.GONE);
         }
         if (network_text != null) {
