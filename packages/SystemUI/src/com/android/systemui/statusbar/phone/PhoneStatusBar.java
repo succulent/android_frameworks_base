@@ -1193,7 +1193,7 @@ public class PhoneStatusBar extends BaseStatusBar {
 
         mExpandedVisible = true;
         mPile.setLayoutTransitionsEnabled(true);
-        if (mNavigationBarView != null)
+        if (mNavigationBarView != null && mVisible)
             mNavigationBarView.setSlippery(true);
 
         updateCarrierLabelVisibility(true);
