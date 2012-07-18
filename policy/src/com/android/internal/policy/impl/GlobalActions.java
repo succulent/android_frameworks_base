@@ -26,6 +26,7 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.Profile;
 import android.app.ProfileManager;
+import android.app.StatusBarManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -106,6 +107,9 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
     private IWindowManager mIWindowManager;
     private Profile mChosenProfile;
 
+    private final boolean mTabletStatusBar;
+    private boolean mAirplaneModeNeeded;
+    private StatusBarManager mStatusBarManager;
 
     /**
      * @param context everything needs a context :(
@@ -114,6 +118,12 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
         mContext = context;
         mWindowManagerFuncs = windowManagerFuncs;
         mAudioManager = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
+        mStatusBarManager = (StatusBarManager)
+                mContext.getSystemService(Context.STATUS_BAR_SERVICE);
+        mTabletStatusBar = context.getResources().getConfiguration().smallestScreenWidthDp >= 600;
+        ConnectivityManager cm = (ConnectivityManager) context
+                .getSystemService(Context.CONNECTIVITY_SERVICE);
+        mAirplaneModeNeeded = cm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) != null;
 
         // receive broadcasts
         IntentFilter filter = new IntentFilter();
@@ -126,8 +136,6 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
         TelephonyManager telephonyManager =
                 (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
         telephonyManager.listen(mPhoneStateListener, PhoneStateListener.LISTEN_SERVICE_STATE);
-        ConnectivityManager cm = (ConnectivityManager)
-                context.getSystemService(Context.CONNECTIVITY_SERVICE);
         mHasTelephony = cm.isNetworkSupported(ConnectivityManager.TYPE_MOBILE);
         mContext.getContentResolver().registerContentObserver(
                 Settings.System.getUriFor(Settings.System.AIRPLANE_MODE_ON), true,
@@ -296,7 +304,24 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
             });
 
         // next: airplane mode
-        mItems.add(mAirplaneModeOn);
+        if (mAirplaneModeNeeded) mItems.add(mAirplaneModeOn);
+
+        // next: statusbar
+        if (mTabletStatusBar) mItems.add(
+            new SinglePressAction(R.drawable.ic_lock_hide_statusbar,
+                    R.string.global_actions_toggle_statusbar) {
+                public void onPress() {
+                    mStatusBarManager.toggleVisibility();
+                }
+
+                public boolean showDuringKeyguard() {
+                    return true;
+                }
+
+                public boolean showBeforeProvisioning() {
+                    return true;
+                }
+            });
 
         // last: silent mode
         if (SHOW_SILENT_TOGGLE) {

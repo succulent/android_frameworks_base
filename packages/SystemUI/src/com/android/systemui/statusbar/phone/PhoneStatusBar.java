@@ -644,7 +644,7 @@ public class PhoneStatusBar extends BaseStatusBar {
     }
 
     private void repositionNavigationBar() {
-        if (mNavigationBarView == null) return;
+        if (mNavigationBarView == null || !mVisible) return;
 
         prepareNavigationBarView();
 
@@ -1019,6 +1019,15 @@ public class PhoneStatusBar extends BaseStatusBar {
             clock.setTextSize(18);
             clock.setVisibility(show ? View.VISIBLE : View.GONE);
         }
+    }
+
+    boolean mVisible = true;
+
+    public void toggleVisibility() {
+        final WindowManager wm = WindowManagerImpl.getDefault();
+        if (mVisible) wm.removeView(mNavigationBarView);
+        else addNavigationBar();
+        mVisible = !mVisible;
     }
 
     /**

@@ -929,6 +929,15 @@ public class TabletStatusBar extends BaseStatusBar implements
         }
     }
 
+    boolean mVisible = true;
+
+    public void toggleVisibility() {
+        final WindowManager wm = WindowManagerImpl.getDefault();
+        if (mVisible) wm.removeView(mStatusBarView);
+        else addStatusBarWindow();
+        mVisible = !mVisible;
+    }
+
     public void disable(int state) {
         int old = mDisabled;
         int diff = state ^ old;
