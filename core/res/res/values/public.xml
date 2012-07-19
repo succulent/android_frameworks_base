@@ -3664,14 +3664,6 @@
   <java-symbol type="string" name="config_legacyUmsLunFile" />
   <java-symbol type="bool" name="config_forceDisableHardwareKeyboard" />
   <java-symbol type="array" name="config_telephony_set_audioparameters" />
-  <java-symbol type="string" name="global_action_reboot" />
-  <java-symbol type="drawable" name="ic_lock_reboot" />
-  <java-symbol type="array" name="shutdown_reboot_options" />
-  <java-symbol type="array" name="shutdown_reboot_actions" />
-  <java-symbol type="string" name="reboot_system" />
-  <java-symbol type="string" name="reboot_progress" />
-  <java-symbol type="drawable" name="ic_lock_screenshot" />
-  <java-symbol type="string" name="global_action_screenshot" />
   <java-symbol type="bool" name="config_autoBrightnessButtonKeyboard" />
   <java-symbol type="string" name="config_deviceKeyHandlerLib" />
   <java-symbol type="string" name="config_deviceKeyHandlerClass" />
@@ -3826,50 +3818,5 @@
   <java-symbol type="id" name="calendar_panel" />
   <java-symbol type="id" name="calendar_event_title" />
   <java-symbol type="id" name="calendar_event_details" />
-
-  <!-- Lock screen shortcuts -->
-  <!-- Lock screen shortcuts - Normal (must match 'Activated' list below) -->
-  <java-symbol type="drawable" name="ic_lockscreen_alarm_normal" />
-  <java-symbol type="drawable" name="ic_lockscreen_browser_normal" />
-  <java-symbol type="drawable" name="ic_lockscreen_calendar_normal" />
-  <java-symbol type="drawable" name="ic_lockscreen_camera_normal" />
-  <java-symbol type="drawable" name="ic_lockscreen_chrome_normal" />
-  <java-symbol type="drawable" name="ic_lockscreen_email_normal" />
-  <java-symbol type="drawable" name="ic_lockscreen_facebook_normal" />
-  <java-symbol type="drawable" name="ic_lockscreen_gallery_normal" />
-  <java-symbol type="drawable" name="ic_lockscreen_google_normal" />
-  <java-symbol type="drawable" name="ic_lockscreen_gplus_normal" />
-  <java-symbol type="drawable" name="ic_lockscreen_gtalk_normal" />
-  <java-symbol type="drawable" name="ic_lockscreen_maps_normal" />
-  <java-symbol type="drawable" name="ic_lockscreen_movie_normal" />
-  <java-symbol type="drawable" name="ic_lockscreen_music_normal" />
-  <java-symbol type="drawable" name="ic_lockscreen_nav_normal" />
-  <java-symbol type="drawable" name="ic_lockscreen_phone_normal" />
-  <java-symbol type="drawable" name="ic_lockscreen_podcast_normal" />
-  <java-symbol type="drawable" name="ic_lockscreen_rss_normal" />
-  <java-symbol type="drawable" name="ic_lockscreen_sms_normal" />
-  <java-symbol type="drawable" name="ic_lockscreen_twitter_normal" />
-
-  <!-- Lock screen shortcuts - Activated (must match 'Normal' list above) -->
-  <java-symbol type="drawable" name="ic_lockscreen_alarm_activated" />
-  <java-symbol type="drawable" name="ic_lockscreen_browser_activated" />
-  <java-symbol type="drawable" name="ic_lockscreen_calendar_activated" />
-  <java-symbol type="drawable" name="ic_lockscreen_camera_activated" />
-  <java-symbol type="drawable" name="ic_lockscreen_chrome_activated" />
-  <java-symbol type="drawable" name="ic_lockscreen_email_activated" />
-  <java-symbol type="drawable" name="ic_lockscreen_facebook_activated" />
-  <java-symbol type="drawable" name="ic_lockscreen_gallery_activated" />
-  <java-symbol type="drawable" name="ic_lockscreen_google_activated" />
-  <java-symbol type="drawable" name="ic_lockscreen_gplus_activated" />
-  <java-symbol type="drawable" name="ic_lockscreen_gtalk_activated" />
-  <java-symbol type="drawable" name="ic_lockscreen_maps_activated" />
-  <java-symbol type="drawable" name="ic_lockscreen_movie_activated" />
-  <java-symbol type="drawable" name="ic_lockscreen_music_activated" />
-  <java-symbol type="drawable" name="ic_lockscreen_nav_activated" />
-  <java-symbol type="drawable" name="ic_lockscreen_phone_activated" />
-  <java-symbol type="drawable" name="ic_lockscreen_podcast_activated" />
-  <java-symbol type="drawable" name="ic_lockscreen_rss_activated" />
-  <java-symbol type="drawable" name="ic_lockscreen_sms_activated" />
-  <java-symbol type="drawable" name="ic_lockscreen_twitter_activated" />
 
 </resources>

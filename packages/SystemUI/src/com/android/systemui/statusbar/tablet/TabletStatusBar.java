@@ -24,6 +24,7 @@ import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.StatusBarManager;
 import android.content.BroadcastReceiver;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -188,6 +189,9 @@ public class TabletStatusBar extends BaseStatusBar implements
     private InputMethodsPanel mInputMethodsPanel;
     private CompatModePanel mCompatModePanel;
 
+    // clock
+    private boolean mShowClock;
+
     private int mSystemUiVisibility = 0;
 
     private int mNavigationIconHints = 0;
@@ -197,6 +201,8 @@ public class TabletStatusBar extends BaseStatusBar implements
     public Context getContext() { return mContext; }
 
     private StorageManager mStorageManager;
+
+    boolean mVisible = true;
 
     private Runnable mShowSearchPanel = new Runnable() {
         public void run() {
@@ -525,6 +531,8 @@ public class TabletStatusBar extends BaseStatusBar implements
 
         mBatteryController = new BatteryController(mContext);
         mBatteryController.addIconView((ImageView)sb.findViewById(R.id.battery));
+        mBatteryController.addLabelView(
+                (TextView)sb.findViewById(R.id.battery_text));
         mBluetoothController = new BluetoothController(mContext);
         mBluetoothController.addIconView((ImageView)sb.findViewById(R.id.bluetooth));
 
@@ -923,21 +931,22 @@ public class TabletStatusBar extends BaseStatusBar implements
     }
 
     public void showClock(boolean show) {
-        int clockColor = Settings.System.getInt(mContext.getContentResolver(),
+        ContentResolver resolver = mContext.getContentResolver();
+        mShowClock = (Settings.System.getInt(resolver,
+                Settings.System.STATUS_BAR_CLOCK, 1) == 1);
+        int clockColor = Settings.System.getInt(resolver,
                 Settings.System.STATUS_BAR_CLOCK_COLOR, 0xFF33B5E5);
 
         TextView clock = (TextView) mBarContents.findViewById(R.id.clock);
         View network_text = mBarContents.findViewById(R.id.network_text);
         if (clock != null) {
             clock.setTextColor(clockColor);
-            clock.setVisibility(show ? View.VISIBLE : View.GONE);
+            clock.setVisibility(show ? (mShowClock ? View.VISIBLE : View.GONE) : View.GONE);
         }
         if (network_text != null) {
             network_text.setVisibility((!show) ? View.VISIBLE : View.GONE);
         }
     }
-
-    boolean mVisible = true;
 
     public void toggleVisibility() {
         final WindowManager wm = WindowManagerImpl.getDefault();

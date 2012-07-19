@@ -1208,12 +1208,16 @@ public class NetworkController extends BroadcastReceiver {
             }
         }
 
+        int textColor = Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.STATUS_BAR_CLOCK_COLOR, 0xFF33B5E5);
+
         // the combinedLabel in the notification panel
         if (!mLastCombinedLabel.equals(combinedLabel)) {
             mLastCombinedLabel = combinedLabel;
             N = mCombinedLabelViews.size();
             for (int i=0; i<N; i++) {
                 TextView v = mCombinedLabelViews.get(i);
+                v.setTextColor(textColor);
                 v.setText(combinedLabel);
             }
         }
@@ -1222,6 +1226,7 @@ public class NetworkController extends BroadcastReceiver {
         N = mWifiLabelViews.size();
         for (int i=0; i<N; i++) {
             TextView v = mWifiLabelViews.get(i);
+            v.setTextColor(textColor);
             v.setText(wifiLabel);
             if ("".equals(wifiLabel)) {
                 v.setVisibility(View.GONE);
@@ -1234,6 +1239,7 @@ public class NetworkController extends BroadcastReceiver {
         N = mMobileLabelViews.size();
         for (int i=0; i<N; i++) {
             TextView v = mMobileLabelViews.get(i);
+            v.setTextColor(textColor);
             v.setText(mobileLabel);
             if ("".equals(mobileLabel)) {
                 v.setVisibility(View.GONE);

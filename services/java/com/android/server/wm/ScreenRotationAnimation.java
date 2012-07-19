@@ -189,7 +189,6 @@ class ScreenRotationAnimation {
     public ScreenRotationAnimation(Context context, SurfaceSession session,
             boolean inTransaction, int originalWidth, int originalHeight, int originalRotation) {
         mContext = context;
-
         // Allow for abnormal hardware orientation
         mSnapshotRotation = (4 - android.os.SystemProperties.getInt("ro.sf.hwrotation",0) / 90) % 4;
         if (mSnapshotRotation == Surface.ROTATION_0 || mSnapshotRotation == Surface.ROTATION_180) {
