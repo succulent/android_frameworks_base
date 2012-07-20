@@ -2370,6 +2370,11 @@ public final class Settings {
         public static final String STATUS_BAR_CLOCK_COLOR = "status_bar_clock_color";
 
         /**
+         * @hide
+         */
+        public static final String COMBINED_BAR_SETTINGS = "combined_bar_settings";
+
+        /**
          * Use the Notification Power Widget? (Who wouldn't!)
          *
          * @hide
