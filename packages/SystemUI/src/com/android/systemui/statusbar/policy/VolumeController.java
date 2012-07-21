@@ -16,7 +16,6 @@
 
 package com.android.systemui.statusbar.policy;
 
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -24,31 +23,19 @@ import android.media.AudioManager;
 import android.provider.Settings;
 
 public class VolumeController implements ToggleSlider.Listener {
-    private static final int STREAM = AudioManager.STREAM_MUSIC;
-
     private AudioManager mAudioManager;
     private ToggleSlider mControl;
     private Context mContext;
-    private boolean mVoiceCapable;
 
     public VolumeController(Context context, ToggleSlider control) {
-        // receive broadcasts
-        IntentFilter filter = new IntentFilter();
-        filter.addAction(AudioManager.RINGER_MODE_CHANGED_ACTION);
-        context.registerReceiver(mBroadcastReceiver, filter);
-
         mAudioManager = (AudioManager)context.getSystemService(Context.AUDIO_SERVICE);
         mControl = control;
         mContext = context;
 
-        mVoiceCapable = mContext.getResources().getBoolean(
-                        com.android.internal.R.bool.config_voice_capable);
-
-        boolean mute = (mVoiceCapable ? mAudioManager.isStreamMute(STREAM) :
-                mAudioManager.getRingerMode() != AudioManager.RINGER_MODE_NORMAL);
-        int volume = mute ? mAudioManager.getLastAudibleStreamVolume(STREAM) :
-                mAudioManager.getStreamVolume(STREAM);
-        control.setMax(mAudioManager.getStreamMaxVolume(STREAM));
+        boolean mute = mAudioManager.isMasterMute();
+        int volume = mute ? mAudioManager.getLastAudibleMasterVolume() :
+                mAudioManager.getMasterVolume();
+        control.setMax(mAudioManager.getMasterMaxVolume());
         control.setValue(volume);
         control.setChecked(mute);
         control.setOnChangedListener(this);
@@ -56,40 +43,15 @@ public class VolumeController implements ToggleSlider.Listener {
 
     public void onChanged(ToggleSlider view, boolean tracking, boolean mute, int level) {
         if (!tracking) {
-            if (mVoiceCapable) {
-                if (mute && !mAudioManager.isStreamMute(STREAM)) {
-                    mAudioManager.setStreamMute(STREAM, mute);
-                    mControl.setChecked(mute);
-                } else if (!mute && mAudioManager.isStreamMute(STREAM)) {
-                    mAudioManager.setStreamMute(STREAM, mute);
-                }
-            } else {
-                if (mute) {
-                    boolean vibeInSilent = (1 == Settings.System.getInt(mContext.getContentResolver(),
-                            Settings.System.VIBRATE_IN_SILENT, 1));
-                    mAudioManager.setRingerMode(
-                            vibeInSilent ? AudioManager.RINGER_MODE_VIBRATE
-                            : AudioManager.RINGER_MODE_SILENT);
-                } else {
-                    mAudioManager.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
-                }
+            if (mute && !mAudioManager.isMasterMute()) {
+                mAudioManager.setMasterMute(mute, 0);
+                mControl.setChecked(mute);
+            } else if (!mute && mAudioManager.isMasterMute()) {
+                mAudioManager.setMasterMute(mute, 0);
             }
-            //int flags = Settings.System.getInt(mContext.getContentResolver(),
-            //        Settings.System.VOLUME_CHANGE_BEEP, 1) == 1 ? AudioManager.FLAG_PLAY_SOUND : 0;
-            mAudioManager.setStreamVolume(STREAM, level, AudioManager.FLAG_PLAY_SOUND);
+            mAudioManager.setMasterVolume(level, AudioManager.FLAG_PLAY_SOUND);
         } else {
-            mAudioManager.setStreamVolume(STREAM, level, 0);
+            mAudioManager.setMasterVolume(level, 0);
         }
     }
-
-    private BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
-        public void onReceive(Context context, Intent intent) {
-            if (intent.getAction().equals(AudioManager.RINGER_MODE_CHANGED_ACTION)) {
-                if (!mVoiceCapable) {
-                    mControl.setChecked(mAudioManager.getRingerMode() !=
-                            AudioManager.RINGER_MODE_NORMAL);
-                }
-            }
-        }
-    };
 }

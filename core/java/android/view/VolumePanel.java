@@ -390,7 +390,8 @@ public class VolumePanel extends Handler implements OnSeekBarChangeListener, Vie
     }
 
     private boolean isMuted(int streamType) {
-        return mAudioManager.isStreamMute(streamType);
+        if (streamType == STREAM_MASTER) return mAudioManager.isMasterMute();
+        else return mAudioManager.isStreamMute(streamType);
     }
 
     private void createSliders() {

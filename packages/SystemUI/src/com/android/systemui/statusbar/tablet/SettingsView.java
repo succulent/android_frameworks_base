@@ -41,7 +41,6 @@ import com.android.systemui.statusbar.policy.AutoRotateController;
 import com.android.systemui.statusbar.policy.BrightnessController;
 import com.android.systemui.statusbar.policy.BluetoothController;
 import com.android.systemui.statusbar.policy.DoNotDisturbController;
-import com.android.systemui.statusbar.policy.NotificationVolumeController;
 import com.android.systemui.statusbar.policy.ToggleSlider;
 import com.android.systemui.statusbar.policy.VolumeController;
 import com.android.systemui.statusbar.policy.WifiController;
@@ -60,12 +59,10 @@ public class SettingsView extends LinearLayout implements View.OnClickListener,
     public static final String BUTTON_AIRPLANE = "toggleAirplane";
     public static final String BUTTON_MEDIA = "toggleMedia";
     public static final String BUTTON_SLEEP = "toggleSleep";
-    public static final String BUTTON_NOTIFICATION_VOLUME = "toggleNotificationVolume";
     public static final String BUTTON_DELIMITER = "|";
     public static final String BUTTONS_DEFAULT = BUTTON_MEDIA + BUTTON_DELIMITER +
             BUTTON_BRIGHTNESS + BUTTON_DELIMITER +
             BUTTON_SOUND + BUTTON_DELIMITER +
-            BUTTON_NOTIFICATION_VOLUME + BUTTON_DELIMITER +
             BUTTON_AUTOROTATE + BUTTON_DELIMITER +
             BUTTON_NOTIFICATIONS + BUTTON_DELIMITER +
             BUTTON_SETTINGS;
@@ -81,14 +78,12 @@ public class SettingsView extends LinearLayout implements View.OnClickListener,
     public static final int SLEEP = 15;
     public static final int AUTOROTATE = 16;
     public static final int MEDIA_VOLUME = 17;
-    public static final int NOTIFICATION_VOLUME = 18;
 
     AirplaneModeController mAirplane;
     AutoRotateController mRotate;
     BrightnessController mBrightness;
     DoNotDisturbController mDoNotDisturb;
     BluetoothController mBluetooth;
-    NotificationVolumeController mNotificationVolume;
     WifiController mWifi;
     VolumeController mVolume;
     TextView mSleepText;
@@ -184,15 +179,6 @@ public class SettingsView extends LinearLayout implements View.OnClickListener,
                 mVolume = new VolumeController(context, toggle);
                 ll.addView(toggle, sliderlp);
                 ll.setId(MEDIA_VOLUME);
-                ll.setOnLongClickListener(this);
-            } else if (settingsRow[i].contains(BUTTON_NOTIFICATION_VOLUME)) {
-                icon.setImageResource(R.drawable.ic_audio_ring_notif);
-                ll.addView(icon, iconlp);
-                ToggleSlider toggle = new ToggleSlider(context);
-                toggle.setLabel(R.string.status_bar_settings_mute_label);
-                mNotificationVolume = new NotificationVolumeController(context, toggle);
-                ll.addView(toggle, sliderlp);
-                ll.setId(NOTIFICATION_VOLUME);
                 ll.setOnLongClickListener(this);
             } else if (settingsRow[i].contains(BUTTON_SLEEP)) {
                 icon.setImageResource(R.drawable.stat_screen_timeout_on);
@@ -351,7 +337,6 @@ public class SettingsView extends LinearLayout implements View.OnClickListener,
                 onClickDisplay();
                 return true;
             case MEDIA_VOLUME:
-            case NOTIFICATION_VOLUME:
                 onClickVolume();
                 return true;
         }
