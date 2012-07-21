@@ -138,7 +138,7 @@ public class SettingsView extends LinearLayout implements View.OnClickListener,
         for (int i = 0; i < settingsRow.length; i++) {
             LinearLayout ll = new LinearLayout(context);
             ll.setOrientation(LinearLayout.HORIZONTAL);
-            ll.setPadding(0, 0, 64, 0);
+            ll.setPadding(0, 0, 16, 0);
             ll.setBackgroundResource(R.drawable.expanded_settings_background);
             ImageView icon = new ImageView(context);
             icon.setScaleType(ImageView.ScaleType.CENTER);
@@ -231,10 +231,6 @@ public class SettingsView extends LinearLayout implements View.OnClickListener,
                 icon.setOnClickListener(this);
                 icon.setBackgroundResource(R.drawable.expanded_settings_background);
                 ll.addView(icon, medialp);
-                View previousSeparator = new View(context);
-                previousSeparator.setBackgroundResource(
-                        com.android.internal.R.drawable.divider_horizontal_dark);
-                ll.addView(previousSeparator, buttonseparatorlp);
                 ImageView iconTwo = new ImageView(context);
                 iconTwo.setScaleType(ImageView.ScaleType.CENTER);
                 iconTwo.setImageResource(R.drawable.stat_media_pause);
@@ -242,10 +238,6 @@ public class SettingsView extends LinearLayout implements View.OnClickListener,
                 iconTwo.setOnClickListener(this);
                 iconTwo.setBackgroundResource(R.drawable.expanded_settings_background);
                 ll.addView(iconTwo, medialp);
-                View pauseSeparator = new View(context);
-                pauseSeparator.setBackgroundResource(
-                        com.android.internal.R.drawable.divider_horizontal_dark);
-                ll.addView(pauseSeparator, buttonseparatorlp);
                 ImageView iconThree = new ImageView(context);
                 iconThree.setScaleType(ImageView.ScaleType.CENTER);
                 iconThree.setImageResource(R.drawable.stat_media_play);
@@ -253,10 +245,6 @@ public class SettingsView extends LinearLayout implements View.OnClickListener,
                 iconThree.setOnClickListener(this);
                 iconThree.setBackgroundResource(R.drawable.expanded_settings_background);
                 ll.addView(iconThree, medialp);
-                View playSeparator = new View(context);
-                playSeparator.setBackgroundResource(
-                        com.android.internal.R.drawable.divider_horizontal_dark);
-                ll.addView(playSeparator, buttonseparatorlp);
                 ImageView iconFour = new ImageView(context);
                 iconFour.setScaleType(ImageView.ScaleType.CENTER);
                 iconFour.setImageResource(R.drawable.stat_media_next);
@@ -278,8 +266,7 @@ public class SettingsView extends LinearLayout implements View.OnClickListener,
         if (resource != 0) text.setText(resource);
         text.setGravity(Gravity.CENTER_VERTICAL);
         text.setTextSize(18);
-        //text.setTextColor(getResources()
-        //        .getColor(com.android.internal.R.color.primary_text_holo_dark));
+        text.setTextColor(0xfff3f3f3);
         return text;
     }
 
