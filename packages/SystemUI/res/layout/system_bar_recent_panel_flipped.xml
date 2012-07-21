@@ -24,8 +24,8 @@
     android:id="@+id/recents_root"
     android:layout_height="match_parent"
     android:layout_width="wrap_content"
-    android:clipToPadding="false"
-    android:clipChildren="false"
+    android:clipToPadding="true"
+    android:clipChildren="true"
     systemui:recentItemLayout="@layout/system_bar_recent_item"
     >
     <View
