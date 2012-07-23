@@ -29,6 +29,7 @@ import android.graphics.drawable.Drawable;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
+import android.provider.Settings;
 import android.util.Slog;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -79,6 +80,7 @@ public class TabletTicker
 
     private LayoutTransition mLayoutTransition;
     private boolean mWindowShouldClose;
+    private boolean mRightButtons;
 
     public TabletTicker(TabletStatusBar bar) {
         mBar = bar;
@@ -86,6 +88,8 @@ public class TabletTicker
         final Resources res = mContext.getResources();
         mLargeIconHeight = res.getDimensionPixelSize(
                 android.R.dimen.notification_large_icon_height);
+        mRightButtons = (Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.TABLET_FLIPPED, 0) == 1);
     }
 
     public void add(IBinder key, StatusBarNotification notification) {
@@ -225,7 +229,7 @@ public class TabletTicker
         WindowManager.LayoutParams lp = new WindowManager.LayoutParams(width, mLargeIconHeight,
                 WindowManager.LayoutParams.TYPE_NAVIGATION_BAR_PANEL, windowFlags,
                 PixelFormat.TRANSLUCENT);
-        lp.gravity = Gravity.BOTTOM | Gravity.RIGHT;
+        lp.gravity = Gravity.BOTTOM | (mRightButtons ? Gravity.LEFT : Gravity.RIGHT);
 //        lp.windowAnimations = com.android.internal.R.style.Animation_Toast;
 
         mLayoutTransition = new LayoutTransition();
