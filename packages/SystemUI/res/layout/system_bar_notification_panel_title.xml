@@ -150,7 +150,6 @@
                 android:layout_gravity="left|center_vertical"
                 android:paddingRight="6dp"
                 android:singleLine="true"
-                android:text="@string/status_bar_settings_settings_button"
                 />
 
             <ImageView
