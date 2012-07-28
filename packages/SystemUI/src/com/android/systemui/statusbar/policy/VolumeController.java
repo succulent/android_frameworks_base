@@ -16,42 +16,49 @@
 
 package com.android.systemui.statusbar.policy;
 
+import android.content.ContentResolver;
 import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
+import android.os.RemoteException;
+import android.os.ServiceManager;
 import android.media.AudioManager;
 import android.provider.Settings;
+import android.util.Slog;
+import android.view.IWindowManager;
+import android.widget.CompoundButton;
 
 public class VolumeController implements ToggleSlider.Listener {
-    private AudioManager mAudioManager;
-    private ToggleSlider mControl;
+    private static final String TAG = "StatusBar.VolumeController";
+    private static final int STREAM = AudioManager.STREAM_MUSIC;
+
     private Context mContext;
+    private ToggleSlider mControl;
+    private AudioManager mAudioManager;
+
+    private boolean mMute;
+    private int mVolume;
 
     public VolumeController(Context context, ToggleSlider control) {
-        mAudioManager = (AudioManager)context.getSystemService(Context.AUDIO_SERVICE);
-        mControl = control;
         mContext = context;
+        mControl = control;
+        mAudioManager = (AudioManager)context.getSystemService(Context.AUDIO_SERVICE);
 
-        boolean mute = mAudioManager.isMasterMute();
-        int volume = mute ? mAudioManager.getLastAudibleMasterVolume() :
-                mAudioManager.getMasterVolume();
-        control.setMax(mAudioManager.getMasterMaxVolume());
-        control.setValue(volume);
-        control.setChecked(mute);
+        mMute = mAudioManager.isStreamMute(STREAM);
+        mVolume = mMute ? mAudioManager.getLastAudibleStreamVolume(STREAM) :
+                mAudioManager.getStreamVolume(STREAM);
+        control.setMax(mAudioManager.getStreamMaxVolume(STREAM));
+        control.setValue(mVolume);
+        control.setChecked(mMute);
+
         control.setOnChangedListener(this);
     }
 
     public void onChanged(ToggleSlider view, boolean tracking, boolean mute, int level) {
         if (!tracking) {
-            if (mute && !mAudioManager.isMasterMute()) {
-                mAudioManager.setMasterMute(mute, 0);
-                mControl.setChecked(mute);
-            } else if (!mute && mAudioManager.isMasterMute()) {
-                mAudioManager.setMasterMute(mute, 0);
+            if (mute) {
+                mAudioManager.setStreamMute(STREAM, mute);
+            } else {
+                mAudioManager.setStreamVolume(STREAM, level, AudioManager.FLAG_PLAY_SOUND);
             }
-            mAudioManager.setMasterVolume(level, AudioManager.FLAG_PLAY_SOUND);
-        } else {
-            mAudioManager.setMasterVolume(level, 0);
         }
     }
 }
