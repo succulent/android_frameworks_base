@@ -57,6 +57,7 @@ public class VolumeController implements ToggleSlider.Listener {
             if (mute) {
                 mAudioManager.setStreamMute(STREAM, mute);
             } else {
+                mAudioManager.setStreamMute(STREAM, mute);
                 mAudioManager.setStreamVolume(STREAM, level, AudioManager.FLAG_PLAY_SOUND);
             }
         }
