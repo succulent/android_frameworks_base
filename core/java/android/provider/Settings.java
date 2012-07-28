@@ -2381,6 +2381,31 @@ public final class Settings {
         public static final String COMBINED_BAR_SETTINGS = "combined_bar_settings";
 
         /**
+         * The color tint of the navigation buttons in the tablet combined bar.
+         * default: none
+         * @hide
+         */
+        public static final String COMBINED_BAR_NAVIGATION_COLOR = "combined_bar_navigation_color";
+
+        /**
+        * CombinedBar navigation glow on tablets.
+        * @hide
+        */
+        public static final String COMBINED_BAR_NAVIGATION_GLOW = "combined_bar_navigation_glow";
+
+        /**
+        * CombinedBar navigation glow time on tablets.
+        * @hide
+        */
+        public static final String COMBINED_BAR_NAVIGATION_GLOW_TIME = "combined_bar_navigation_glow_time";
+
+        /**
+        * CombinedBar navigation glow color on tablets.
+        * @hide
+        */
+        public static final String COMBINED_BAR_NAVIGATION_GLOW_COLOR = "combined_bar_navigation_glow_color";
+
+        /**
          * Use the Notification Power Widget? (Who wouldn't!)
          *
          * @hide
