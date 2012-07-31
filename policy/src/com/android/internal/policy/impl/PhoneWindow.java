@@ -2009,7 +2009,8 @@ public class PhoneWindow extends Window implements MenuBuilder.Callback {
 
             int topOffset = 0;
             if (!mTabletMode || mContext.getResources().getConfiguration()
-                    .smallestScreenWidthDp < 600) {
+                    .smallestScreenWidthDp * DisplayMetrics.DENSITY_DEFAULT
+                    / DisplayMetrics.DENSITY_DEVICE < 600) {
                  topOffset = mContext.getResources().getDimensionPixelSize(
                         com.android.internal.R.dimen.status_bar_height);
             }
