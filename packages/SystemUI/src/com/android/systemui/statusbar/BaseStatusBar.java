@@ -38,6 +38,7 @@ import android.os.RemoteException;
 import android.os.ServiceManager;
 import android.provider.Settings;
 import android.text.TextUtils;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.Slog;
 import android.view.Display;
@@ -448,15 +449,23 @@ public abstract class BaseStatusBar extends SystemUI implements
             WindowManagerImpl.getDefault().removeView(mSearchPanelView);
         }
 
+        boolean phoneSize = mContext.getResources().getConfiguration()
+                .smallestScreenWidthDp * DisplayMetrics.DENSITY_DEFAULT
+                / DisplayMetrics.DENSITY_DEVICE < 600;
+        boolean tabletSize = mContext.getResources().getConfiguration()
+                .smallestScreenWidthDp * DisplayMetrics.DENSITY_DEFAULT
+                / DisplayMetrics.DENSITY_DEVICE >= 720;
+        boolean hybridSize = !tabletSize && !phoneSize;
+
         boolean tabletMode = Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.TABLET_MODE, 0) == 1;
+                Settings.System.TABLET_MODE, 0) == 1 && hybridSize;
         boolean tabletFlipped = Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.TABLET_FLIPPED, 0) == 1;
+                Settings.System.TABLET_FLIPPED, 0) == 1 && (tabletSize || tabletMode);
 
         // Provide SearchPanel with a temporary parent to allow layout params to work.
         LinearLayout tmpRoot = new LinearLayout(mContext);
-        mSearchPanelView = (SearchPanelView) LayoutInflater.from(mContext).inflate(!tabletMode ?
-                R.layout.status_bar_search_panel : (tabletFlipped ?
+        mSearchPanelView = (SearchPanelView) LayoutInflater.from(mContext).inflate(!tabletMode &&
+                !tabletSize ? R.layout.status_bar_search_panel : (tabletFlipped ?
                 R.layout.status_bar_search_panel_tablet_flipped :
                 R.layout.status_bar_search_panel_tablet), tmpRoot, false);
         mSearchPanelView.setOnTouchListener(

@@ -157,5 +157,5 @@
     <!-- Height of the carrier/wifi name label -->
     <dimen name="carrier_label_height">24dp</dimen>
 
-    <dimen name="status_bar_clock_size">16dp</dimen>
+    <dimen name="status_bar_clock_size">12dp</dimen>
 </resources>

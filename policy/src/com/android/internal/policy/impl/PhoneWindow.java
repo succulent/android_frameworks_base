@@ -204,7 +204,8 @@ public class PhoneWindow extends Window implements MenuBuilder.Callback {
     private boolean mGestureMove;
     private int mGestureStart;
     private int mGestureDistance;
-    private boolean mTabletMode;
+    private boolean mHybridMode;
+    private boolean mPhoneMode;
     private boolean mHasNavigationBar;
     private boolean mDimDialogBackground;
 
@@ -2008,15 +2009,13 @@ public class PhoneWindow extends Window implements MenuBuilder.Callback {
             int action = event.getAction();
 
             int topOffset = 0;
-            if (!mTabletMode || mContext.getResources().getConfiguration()
-                    .smallestScreenWidthDp * DisplayMetrics.DENSITY_DEFAULT
-                    / DisplayMetrics.DENSITY_DEVICE < 600) {
+            if (mHybridMode || mPhoneMode) {
                  topOffset = mContext.getResources().getDimensionPixelSize(
                         com.android.internal.R.dimen.status_bar_height);
             }
 
             int bottomOffset = 0;
-            if (!mTabletMode && mHasNavigationBar) {
+            if (mHybridMode && mHasNavigationBar) {
                  bottomOffset = mContext.getResources().getDimensionPixelSize(
                         com.android.internal.R.dimen.navigation_bar_height);
             }
@@ -3763,8 +3762,13 @@ public class PhoneWindow extends Window implements MenuBuilder.Callback {
                 Settings.System.EDGE_SWIPE_START, 35);
         mGestureDistance = Settings.System.getInt(getContext().getContentResolver(),
                 Settings.System.EDGE_SWIPE_DISTANCE, 40);
-        mTabletMode = Settings.System.getInt(getContext().getContentResolver(),
-                Settings.System.TABLET_MODE, 0) == 1;
+        mPhoneMode = getContext().getResources().getConfiguration()
+                .smallestScreenWidthDp * DisplayMetrics.DENSITY_DEFAULT
+                / DisplayMetrics.DENSITY_DEVICE < 600;
+        mHybridMode = Settings.System.getInt(getContext().getContentResolver(),
+                Settings.System.TABLET_MODE, 0) == 0 && getContext().getResources().getConfiguration()
+                .smallestScreenWidthDp * DisplayMetrics.DENSITY_DEFAULT
+                / DisplayMetrics.DENSITY_DEVICE < 720 && !mPhoneMode;
         mDimDialogBackground = Settings.System.getInt(getContext().getContentResolver(),
                 Settings.System.DIM_DIALOG_BG, 0) == 1;
         boolean hasNavigationBar = getContext().getResources().getBoolean(
