@@ -185,6 +185,8 @@ public class NotificationManagerService extends INotificationManager.Stub
     private static final String TAG_PACKAGE = "package";
     private static final String ATTR_NAME = "name";
 
+    private boolean mPrimaryUser = true;
+
     private void loadBlockDb() {
         synchronized(mBlockedPackages) {
             if (mPolicyFile == null) {
@@ -610,6 +612,8 @@ public class NotificationManagerService extends INotificationManager.Stub
                     Settings.System.NOTIFICATION_LIGHT_PULSE_CUSTOM_ENABLE), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.NOTIFICATION_LIGHT_PULSE_CUSTOM_VALUES), false, this);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.ACTIVE_USER_ID), false, this);
             update();
         }
 
@@ -642,6 +646,13 @@ public class NotificationManagerService extends INotificationManager.Stub
                     Settings.System.NOTIFICATION_LIGHT_PULSE_CUSTOM_ENABLE, 0) != 0) {
                 parseNotificationPulseCustomValuesString(Settings.System.getString(resolver,
                         Settings.System.NOTIFICATION_LIGHT_PULSE_CUSTOM_VALUES));
+            }
+
+            boolean primaryUser = Settings.System.getInt(resolver,
+                    Settings.System.ACTIVE_USER_ID, 0) == 0;
+            if (primaryUser != mPrimaryUser) {
+                mPrimaryUser = primaryUser;
+                cancelAll();
             }
         }
     }
@@ -1101,10 +1112,7 @@ public class NotificationManagerService extends INotificationManager.Stub
                         | Notification.FLAG_NO_CLEAR;
             }
 
-            boolean notifyUser = UserId.getUserId(Process.myUid()) == r.uid ||
-                    r.uid == Process.SYSTEM_UID || pkg.equals("com.android.systemui");
-
-            if (notification.icon != 0 && notifyUser) {
+            if (notification.icon != 0 && mPrimaryUser) {
                 StatusBarNotification n = new StatusBarNotification(pkg, id, tag,
                         r.uid, r.initialPid, score, notification);
                 if (old != null && old.statusBarKey != null) {
@@ -1147,7 +1155,7 @@ public class NotificationManagerService extends INotificationManager.Stub
                         (ProfileManager) mContext.getSystemService(Context.PROFILE_SERVICE);
 
                 ProfileGroup group = profileManager.getActiveProfileGroup(pkg);
-                if (group != null && notifyUser) {
+                if (group != null && mPrimaryUser) {
                     notification = group.processNotification(notification);
                 }
             } catch(Throwable th) {
@@ -1158,7 +1166,7 @@ public class NotificationManagerService extends INotificationManager.Stub
             if (((mDisabledNotifications & StatusBarManager.DISABLE_NOTIFICATION_ALERTS) == 0)
                     && (!(old != null
                         && (notification.flags & Notification.FLAG_ONLY_ALERT_ONCE) != 0 ))
-                    && mSystemReady && notifyUser) {
+                    && mSystemReady && mPrimaryUser) {
 
                 final AudioManager audioManager = (AudioManager) mContext
                 .getSystemService(Context.AUDIO_SERVICE);
@@ -1221,11 +1229,11 @@ public class NotificationManagerService extends INotificationManager.Stub
             }
             //Slog.i(TAG, "notification.lights="
             //        + ((old.notification.lights.flags & Notification.FLAG_SHOW_LIGHTS) != 0));
-            if ((notification.flags & Notification.FLAG_SHOW_LIGHTS) != 0 && notifyUser) {
+            if ((notification.flags & Notification.FLAG_SHOW_LIGHTS) != 0 && mPrimaryUser) {
                 mLights.add(r);
                 updateLightsLocked();
             } else {
-                if (old != null && notifyUser
+                if (old != null && mPrimaryUser
                         && ((old.notification.flags & Notification.FLAG_SHOW_LIGHTS) != 0)) {
                     updateLightsLocked();
                 }
