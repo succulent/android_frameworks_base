@@ -18,4 +18,6 @@
 <resources>
     <!-- Recent Applications parameters -->
     <dimen name="status_bar_recents_app_label_width">140dip</dimen>
+    <!-- gap on either side of status bar notification icons -->
+    <dimen name="status_bar_icon_padding">2dp</dimen>
 </resources>
