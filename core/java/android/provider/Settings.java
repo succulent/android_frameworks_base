@@ -2406,6 +2406,11 @@ public final class Settings {
         public static final String COMBINED_BAR_NAVIGATION_GLOW_COLOR = "combined_bar_navigation_glow_color";
 
         /**
+         * @hide
+         */
+        public static final String ACTIVE_USER_ID = "active_user_id";
+
+        /**
          * Use the Notification Power Widget? (Who wouldn't!)
          *
          * @hide

@@ -307,6 +307,8 @@ public class RecentsPanelView extends FrameLayout implements OnItemClickListener
 
     public void show(boolean show, boolean animate,
             ArrayList<TaskDescription> recentTaskDescriptions, boolean firstScreenful) {
+        if (Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.ACTIVE_USER_ID, 0) != 0) return;
         sendCloseSystemWindows(mContext, BaseStatusBar.SYSTEM_DIALOG_REASON_RECENT_APPS);
 
         if (show) {

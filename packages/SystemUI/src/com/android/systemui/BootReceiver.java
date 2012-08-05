@@ -39,6 +39,7 @@ public class BootReceiver extends BroadcastReceiver {
                 Intent loadavg = new Intent(context, com.android.systemui.LoadAverageService.class);
                 context.startService(loadavg);
             }
+            Settings.System.putInt(res, Settings.System.ACTIVE_USER_ID, 0);
         } catch (Exception e) {
             Slog.e(TAG, "Can't start load average service", e);
         }

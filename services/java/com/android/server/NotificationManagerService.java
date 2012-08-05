@@ -1101,7 +1101,10 @@ public class NotificationManagerService extends INotificationManager.Stub
                         | Notification.FLAG_NO_CLEAR;
             }
 
-            if (notification.icon != 0) {
+            boolean notifyUser = UserId.getUserId(Process.myUid()) == r.uid ||
+                    r.uid == Process.SYSTEM_UID || pkg.equals("com.android.systemui");
+
+            if (notification.icon != 0 && notifyUser) {
                 StatusBarNotification n = new StatusBarNotification(pkg, id, tag,
                         r.uid, r.initialPid, score, notification);
                 if (old != null && old.statusBarKey != null) {
@@ -1144,7 +1147,7 @@ public class NotificationManagerService extends INotificationManager.Stub
                         (ProfileManager) mContext.getSystemService(Context.PROFILE_SERVICE);
 
                 ProfileGroup group = profileManager.getActiveProfileGroup(pkg);
-                if (group != null) {
+                if (group != null && notifyUser) {
                     notification = group.processNotification(notification);
                 }
             } catch(Throwable th) {
@@ -1155,7 +1158,7 @@ public class NotificationManagerService extends INotificationManager.Stub
             if (((mDisabledNotifications & StatusBarManager.DISABLE_NOTIFICATION_ALERTS) == 0)
                     && (!(old != null
                         && (notification.flags & Notification.FLAG_ONLY_ALERT_ONCE) != 0 ))
-                    && mSystemReady) {
+                    && mSystemReady && notifyUser) {
 
                 final AudioManager audioManager = (AudioManager) mContext
                 .getSystemService(Context.AUDIO_SERVICE);
@@ -1218,11 +1221,11 @@ public class NotificationManagerService extends INotificationManager.Stub
             }
             //Slog.i(TAG, "notification.lights="
             //        + ((old.notification.lights.flags & Notification.FLAG_SHOW_LIGHTS) != 0));
-            if ((notification.flags & Notification.FLAG_SHOW_LIGHTS) != 0) {
+            if ((notification.flags & Notification.FLAG_SHOW_LIGHTS) != 0 && notifyUser) {
                 mLights.add(r);
                 updateLightsLocked();
             } else {
-                if (old != null
+                if (old != null && notifyUser
                         && ((old.notification.flags & Notification.FLAG_SHOW_LIGHTS) != 0)) {
                     updateLightsLocked();
                 }

@@ -359,6 +359,8 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
                     public void onPress() {
                         try {
                             ActivityManagerNative.getDefault().switchUser(user.id);
+                            Settings.System.putInt(mContext.getContentResolver(),
+                                    Settings.System.ACTIVE_USER_ID, user.id);
                             getWindowManager().lockNow();
                         } catch (RemoteException re) {
                             Log.e(TAG, "Couldn't switch user " + re);

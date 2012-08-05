@@ -4127,9 +4127,10 @@ public final class ActivityThread {
         final File cacheDir = appContext.getCacheDir();
 
         // Provide a usable directory for temporary files
-        System.setProperty("java.io.tmpdir", cacheDir.getAbsolutePath());
-
-        setupGraphicsSupport(data.info, cacheDir);
+        if (cacheDir != null) {
+            System.setProperty("java.io.tmpdir", cacheDir.getAbsolutePath());
+            setupGraphicsSupport(data.info, cacheDir);
+        }
 
         /**
          * For system applications on userdebug/eng builds, log stack
