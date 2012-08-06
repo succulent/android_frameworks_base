@@ -563,9 +563,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     int mPortraitRotation = 0;   // default portrait rotation
     int mUpsideDownRotation = 0; // "other" portrait rotation
 
-    // What we do when the user long presses on home
-    private int mLongPressOnHomeBehavior = -1;
-
     // Screenshot trigger states
     // Time to volume and power must be pressed within this interval of each other.
     private static final long ACTION_CHORD_DEBOUNCE_DELAY_MILLIS = 150;
@@ -5087,7 +5084,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 pw.print(" mForceStatusBar="); pw.print(mForceStatusBar);
                 pw.print(" mHideLockScreen="); pw.println(mHideLockScreen);
         pw.print(prefix); pw.print("mDismissKeyguard="); pw.print(mDismissKeyguard);
-                pw.print(" mHomePressed="); pw.println(mHomePressed);
         pw.print(prefix); pw.print("mAllowLockscreenWhenOn="); pw.print(mAllowLockscreenWhenOn);
                 pw.print(" mLockScreenTimeout="); pw.print(mLockScreenTimeout);
                 pw.print(" mLockScreenTimerActive="); pw.println(mLockScreenTimerActive);
