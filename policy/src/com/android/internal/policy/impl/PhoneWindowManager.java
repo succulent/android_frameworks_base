@@ -1291,7 +1291,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         boolean tabletModeOverride = Settings.System.getInt(resolver,
                         Settings.System.TABLET_MODE, 0) == 1;
 
-        if (shortSizeDp < 600) {
+        if (shortSizeDp < 600 && !tabletModeOverride) {
             // 0-599dp: "phone" UI with a separate status & navigation bar
             mHasSystemNavBar = false;
             mNavigationBarCanMove = true;
@@ -1504,7 +1504,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         boolean tabletModeOverride = Settings.System.getInt(resolver,
                         Settings.System.TABLET_MODE, 0) == 1;
 
-        if (shortSizeDp < 600) {
+        if (shortSizeDp < 600 && !tabletModeOverride) {
             // 0-599dp: "phone" UI with a separate status & navigation bar
             mHasSystemNavBar = false;
             mNavigationBarCanMove = true;
