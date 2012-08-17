@@ -334,7 +334,24 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
         }
 
         // next: airplane mode
-        mItems.add(mAirplaneModeOn);
+        if (mAirplaneModeNeeded) mItems.add(mAirplaneModeOn);
+
+        // next: statusbar
+        if (mTabletStatusBar) mItems.add(
+            new SinglePressAction(R.drawable.ic_lock_hide_statusbar,
+                    R.string.global_actions_toggle_statusbar) {
+                public void onPress() {
+                    mStatusBarManager.toggleVisibility();
+                }
+
+                public boolean showDuringKeyguard() {
+                    return true;
+                }
+
+                public boolean showBeforeProvisioning() {
+                    return true;
+                }
+            });
 
         // next: users
         List<UserInfo> users = mContext.getPackageManager().getUsers();
@@ -355,6 +372,8 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
                     public void onPress() {
                         try {
                             ActivityManagerNative.getDefault().switchUser(user.id);
+                            Settings.System.putInt(mContext.getContentResolver(),
+                                    Settings.System.ACTIVE_USER_ID, user.id);
                             getWindowManager().lockNow();
                         } catch (RemoteException re) {
                             Log.e(TAG, "Couldn't switch user " + re);
