@@ -6431,8 +6431,9 @@ public class WindowManagerService extends IWindowManager.Stub
         sl = reduceConfigLayout(sl, Surface.ROTATION_180, density, unrotDw, unrotDh);
         sl = reduceConfigLayout(sl, Surface.ROTATION_270, density, unrotDh, unrotDw);
         boolean forceTablet = Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.TABLET_MODE, 0) == 1;
-        outConfig.smallestScreenWidthDp = forceTablet ? 721 : (int)(mSmallestDisplayWidth / density);
+                Settings.System.TABLET_MODE, 0) == 1 && (int)(mSmallestDisplayWidth / density) < 720;
+        outConfig.smallestScreenWidthDp = forceTablet ? 720 :
+                (int)(mSmallestDisplayWidth / density);
         outConfig.screenLayout = sl;
     }
 

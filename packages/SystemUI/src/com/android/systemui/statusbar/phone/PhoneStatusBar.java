@@ -1134,7 +1134,6 @@ public class PhoneStatusBar extends BaseStatusBar {
                 Settings.System.STATUS_BAR_CLOCK_COLOR, 0xFF33B5E5);
         TextView clock = (TextView) mStatusBarView.findViewById(R.id.clock);
         if (clock != null) {
-            clock.setTextSize(mContext.getResources().getDimensionPixelSize(R.dimen.status_bar_clock_size));
             clock.setTextColor(clockColor);
             clock.setVisibility(show ? (mShowClock ? View.VISIBLE : View.GONE) : View.GONE);
         }

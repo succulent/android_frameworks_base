@@ -449,16 +449,11 @@ public abstract class BaseStatusBar extends SystemUI implements
             WindowManagerImpl.getDefault().removeView(mSearchPanelView);
         }
 
-        boolean phoneSize = mContext.getResources().getConfiguration()
-                .smallestScreenWidthDp * DisplayMetrics.DENSITY_DEFAULT
-                / DisplayMetrics.DENSITY_DEVICE < 600;
         boolean tabletSize = mContext.getResources().getConfiguration()
                 .smallestScreenWidthDp * DisplayMetrics.DENSITY_DEFAULT
                 / DisplayMetrics.DENSITY_DEVICE >= 720;
-        boolean hybridSize = !tabletSize && !phoneSize;
-
         boolean tabletMode = Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.TABLET_MODE, 0) == 1 && hybridSize;
+                Settings.System.TABLET_MODE, 0) == 1;
         boolean tabletFlipped = Settings.System.getInt(mContext.getContentResolver(),
                 Settings.System.TABLET_FLIPPED, 0) == 1 && (tabletSize || tabletMode);
 
