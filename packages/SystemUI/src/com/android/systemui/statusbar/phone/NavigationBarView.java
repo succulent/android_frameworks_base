@@ -228,7 +228,9 @@ public class NavigationBarView extends LinearLayout {
         mDisabledFlags = disabledFlags;
 
         final boolean disableHome = ((disabledFlags & View.STATUS_BAR_DISABLE_HOME) != 0);
-        final boolean disableRecent = ((disabledFlags & View.STATUS_BAR_DISABLE_RECENT) != 0);
+        final boolean disableRecent = ((disabledFlags & View.STATUS_BAR_DISABLE_RECENT) != 0) ||
+                Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.ACTIVE_USER_ID, 0) != 0;
         final boolean disableBack = ((disabledFlags & View.STATUS_BAR_DISABLE_BACK) != 0);
 
         setSlippery(disableHome && disableRecent && disableBack);

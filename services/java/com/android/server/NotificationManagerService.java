@@ -1112,6 +1112,17 @@ public class NotificationManagerService extends INotificationManager.Stub
                         | Notification.FLAG_NO_CLEAR;
             }
 
+            int userid = Settings.System.getInt(mContext.getContentResolver(),
+                    Settings.System.ACTIVE_USER_ID, 0);
+
+            if ((callingUid >= (userid) * 100000) && (callingUid < (userid + 1) * 100000)) {
+                mPrimaryUser = true;
+            } else if (userid == 0 && callingUid < 100000) {
+                mPrimaryUser = true;
+            } else {
+                mPrimaryUser = false;
+            }
+
             if (notification.icon != 0 && mPrimaryUser) {
                 StatusBarNotification n = new StatusBarNotification(pkg, id, tag,
                         r.uid, r.initialPid, score, notification);

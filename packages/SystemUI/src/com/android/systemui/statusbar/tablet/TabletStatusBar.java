@@ -1094,7 +1094,9 @@ public class TabletStatusBar extends BaseStatusBar implements
                 Settings.System.FORCE_SOFT_MENU_BUTTON, 0) == 1);
 
         boolean disableHome = ((visibility & StatusBarManager.DISABLE_HOME) != 0);
-        boolean disableRecent = ((visibility & StatusBarManager.DISABLE_RECENT) != 0);
+        boolean disableRecent = ((visibility & StatusBarManager.DISABLE_RECENT) != 0) ||
+                Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.ACTIVE_USER_ID, 0) != 0;
         boolean disableBack = ((visibility & StatusBarManager.DISABLE_BACK) != 0);
 
         mBackButton.setVisibility(!navControls ? View.GONE :

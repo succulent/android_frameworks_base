@@ -253,11 +253,14 @@ public class SettingsView extends LinearLayout implements View.OnClickListener,
                 iconFour.setBackgroundResource(R.drawable.expanded_settings_background);
                 ll.addView(iconFour, medialp);
             }
-
-            addView(ll, lp);
-            View separator = new View(context);
-            separator.setBackgroundResource(com.android.internal.R.drawable.divider_horizontal_dark);
-            addView(separator, separatorlp);
+            if (!(settingsRow[i].contains(BUTTON_SETTINGS) &&
+                        Settings.System.getInt(mContext.getContentResolver(),
+                        Settings.System.ACTIVE_USER_ID, 0) != 0)) {
+                addView(ll, lp);
+                View separator = new View(context);
+                separator.setBackgroundResource(com.android.internal.R.drawable.divider_horizontal_dark);
+                addView(separator, separatorlp);
+            }
         }
     }
 
