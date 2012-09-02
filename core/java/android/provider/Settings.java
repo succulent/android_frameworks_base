@@ -2812,6 +2812,26 @@ public final class Settings {
         public static final String POWER_MENU_PROFILES_ENABLED = "power_menu_profiles_enabled";
 
         /**
+         * @hide
+         */
+        public static final String POWER_MENU_SILENT_MODE_ENABLED = "power_menu_silent_mode_enabled";
+
+        /**
+         * @hide
+         */
+        public static final String POWER_MENU_SYSTEMBAR_TOGGLE_ENABLED = "power_menu_systembar_toggle_enabled";
+
+        /**
+         * @hide
+         */
+        public static final String POWER_MENU_AIRPLANE_MODE_ENABLED = "power_menu_airplane_mode_enabled";
+
+        /**
+         * @hide
+         */
+        public static final String POWER_MENU_MULTIUSER_MODE_ENABLED = "power_menu_multiuser_mode_enabled";
+
+        /**
          * Whether to enable custom rebindings of the actions performed on
          * certain key press events.
          * @hide

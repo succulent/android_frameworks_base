@@ -110,8 +110,6 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
     private IWindowManager mIWindowManager;
     private Profile mChosenProfile;
 
-    private final boolean mTabletStatusBar;
-    private boolean mAirplaneModeNeeded;
     private StatusBarManager mStatusBarManager;
     private static final String SYSTEM_PROFILES_ENABLED = "system_profiles_enabled";
     private static final String POWER_MENU_SCREENSHOT_ENABLED = "power_menu_screenshot_enabled";
@@ -125,10 +123,6 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
         mAudioManager = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
         mStatusBarManager = (StatusBarManager)
                 mContext.getSystemService(Context.STATUS_BAR_SERVICE);
-        mTabletStatusBar = context.getResources().getConfiguration().smallestScreenWidthDp >= 600;
-        ConnectivityManager cm = (ConnectivityManager) context
-                .getSystemService(Context.CONNECTIVITY_SERVICE);
-        mAirplaneModeNeeded = cm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) != null;
 
         // receive broadcasts
         IntentFilter filter = new IntentFilter();
@@ -143,6 +137,8 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
         TelephonyManager telephonyManager =
                 (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
         telephonyManager.listen(mPhoneStateListener, PhoneStateListener.LISTEN_SERVICE_STATE);
+        ConnectivityManager cm = (ConnectivityManager)
+                context.getSystemService(Context.CONNECTIVITY_SERVICE);
         mHasTelephony = cm.isNetworkSupported(ConnectivityManager.TYPE_MOBILE);
         mContext.getContentResolver().registerContentObserver(
                 Settings.System.getUriFor(Settings.System.AIRPLANE_MODE_ON), true,
@@ -334,11 +330,15 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
         }
 
         // next: airplane mode
-        if (mAirplaneModeNeeded) mItems.add(mAirplaneModeOn);
+        if (Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.POWER_MENU_AIRPLANE_MODE_ENABLED, 1) == 1) {
+            mItems.add(mAirplaneModeOn);
+        }
 
         // next: statusbar
-        if (mTabletStatusBar) mItems.add(
-            new SinglePressAction(R.drawable.ic_lock_hide_statusbar,
+        if (Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.POWER_MENU_SYSTEMBAR_TOGGLE_ENABLED, 1) == 1) {
+            mItems.add(new SinglePressAction(R.drawable.ic_lock_hide_statusbar,
                     R.string.global_actions_toggle_statusbar) {
                 public void onPress() {
                     mStatusBarManager.toggleVisibility();
@@ -352,6 +352,7 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
                     return true;
                 }
             });
+        }
 
         // next: users
         List<UserInfo> users = mContext.getPackageManager().getUsers();
@@ -388,12 +389,16 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
                         return false;
                     }
                 };
-                mItems.add(switchToUser);
+                if (Settings.System.getInt(mContext.getContentResolver(),
+                        Settings.System.POWER_MENU_MULTIUSER_MODE_ENABLED, 1) == 1) {
+                    mItems.add(switchToUser);
+                }
             }
         }
 
         // last: silent mode
-        if (SHOW_SILENT_TOGGLE) {
+        if (Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.POWER_MENU_SILENT_MODE_ENABLED, 1) == 1) {
             mItems.add(mSilentModeAction);
         }
 
