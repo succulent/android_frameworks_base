@@ -4158,9 +4158,10 @@ public final class ActivityThread {
         appContext.init(data.info, null, this);
         final File cacheDir = appContext.getCacheDir();
 
-        // Provide a usable directory for temporary files
         if (cacheDir != null) {
+            // Provide a usable directory for temporary files
             System.setProperty("java.io.tmpdir", cacheDir.getAbsolutePath());
+
             setupGraphicsSupport(data.info, cacheDir);
         }
 
