@@ -78,11 +78,16 @@
                 android:paddingLeft="4dip"
                 android:visibility="gone"
                 />
-            <ImageView
-                android:id="@+id/battery"
-                android:layout_height="wrap_content"
+            <TextView
+                android:id="@+id/dock_battery_text"
+                android:textAppearance="@style/TextAppearance.StatusBar.Battery"
                 android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:singleLine="true"
+                android:textSize="20sp"
                 android:paddingLeft="4dip"
+                android:layout_marginRight="-3dip"
+                android:gravity="center_vertical|left"
                 />
             <TextView
                 android:id="@+id/battery_text"
@@ -90,8 +95,9 @@
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:singleLine="true"
+                android:textSize="20sp"
                 android:paddingLeft="4dip"
-                android:layout_marginLeft="-3dip"
+                android:layout_marginRight="-3dip"
                 android:gravity="center_vertical|left"
                 />
             <ImageView
@@ -100,15 +106,11 @@
                 android:layout_width="wrap_content"
                 android:paddingLeft="4dip"
                 />
-            <TextView
-                android:id="@+id/dock_battery_text"
-                android:textAppearance="@style/TextAppearance.StatusBar.Battery"
+            <ImageView
+                android:id="@+id/battery"
+                android:layout_height="wrap_content"
                 android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:singleLine="true"
                 android:paddingLeft="4dip"
-                android:layout_marginRight="-3dip"
-                android:gravity="center_vertical|left"
                 />
         </LinearLayout>
     </LinearLayout>
