@@ -1292,7 +1292,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
         ContentResolver resolver = mContext.getContentResolver();
         boolean tabletModeOverride = Settings.System.getInt(resolver,
-                        Settings.System.TABLET_MODE, 0) == 1;
+                        Settings.System.TABLET_MODE, 0) > 0;
 
         if (shortSizeDp < 600 && !tabletModeOverride) {
             // 0-599dp: "phone" UI with a separate status & navigation bar
@@ -1505,7 +1505,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 / DisplayMetrics.DENSITY_DEVICE;
 
         boolean tabletModeOverride = Settings.System.getInt(resolver,
-                        Settings.System.TABLET_MODE, 0) == 1;
+                        Settings.System.TABLET_MODE, 0) > 0;
 
         if (shortSizeDp < 600 && !tabletModeOverride) {
             // 0-599dp: "phone" UI with a separate status & navigation bar
