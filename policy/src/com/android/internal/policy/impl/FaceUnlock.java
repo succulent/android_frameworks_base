@@ -284,12 +284,12 @@ public class FaceUnlock implements BiometricSensorUnlock, Handler.Callback {
     }
 
     /**
-     * Sets the Face Unlock view to invisible, thus exposing the backup lock.
+     * Sets the Face Unlock view to gone, thus exposing the backup lock.
      */
     void handleHideFaceUnlockView() {
         if (DEBUG) Log.d(TAG, "handleHideFaceUnlockView()");
         if (mFaceUnlockView != null) {
-            mFaceUnlockView.setVisibility(View.INVISIBLE);
+            mFaceUnlockView.setVisibility(View.GONE);
         } else {
             Log.e(TAG, "mFaceUnlockView is null in handleHideFaceUnlockView()");
         }
@@ -380,7 +380,7 @@ public class FaceUnlock implements BiometricSensorUnlock, Handler.Callback {
     void handleCancel() {
         if (DEBUG) Log.d(TAG, "handleCancel()");
         if (mFaceUnlockView != null) {
-            mFaceUnlockView.setVisibility(View.INVISIBLE);
+            mFaceUnlockView.setVisibility(View.GONE);
         } else {
             Log.e(TAG, "mFaceUnlockView is null in handleCancel()");
         }
@@ -404,7 +404,7 @@ public class FaceUnlock implements BiometricSensorUnlock, Handler.Callback {
     void handleExposeFallback() {
         if (DEBUG) Log.d(TAG, "handleExposeFallback()");
         if (mFaceUnlockView != null) {
-            mFaceUnlockView.setVisibility(View.INVISIBLE);
+            mFaceUnlockView.setVisibility(View.GONE);
         } else {
             Log.e(TAG, "mFaceUnlockView is null in handleExposeFallback()");
         }
