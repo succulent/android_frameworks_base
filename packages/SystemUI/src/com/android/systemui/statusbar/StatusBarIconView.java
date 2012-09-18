@@ -30,6 +30,7 @@ import android.os.Handler;
 import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.AttributeSet;
+import android.util.DisplayMetrics;
 import android.util.Slog;
 import android.util.Log;
 import android.view.ViewDebug;
@@ -78,8 +79,14 @@ public class StatusBarIconView extends AnimatedImageView {
         // We do not resize and scale system icons (on the right), only notification icons (on the
         // left).
         if (notification != null) {
+            DisplayMetrics displayMetrics = res.getDisplayMetrics();
+            boolean phone = ((res.getConfiguration().smallestScreenWidthDp *
+                    displayMetrics.density) < 720 &&
+                    Settings.System.getInt(context.getContentResolver(),
+                    Settings.System.TABLET_MODE, 0) == 0);
             final int outerBounds = res.getDimensionPixelSize(R.dimen.status_bar_icon_size);
-            final int imageBounds = res.getDimensionPixelSize(R.dimen.status_bar_icon_drawing_size);
+            final int imageBounds = res.getDimensionPixelSize(phone ?
+                    R.dimen.status_bar_icon_drawing_size : R.dimen.status_bar_icon_drawing_size_large);
             final float scale = (float)imageBounds / (float)outerBounds;
             setScaleX(scale);
             setScaleY(scale);
@@ -93,8 +100,14 @@ public class StatusBarIconView extends AnimatedImageView {
     public StatusBarIconView(Context context, AttributeSet attrs) {
         super(context, attrs);
         final Resources res = context.getResources();
+        DisplayMetrics displayMetrics = res.getDisplayMetrics();
+        boolean phone = ((res.getConfiguration().smallestScreenWidthDp *
+                displayMetrics.density) < 720 &&
+                Settings.System.getInt(context.getContentResolver(),
+                Settings.System.TABLET_MODE, 0) == 0);
         final int outerBounds = res.getDimensionPixelSize(R.dimen.status_bar_icon_size);
-        final int imageBounds = res.getDimensionPixelSize(R.dimen.status_bar_icon_drawing_size);
+        final int imageBounds = res.getDimensionPixelSize(phone ?
+                R.dimen.status_bar_icon_drawing_size : R.dimen.status_bar_icon_drawing_size_large);
         final float scale = (float)imageBounds / (float)outerBounds;
         setScaleX(scale);
         setScaleY(scale);

@@ -18,10 +18,12 @@ package com.android.systemui.statusbar;
 
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.res.Resources;
 import android.database.ContentObserver;
 import android.os.Handler;
 import android.provider.Settings;
 import android.util.AttributeSet;
+import android.util.DisplayMetrics;
 import android.util.Slog;
 import android.view.View;
 import android.view.ViewGroup;
@@ -176,6 +178,50 @@ public class SignalClusterView
 
     // Run after each indicator change.
     private void apply() {
+        Resources res = mContext.getResources();
+        DisplayMetrics displayMetrics = res.getDisplayMetrics();
+        boolean phone = ((res.getConfiguration().smallestScreenWidthDp *
+                displayMetrics.density) < 720 &&
+                Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.TABLET_MODE, 0) == 0);
+        final int outerBounds = res.getDimensionPixelSize(R.dimen.status_bar_icon_size);
+        final int imageBounds = res.getDimensionPixelSize(phone ?
+                R.dimen.status_bar_icon_drawing_size : R.dimen.status_bar_icon_drawing_size_large);
+        final float scale = (float)imageBounds / (float)outerBounds;
+
+        if (scale < 1) {
+            if (mWifi != null) {
+                mWifi.setScaleX(scale);
+                mWifi.setScaleY(scale);
+                mWifi.setScaleType(ImageView.ScaleType.CENTER);
+            }
+            if (mWifiActivity != null) {
+                mWifiActivity.setScaleX(scale);
+                mWifiActivity.setScaleY(scale);
+                mWifiActivity.setScaleType(ImageView.ScaleType.CENTER);
+            }
+            if (mMobile != null) {
+                mMobile.setScaleX(scale);
+                mMobile.setScaleY(scale);
+                mMobile.setScaleType(ImageView.ScaleType.CENTER);
+            }
+            if (mMobileActivity != null) {
+                mMobileActivity.setScaleX(scale);
+                mMobileActivity.setScaleY(scale);
+                mMobileActivity.setScaleType(ImageView.ScaleType.CENTER);
+            }
+            if (mMobileType != null) {
+                mMobileType.setScaleX(scale);
+                mMobileType.setScaleY(scale);
+                mMobileType.setScaleType(ImageView.ScaleType.CENTER);
+            }
+            if (mAirplane != null) {
+                mAirplane.setScaleX(scale);
+                mAirplane.setScaleY(scale);
+                mAirplane.setScaleType(ImageView.ScaleType.CENTER);
+            }
+        }
+
         if (mWifiGroup == null) return;
 
         if (mWifiVisible) {
@@ -214,6 +260,8 @@ public class SignalClusterView
         } else {
             mSpacer.setVisibility(View.GONE);
         }
+
+        if (phone) mSpacer.setVisibility(View.GONE);
 
         if (DEBUG) Slog.d(TAG,
                 String.format("mobile: %s sig=%d act=%d typ=%d",

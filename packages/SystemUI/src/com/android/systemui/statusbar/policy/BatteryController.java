@@ -23,10 +23,12 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.res.Resources;
 import android.database.ContentObserver;
 import android.os.BatteryManager;
 import android.os.Handler;
 import android.provider.Settings;
+import android.util.DisplayMetrics;
 import android.util.Slog;
 import android.view.View;
 import android.widget.ImageView;
@@ -93,6 +95,21 @@ public class BatteryController extends BroadcastReceiver {
     }
 
     public void addIconView(ImageView v) {
+        Resources res = mContext.getResources();
+        DisplayMetrics displayMetrics = res.getDisplayMetrics();
+        boolean phone = ((res.getConfiguration().smallestScreenWidthDp *
+                displayMetrics.density) < 720 &&
+                Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.TABLET_MODE, 0) == 0);
+        final int outerBounds = res.getDimensionPixelSize(R.dimen.status_bar_icon_size);
+        final int imageBounds = res.getDimensionPixelSize(phone ?
+                R.dimen.status_bar_icon_drawing_size : R.dimen.status_bar_icon_drawing_size_large);
+        final float scale = (float)imageBounds / (float)outerBounds;
+        if (scale < 1) {
+            v.setScaleX(scale);
+            v.setScaleY(scale);
+            v.setScaleType(ImageView.ScaleType.CENTER);
+        }
         mIconViews.add(v);
     }
 
