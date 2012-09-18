@@ -32,6 +32,7 @@ import android.os.Message;
 import android.os.ServiceManager;
 import android.provider.Settings;
 import android.util.AttributeSet;
+import android.util.DisplayMetrics;
 import android.util.Slog;
 import android.view.Display;
 import android.view.MotionEvent;
@@ -184,7 +185,8 @@ public class NavigationBarView extends LinearLayout {
         mShowMenu = false;
         //Silly way to identify 600dp
         //TODO come up with a better way
-        mIs600dp = res.getInteger(R.integer.notification_panel_layout_gravity) == 49;
+        DisplayMetrics displayMetrics = res.getDisplayMetrics();
+        mIs600dp = (res.getConfiguration().smallestScreenWidthDp * displayMetrics.density) >= 600;
         mDelegateHelper = new DelegateViewHelper(this);
         updateResources();
 
