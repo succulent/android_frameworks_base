@@ -518,6 +518,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     boolean mConsumeSearchKeyUp;
     boolean mAssistKeyLongPressed;
     boolean mFullscreenMode;
+    boolean mStatusBarToggled = false;
 
     // Used when key is pressed and performing non-default action
     boolean mMenuDoCustomAction;
@@ -640,6 +641,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     Settings.System.TABLET_MODE), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.FULLSCREEN_MODE), false, this);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.STATUS_BAR_TOGGLED), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.NAVIGATION_CONTROLS), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
@@ -1573,8 +1576,19 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
         mLongPressOnHomeBehavior = -1;
 
+        boolean statusBarToggled = Settings.System.getInt(resolver,
+                Settings.System.STATUS_BAR_TOGGLED, 0) == 1;
+
         mFullscreenMode = Settings.System.getInt(resolver,
-                Settings.System.FULLSCREEN_MODE, 0) == 1;
+                Settings.System.FULLSCREEN_MODE, 0) == 1 || statusBarToggled;
+
+        if (statusBarToggled != mStatusBarToggled) {
+            mStatusBarToggled = statusBarToggled;
+            try {
+                mWindowManager.clearForcedDisplaySize();
+            } catch (Exception e) {
+            }
+        }
     }
 
     private void enablePointerLocation() {

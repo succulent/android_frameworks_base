@@ -406,6 +406,12 @@ public class PhoneStatusBar extends BaseStatusBar {
 
         // Lastly, call to the icon policy to install/update all the icons.
         mIconPolicy = new PhoneStatusBarPolicy(mContext);
+
+
+        if (Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.STATUS_BAR_TOGGLED, 0) == 1) {
+            toggleVisibility();
+        }
     }
 
     // ================================================================================
@@ -477,7 +483,7 @@ public class PhoneStatusBar extends BaseStatusBar {
         try {
             boolean showNav = mWindowManager.hasNavigationBar();
             if (DEBUG) Slog.v(TAG, "hasNavigationBar=" + showNav);
-            if (showNav && !mRecreating) {
+            if (showNav && !mRecreating && mNavigationBarView == null) {
                 mNavigationBarView =
                     (NavigationBarView) View.inflate(context, R.layout.navigation_bar, null);
 
@@ -690,8 +696,10 @@ public class PhoneStatusBar extends BaseStatusBar {
         super.hideSearchPanel();
         WindowManager.LayoutParams lp =
             (android.view.WindowManager.LayoutParams) mNavigationBarView.getLayoutParams();
-        lp.flags |= WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL;
-        WindowManagerImpl.getDefault().updateViewLayout(mNavigationBarView, lp);
+        if (lp != null) {
+            lp.flags |= WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL;
+            WindowManagerImpl.getDefault().updateViewLayout(mNavigationBarView, lp);
+        }
     }
 
     protected int getStatusBarGravity() {
@@ -771,8 +779,8 @@ public class PhoneStatusBar extends BaseStatusBar {
         }
         prepareNavigationBarView();
 
-        WindowManagerImpl.getDefault().updateViewLayout(
-                mNavigationBarView, getNavigationBarLayoutParams());
+        //WindowManagerImpl.getDefault().updateViewLayout(
+        //        mNavigationBarView, getNavigationBarLayoutParams());
     }
 
     private WindowManager.LayoutParams getNavigationBarLayoutParams() {
@@ -1159,9 +1167,17 @@ public class PhoneStatusBar extends BaseStatusBar {
 
     public void toggleVisibility() {
         final WindowManager wm = WindowManagerImpl.getDefault();
-        if (mVisible) wm.removeView(mNavigationBarView);
-        else addNavigationBar();
+        if (mVisible) {
+            if (wm.hasView(mNavigationBarView)) wm.removeView(mNavigationBarView);
+            if (wm.hasView((View) mStatusBarContainer)) wm.removeView(mStatusBarContainer);
+        } else {
+            addNavigationBar();
+            addStatusBarWindow();
+            recreateStatusBar();
+        }
         mVisible = !mVisible;
+        Settings.System.putInt(mContext.getContentResolver(),
+                Settings.System.STATUS_BAR_TOGGLED, mVisible ? 0 : 1);
     }
 
     /**
@@ -2470,7 +2486,7 @@ public class PhoneStatusBar extends BaseStatusBar {
             }
             else if (Intent.ACTION_CONFIGURATION_CHANGED.equals(action)) {
                 updateResources();
-                repositionNavigationBar();
+                //repositionNavigationBar();
                 updateExpandedViewPos(EXPANDED_LEAVE_ALONE);
             }
         }
