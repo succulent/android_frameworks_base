@@ -2439,6 +2439,21 @@ public final class Settings {
         public static final String ACTIVE_USER_ID = "active_user_id";
 
         /**
+         * @hide
+         */
+        public static final String FULLSCREEN_MODE = "fullscreen_mode";
+
+        /**
+         * @hide
+         */
+        public static final String FULLSCREEN_TIMEOUT = "fullscreen_timeout";
+
+        /**
+         * @hide
+         */
+        public static final String EDGE_SWIPE_BLACKLIST = "edge_swipe_blacklist";
+
+        /**
          * Use the Notification Power Widget? (Who wouldn't!)
          *
          * @hide
@@ -2836,6 +2851,11 @@ public final class Settings {
          * @hide
          */
         public static final String POWER_MENU_MULTIUSER_MODE_ENABLED = "power_menu_multiuser_mode_enabled";
+
+        /**
+         * @hide
+         */
+        public static final String POWER_MENU_NAV_CONTROLS_ENABLED = "power_menu_nav_controls_enabled";
 
         /**
          * Whether to enable custom rebindings of the actions performed on

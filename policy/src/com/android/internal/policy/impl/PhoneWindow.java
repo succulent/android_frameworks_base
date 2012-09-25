@@ -39,6 +39,8 @@ import com.android.internal.widget.ActionBarContainer;
 import com.android.internal.widget.ActionBarContextView;
 import com.android.internal.widget.ActionBarView;
 
+import android.app.ActivityManager;
+import android.app.ActivityManager.RunningAppProcessInfo;
 import android.app.KeyguardManager;
 import android.app.StatusBarManager;
 import android.content.Context;
@@ -99,6 +101,7 @@ import android.widget.TextView;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Android-specific Window.
@@ -207,6 +210,9 @@ public class PhoneWindow extends Window implements MenuBuilder.Callback {
     private boolean mPhoneMode;
     private boolean mHasNavigationBar;
     private boolean mDimDialogBackground;
+    private boolean mFullscreenMode;
+    private int mStatusBarTimeout;
+    private String mBlacklist;
 
     static class WindowManagerHolder {
         static final IWindowManager sWindowManager = IWindowManager.Stub.asInterface(
@@ -1809,11 +1815,39 @@ public class PhoneWindow extends Window implements MenuBuilder.Callback {
         private int mSwipeStartBottom;
         private int mSwipeStartTop;
         private StatusBarManager mSbm;
+        private int mLastSystemUiVis = 0;
 
         public DecorView(Context context, int featureId) {
             super(context);
             mFeatureId = featureId;
             updateGestureSettings();
+            if (mFullscreenMode) {
+                final int flags = View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                        | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                        | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                        | View.SYSTEM_UI_FLAG_LOW_PROFILE
+                        | View.SYSTEM_UI_FLAG_FULLSCREEN
+                        | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION;
+                setSystemUiVisibility(flags);
+
+                setOnSystemUiVisibilityChangeListener(
+                        new View.OnSystemUiVisibilityChangeListener() {
+                    @Override
+                    public void onSystemUiVisibilityChange(int visibility) {
+                        int diff = mLastSystemUiVis ^ visibility;
+                        mLastSystemUiVis = visibility;
+                        if ((diff & View.SYSTEM_UI_FLAG_HIDE_NAVIGATION) != 0
+                                && (visibility & View.SYSTEM_UI_FLAG_HIDE_NAVIGATION) == 0) {
+                            postDelayed(new Runnable() {
+                                @Override
+                                public void run() {
+                                    setSystemUiVisibility(flags);
+                                }
+                            }, mStatusBarTimeout);
+                        }
+                    }
+                });
+            }
         }
 
         @Override
@@ -1999,11 +2033,30 @@ public class PhoneWindow extends Window implements MenuBuilder.Callback {
                     dispatchKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_MENU));
                     dispatchKeyEvent(new KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_MENU));
                     break;
+                case 7:
+                    final int flags = View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                            | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                            | View.SYSTEM_UI_FLAG_LAYOUT_STABLE;
+                    if (mFullscreenMode) setSystemUiVisibility(flags);
+                    break;
             }
         }
 
         @Override
         public boolean onInterceptTouchEvent(MotionEvent event) {
+            boolean blacklisted = false;
+
+            if (mBlacklist != null) {
+                ActivityManager activityManager =
+                        (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
+                List<RunningAppProcessInfo> appProcesses = activityManager.getRunningAppProcesses();
+                for (RunningAppProcessInfo appProcess : appProcesses) {
+                    if (appProcess.importance == RunningAppProcessInfo.IMPORTANCE_FOREGROUND) {
+                        if (mBlacklist.contains(appProcess.processName)) blacklisted = true;
+                    }
+                }
+            }
+
             int action = event.getAction();
 
             int topOffset = 0;
@@ -2018,7 +2071,7 @@ public class PhoneWindow extends Window implements MenuBuilder.Callback {
                         com.android.internal.R.dimen.navigation_bar_height);
             }
 
-            if (mGestureBottom + mGestureLeft + mGestureRight + mGestureTop > 0) {
+            if (!blacklisted && mGestureBottom + mGestureLeft + mGestureRight + mGestureTop > 0) {
                 int x = (int)event.getX();
                 int y = (int)event.getY();
                 boolean handled = false;
@@ -2542,6 +2595,13 @@ public class PhoneWindow extends Window implements MenuBuilder.Callback {
             }
 
             updateGestureSettings();
+            final int flags = View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                    | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                    | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                    | View.SYSTEM_UI_FLAG_LOW_PROFILE
+                    | View.SYSTEM_UI_FLAG_FULLSCREEN
+                    | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION;
+            if (mFullscreenMode) setSystemUiVisibility(flags);
         }
 
         void updateWindowResizeState() {
@@ -3775,5 +3835,11 @@ public class PhoneWindow extends Window implements MenuBuilder.Callback {
                 com.android.internal.R.bool.config_showNavigationBar);
         mHasNavigationBar = Settings.System.getInt(getContext().getContentResolver(),
                 Settings.System.NAVIGATION_CONTROLS, hasNavigationBar ? 1 : 0) == 1;
+        mFullscreenMode = Settings.System.getInt(getContext().getContentResolver(),
+                Settings.System.FULLSCREEN_MODE, 0) == 1;
+        mStatusBarTimeout = Settings.System.getInt(getContext().getContentResolver(),
+                Settings.System.FULLSCREEN_TIMEOUT, 2) * 1000;
+        mBlacklist = Settings.System.getString(getContext().getContentResolver(),
+                Settings.System.EDGE_SWIPE_BLACKLIST);
     }
 }
