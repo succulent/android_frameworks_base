@@ -67,6 +67,7 @@ import android.widget.TextView;
 
 import com.android.internal.app.ThemeUtils;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -345,25 +346,6 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
             mItems.add(mAirplaneModeOn);
         }
 
-        // next: statusbar
-        if (Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.POWER_MENU_SYSTEMBAR_TOGGLE_ENABLED, 1) == 1) {
-            mItems.add(new SinglePressAction(R.drawable.ic_lock_hide_statusbar,
-                    R.string.global_actions_toggle_statusbar) {
-                public void onPress() {
-                    mStatusBarManager.toggleVisibility();
-                }
-
-                public boolean showDuringKeyguard() {
-                    return true;
-                }
-
-                public boolean showBeforeProvisioning() {
-                    return true;
-                }
-            });
-        }
-
         // next: users
         List<UserInfo> users = mContext.getPackageManager().getUsers();
         if (users.size() > 1) {
@@ -404,6 +386,52 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
                     mItems.add(switchToUser);
                 }
             }
+        }
+
+        // next: statusbar
+        if (Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.POWER_MENU_SYSTEMBAR_TOGGLE_ENABLED, 1) == 1) {
+            mItems.add(new SinglePressAction(R.drawable.ic_lock_hide_statusbar,
+                    R.string.global_actions_toggle_statusbar) {
+                public void onPress() {
+                    mStatusBarManager.toggleVisibility();
+                }
+
+                public boolean showDuringKeyguard() {
+                    return true;
+                }
+
+                public boolean showBeforeProvisioning() {
+                    return true;
+                }
+            });
+        }
+
+        // next: notifications
+        if ((Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.FULLSCREEN_MODE, 0) == 1) ||
+                (Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.STATUS_BAR_TOGGLED, 0) == 1)) {
+            mItems.add(new SinglePressAction(R.drawable.ic_lock_notify,
+                    R.string.global_actions_expand_notifications) {
+                public void onPress() {
+                    try {
+                        Object service  = mContext.getSystemService("statusbar");
+                        Class<?> statusbarManager = Class.forName("android.app.StatusBarManager");
+                        Method expand = statusbarManager.getMethod("expand");
+                        expand.invoke(service);
+                    } catch (Exception e) {
+                    }
+                }
+
+                public boolean showDuringKeyguard() {
+                    return true;
+                }
+
+                public boolean showBeforeProvisioning() {
+                    return true;
+                }
+            });
         }
 
         // Next NavBar Hide

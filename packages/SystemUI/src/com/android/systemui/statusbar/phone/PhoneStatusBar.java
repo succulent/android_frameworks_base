@@ -779,8 +779,10 @@ public class PhoneStatusBar extends BaseStatusBar {
         }
         prepareNavigationBarView();
 
-        //WindowManagerImpl.getDefault().updateViewLayout(
-        //        mNavigationBarView, getNavigationBarLayoutParams());
+        if (WindowManagerImpl.getDefault().hasView(mNavigationBarView)) {
+            WindowManagerImpl.getDefault().updateViewLayout(
+                    mNavigationBarView, getNavigationBarLayoutParams());
+        }
     }
 
     private WindowManager.LayoutParams getNavigationBarLayoutParams() {
@@ -1167,14 +1169,31 @@ public class PhoneStatusBar extends BaseStatusBar {
 
     public void toggleVisibility() {
         final WindowManager wm = WindowManagerImpl.getDefault();
+
+        final WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                mVisible ? 0 : getStatusBarHeight(),
+                WindowManager.LayoutParams.TYPE_STATUS_BAR,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+                    | WindowManager.LayoutParams.FLAG_TOUCHABLE_WHEN_WAKING
+                    | WindowManager.LayoutParams.FLAG_SPLIT_TOUCH,
+                PixelFormat.TRANSLUCENT);
+
+        lp.flags |= WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED;
+
         if (mVisible) {
+            lp.flags |= WindowManager.LayoutParams.FLAG_FULLSCREEN;
             if (wm.hasView(mNavigationBarView)) wm.removeView(mNavigationBarView);
-            if (wm.hasView((View) mStatusBarContainer)) wm.removeView(mStatusBarContainer);
         } else {
             addNavigationBar();
-            addStatusBarWindow();
-            recreateStatusBar();
         }
+
+        lp.gravity = getStatusBarGravity();
+        lp.setTitle("StatusBar");
+        lp.packageName = mContext.getPackageName();
+
+        wm.updateViewLayout(mStatusBarContainer, lp);
+
         mVisible = !mVisible;
         Settings.System.putInt(mContext.getContentResolver(),
                 Settings.System.STATUS_BAR_TOGGLED, mVisible ? 0 : 1);
@@ -1357,6 +1376,11 @@ public class PhoneStatusBar extends BaseStatusBar {
         lp.flags |= WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM;
         lp.height = ViewGroup.LayoutParams.MATCH_PARENT;
         final WindowManager wm = WindowManagerImpl.getDefault();
+
+        if (!mVisible) {
+            lp.flags |= WindowManager.LayoutParams.FLAG_FULLSCREEN;
+        }
+
         wm.updateViewLayout(mStatusBarContainer, lp);
 
         // Updating the window layout will force an expensive traversal/redraw.
@@ -1458,10 +1482,15 @@ public class PhoneStatusBar extends BaseStatusBar {
 
         // Shrink the window to the size of the status bar only
         WindowManager.LayoutParams lp = (WindowManager.LayoutParams) mStatusBarContainer.getLayoutParams();
-        lp.height = getStatusBarHeight();
+        lp.height = mVisible ? getStatusBarHeight() : 0;
         lp.flags |= WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
         lp.flags &= ~WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM;
         final WindowManager wm = WindowManagerImpl.getDefault();
+
+        if (!mVisible) {
+            lp.flags |= WindowManager.LayoutParams.FLAG_FULLSCREEN;
+        }
+
         wm.updateViewLayout(mStatusBarContainer, lp);
 
         if ((mDisabled & StatusBarManager.DISABLE_NOTIFICATION_ICONS) == 0) {
@@ -2486,7 +2515,7 @@ public class PhoneStatusBar extends BaseStatusBar {
             }
             else if (Intent.ACTION_CONFIGURATION_CHANGED.equals(action)) {
                 updateResources();
-                //repositionNavigationBar();
+                repositionNavigationBar();
                 updateExpandedViewPos(EXPANDED_LEAVE_ALONE);
             }
         }
