@@ -798,7 +798,9 @@ public class TabletStatusBar extends BaseStatusBar implements
         WindowManager.LayoutParams lp =
             (android.view.WindowManager.LayoutParams) mStatusBarView.getLayoutParams();
         lp.flags &= ~WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL;
-        WindowManagerImpl.getDefault().updateViewLayout(mStatusBarView, lp);
+        if (WindowManagerImpl.getDefault().hasView(mStatusBarView)) {
+            WindowManagerImpl.getDefault().updateViewLayout(mStatusBarView, lp);
+        }
     }
 
     @Override
@@ -807,7 +809,9 @@ public class TabletStatusBar extends BaseStatusBar implements
         WindowManager.LayoutParams lp =
             (android.view.WindowManager.LayoutParams) mStatusBarView.getLayoutParams();
         lp.flags |= WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL;
-        WindowManagerImpl.getDefault().updateViewLayout(mStatusBarView, lp);
+        if (WindowManagerImpl.getDefault().hasView(mStatusBarView)) {
+            WindowManagerImpl.getDefault().updateViewLayout(mStatusBarView, lp);
+        }
     }
 
     public int getStatusBarHeight() {
@@ -1039,13 +1043,8 @@ public class TabletStatusBar extends BaseStatusBar implements
             wm.removeView(mStatusBarView);
             mRecentsPanel.setFullscreen(true);
         } else {
-            addStatusBarWindow();
+            recreateAndAttach();
             mRecentsPanel.setFullscreen(false);
-
-            // Search Panel
-            mStatusBarView.setBar(this);
-            mHomeButton.setOnTouchListener(mHomeSearchActionListener);
-            updateSearchPanel();
         }
 
         mVisible = !mVisible;
@@ -1063,6 +1062,57 @@ public class TabletStatusBar extends BaseStatusBar implements
     private Runnable mHideBarRunnable = new Runnable() { public void run() {
         toggleVisibility();
     }};
+
+    public void recreateAndAttach() {
+        mRecreating = true;
+
+        // extract notifications.
+        int nNotifs = mNotificationData.size();
+        ArrayList<Pair<IBinder, StatusBarNotification>> notifications =
+                new ArrayList<Pair<IBinder, StatusBarNotification>>(nNotifs);
+        copyNotifications(notifications, mNotificationData);
+        mNotificationData.clear();
+
+        final View sb = makeStatusBarView();
+
+        // recreate notifications.
+        for (int i = 0; i < nNotifs; i++) {
+            Pair<IBinder, StatusBarNotification> notifData = notifications.get(i);
+            addNotificationViews(notifData.first, notifData.second);
+        }
+
+        setAreThereNotifications();
+
+        mRecreating = false;
+
+        final WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                WindowManager.LayoutParams.TYPE_NAVIGATION_BAR,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+                    | WindowManager.LayoutParams.FLAG_TOUCHABLE_WHEN_WAKING
+                    | WindowManager.LayoutParams.FLAG_SPLIT_TOUCH,
+                // We use a pixel format of RGB565 for the status bar to save memory bandwidth and
+                // to ensure that the layer can be handled by HWComposer.  On some devices the
+                // HWComposer is unable to handle SW-rendered RGBX_8888 layers.
+                PixelFormat.RGB_565);
+
+        // We explicitly leave FLAG_HARDWARE_ACCELERATED out of the flags.  The status bar occupies
+        // very little screen real-estate and is updated fairly frequently.  By using CPU rendering
+        // for the status bar, we prevent the GPU from having to wake up just to do these small
+        // updates, which should help keep power consumption down.
+
+        lp.gravity = getStatusBarGravity();
+        lp.setTitle("SystemBar");
+        lp.packageName = mContext.getPackageName();
+        WindowManagerImpl.getDefault().addView(sb, lp);
+
+
+        // Search Panel
+        mStatusBarView.setBar(this);
+        mHomeButton.setOnTouchListener(mHomeSearchActionListener);
+        updateSearchPanel();
+    }
 
     public void disable(int state) {
         int old = mDisabled;
@@ -1728,11 +1778,13 @@ public class TabletStatusBar extends BaseStatusBar implements
             mIconLayout.removeView(remove);
         }
 
+        int temp = 0;
         for (int i=0; i<toShow.size(); i++) {
             View v = toShow.get(i);
             v.setPadding(mIconHPadding, 0, mIconHPadding, 0);
             if (v.getParent() == null) {
-                mIconLayout.addView(v, i, params);
+                mIconLayout.addView(v, temp, params);
+                temp++;
             }
         }
     }
