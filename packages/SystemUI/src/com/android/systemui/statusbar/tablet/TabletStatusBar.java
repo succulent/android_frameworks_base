@@ -241,7 +241,9 @@ public class TabletStatusBar extends BaseStatusBar implements
         addStatusBarWindow();
         addPanelWindows();
         if (Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.STATUS_BAR_TOGGLED, 0) == 1) {
+                Settings.System.STATUS_BAR_TOGGLED, 0) == 1 ||
+                Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.FULLSCREEN_MODE, 0) == 1) {
             toggleVisibility();
         }
     }
@@ -1032,6 +1034,7 @@ public class TabletStatusBar extends BaseStatusBar implements
 
     public void toggleVisibility() {
         final WindowManager wm = WindowManagerImpl.getDefault();
+
         if (mVisible && wm.hasView(mStatusBarView)) {
             wm.removeView(mStatusBarView);
             mRecentsPanel.setFullscreen(true);
@@ -1044,10 +1047,22 @@ public class TabletStatusBar extends BaseStatusBar implements
             mHomeButton.setOnTouchListener(mHomeSearchActionListener);
             updateSearchPanel();
         }
+
         mVisible = !mVisible;
+
+        if (Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.FULLSCREEN_MODE, 0) == 1 && mVisible) {
+            mHandler.removeCallbacks(mHideBarRunnable);
+            mHandler.postDelayed(mHideBarRunnable, Settings.System.getInt(mContext.getContentResolver(),
+                    Settings.System.FULLSCREEN_TIMEOUT, 2) * 1000);
+        }
         Settings.System.putInt(mContext.getContentResolver(),
                 Settings.System.STATUS_BAR_TOGGLED, mVisible ? 0 : 1);
     }
+
+    private Runnable mHideBarRunnable = new Runnable() { public void run() {
+        toggleVisibility();
+    }};
 
     public void disable(int state) {
         int old = mDisabled;

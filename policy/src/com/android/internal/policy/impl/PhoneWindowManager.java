@@ -1576,11 +1576,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
         mLongPressOnHomeBehavior = -1;
 
-        mStatusBarToggled = Settings.System.getInt(resolver,
-                Settings.System.STATUS_BAR_TOGGLED, 0) == 1;
-
         mFullscreenMode = Settings.System.getInt(resolver,
-                Settings.System.FULLSCREEN_MODE, 0) == 1 || mStatusBarToggled;
+                Settings.System.FULLSCREEN_MODE, 0) == 1;
     }
 
     private void enablePointerLocation() {
@@ -2874,7 +2871,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 mHideNavFakeWindow.dismiss();
                 mHideNavFakeWindow = null;
             }
-        } else if (mHideNavFakeWindow == null && !mFullscreenMode) {
+        } else if (mHideNavFakeWindow == null) {
             mHideNavFakeWindow = mWindowManagerFuncs.addFakeWindow(
                     mHandler.getLooper(), mHideNavInputEventReceiverFactory,
                     "hidden nav", WindowManager.LayoutParams.TYPE_HIDDEN_NAV_CONSUMER,

@@ -409,7 +409,9 @@ public class PhoneStatusBar extends BaseStatusBar {
 
 
         if (Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.STATUS_BAR_TOGGLED, 0) == 1) {
+                Settings.System.STATUS_BAR_TOGGLED, 0) == 1 ||
+                Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.FULLSCREEN_MODE, 0) == 1) {
             toggleVisibility();
         }
     }
@@ -1170,34 +1172,31 @@ public class PhoneStatusBar extends BaseStatusBar {
     public void toggleVisibility() {
         final WindowManager wm = WindowManagerImpl.getDefault();
 
-        final WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                mVisible ? 0 : getStatusBarHeight(),
-                WindowManager.LayoutParams.TYPE_STATUS_BAR,
-                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
-                    | WindowManager.LayoutParams.FLAG_TOUCHABLE_WHEN_WAKING
-                    | WindowManager.LayoutParams.FLAG_SPLIT_TOUCH,
-                PixelFormat.TRANSLUCENT);
-
-        lp.flags |= WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED;
-
         if (mVisible) {
-            lp.flags |= WindowManager.LayoutParams.FLAG_FULLSCREEN;
+            if (wm.hasView((View) mStatusBarContainer)) wm.removeView(mStatusBarContainer);
             if (wm.hasView(mNavigationBarView)) wm.removeView(mNavigationBarView);
         } else {
             addNavigationBar();
+            addStatusBarWindow();
+            recreateStatusBar();
         }
 
-        lp.gravity = getStatusBarGravity();
-        lp.setTitle("StatusBar");
-        lp.packageName = mContext.getPackageName();
-
-        wm.updateViewLayout(mStatusBarContainer, lp);
-
         mVisible = !mVisible;
+
+        if (Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.FULLSCREEN_MODE, 0) == 1 && mVisible) {
+            mHandler.removeCallbacks(mHideBarRunnable);
+            mHandler.postDelayed(mHideBarRunnable, Settings.System.getInt(mContext.getContentResolver(),
+                    Settings.System.FULLSCREEN_TIMEOUT, 2) * 1000);
+        }
+
         Settings.System.putInt(mContext.getContentResolver(),
                 Settings.System.STATUS_BAR_TOGGLED, mVisible ? 0 : 1);
     }
+
+    private Runnable mHideBarRunnable = new Runnable() { public void run() {
+        toggleVisibility();
+    }};
 
     /**
      * State is one or more of the DISABLE constants from StatusBarManager.
@@ -1377,8 +1376,9 @@ public class PhoneStatusBar extends BaseStatusBar {
         lp.height = ViewGroup.LayoutParams.MATCH_PARENT;
         final WindowManager wm = WindowManagerImpl.getDefault();
 
-        if (!mVisible) {
-            lp.flags |= WindowManager.LayoutParams.FLAG_FULLSCREEN;
+        if (!wm.hasView(mStatusBarContainer)) {
+            addStatusBarWindow();
+            recreateStatusBar();
         }
 
         wm.updateViewLayout(mStatusBarContainer, lp);
@@ -1482,16 +1482,24 @@ public class PhoneStatusBar extends BaseStatusBar {
 
         // Shrink the window to the size of the status bar only
         WindowManager.LayoutParams lp = (WindowManager.LayoutParams) mStatusBarContainer.getLayoutParams();
-        lp.height = mVisible ? getStatusBarHeight() : 0;
+        lp.height = getStatusBarHeight();
         lp.flags |= WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
         lp.flags &= ~WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM;
         final WindowManager wm = WindowManagerImpl.getDefault();
 
-        if (!mVisible) {
-            lp.flags |= WindowManager.LayoutParams.FLAG_FULLSCREEN;
+        if (wm.hasView(mStatusBarContainer)) {
+            wm.updateViewLayout(mStatusBarContainer, lp);
         }
 
-        wm.updateViewLayout(mStatusBarContainer, lp);
+        if (Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.STATUS_BAR_TOGGLED, 0) == 1 ||
+                Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.FULLSCREEN_MODE, 0) == 1) {
+            if (wm.hasView(mStatusBarContainer)) {
+                wm.removeView(mStatusBarContainer);
+            }
+        }
+
 
         if ((mDisabled & StatusBarManager.DISABLE_NOTIFICATION_ICONS) == 0) {
             setNotificationIconVisibility(true, com.android.internal.R.anim.fade_in);

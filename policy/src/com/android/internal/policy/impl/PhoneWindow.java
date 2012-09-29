@@ -199,21 +199,6 @@ public class PhoneWindow extends Window implements MenuBuilder.Callback {
 
     private int mUiOptions = 0;
 
-    private int mGestureBottom;
-    private int mGestureTop;
-    private int mGestureLeft;
-    private int mGestureRight;
-    private boolean mGestureMove;
-    private int mGestureStart;
-    private int mGestureDistance;
-    private boolean mHybridMode;
-    private boolean mPhoneMode;
-    private boolean mHasNavigationBar;
-    private boolean mDimDialogBackground;
-    private boolean mFullscreenMode;
-    private int mStatusBarTimeout;
-    private String mBlacklist;
-
     static class WindowManagerHolder {
         static final IWindowManager sWindowManager = IWindowManager.Stub.asInterface(
                 ServiceManager.getService("window"));
@@ -1806,6 +1791,21 @@ public class PhoneWindow extends Window implements MenuBuilder.Callback {
         private PopupWindow mActionModePopup;
         private Runnable mShowActionModePopup;
 
+        private SettingsObserver mSettingsObserver;
+        private int mGestureBottom;
+        private int mGestureTop;
+        private int mGestureLeft;
+        private int mGestureRight;
+        private boolean mGestureMove;
+        private int mGestureStart;
+        private int mGestureDistance;
+        private boolean mHybridMode;
+        private boolean mPhoneMode;
+        private boolean mHasNavigationBar;
+        private boolean mFullscreenMode = false;
+        private int mStatusBarTimeout;
+        private String mBlacklist;
+
         private boolean mSwipeRight = false;
         private boolean mSwipeLeft = false;
         private boolean mSwipeBottom = false;
@@ -1820,34 +1820,97 @@ public class PhoneWindow extends Window implements MenuBuilder.Callback {
         public DecorView(Context context, int featureId) {
             super(context);
             mFeatureId = featureId;
+            mSettingsObserver = new SettingsObserver();
             updateGestureSettings();
             if (mFullscreenMode) {
                 final int flags = View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
                         | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                        | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                        | View.SYSTEM_UI_FLAG_LOW_PROFILE
-                        | View.SYSTEM_UI_FLAG_FULLSCREEN
-                        | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION;
+                        | View.SYSTEM_UI_FLAG_LAYOUT_STABLE;
                 setSystemUiVisibility(flags);
-
-                setOnSystemUiVisibilityChangeListener(
-                        new View.OnSystemUiVisibilityChangeListener() {
-                    @Override
-                    public void onSystemUiVisibilityChange(int visibility) {
-                        int diff = mLastSystemUiVis ^ visibility;
-                        mLastSystemUiVis = visibility;
-                        if ((diff & View.SYSTEM_UI_FLAG_HIDE_NAVIGATION) != 0
-                                && (visibility & View.SYSTEM_UI_FLAG_HIDE_NAVIGATION) == 0) {
-                            postDelayed(new Runnable() {
-                                @Override
-                                public void run() {
-                                    setSystemUiVisibility(flags);
-                                }
-                            }, mStatusBarTimeout);
-                        }
-                    }
-                });
             }
+        }
+
+        private class SettingsObserver extends ContentObserver {
+
+            SettingsObserver() {
+                super(new Handler());
+            }
+
+            public void observe() {
+                getContext().getContentResolver().registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.EDGE_SWIPE_BOTTOM), false, this);
+                getContext().getContentResolver().registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.EDGE_SWIPE_TOP), false, this);
+                getContext().getContentResolver().registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.EDGE_SWIPE_RIGHT), false, this);
+                getContext().getContentResolver().registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.EDGE_SWIPE_LEFT), false, this);
+                getContext().getContentResolver().registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.EDGE_SWIPE_MOVE), false, this);
+                getContext().getContentResolver().registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.EDGE_SWIPE_START), false, this);
+                getContext().getContentResolver().registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.EDGE_SWIPE_DISTANCE), false, this);
+                getContext().getContentResolver().registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.TABLET_MODE), false, this);
+                getContext().getContentResolver().registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.DIM_DIALOG_BG), false, this);
+                getContext().getContentResolver().registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.FULLSCREEN_MODE), false, this);
+                getContext().getContentResolver().registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.STATUS_BAR_TOGGLED), false, this);
+            }
+
+            public void unobserve() {
+                getContext().getContentResolver().unregisterContentObserver(this);
+            }
+
+            @Override
+            public void onChange(boolean selfChange) {
+                super.onChange(selfChange);
+                updateGestureSettings();
+            }
+        }
+
+        void updateGestureSettings() {
+            mGestureLeft = Settings.System.getInt(getContext().getContentResolver(),
+                    Settings.System.EDGE_SWIPE_LEFT, 0);
+            mGestureTop = Settings.System.getInt(getContext().getContentResolver(),
+                    Settings.System.EDGE_SWIPE_TOP, 0);
+            mGestureRight = Settings.System.getInt(getContext().getContentResolver(),
+                    Settings.System.EDGE_SWIPE_RIGHT, 0);
+            mGestureBottom = Settings.System.getInt(getContext().getContentResolver(),
+                    Settings.System.EDGE_SWIPE_BOTTOM, 0);
+            mGestureMove = Settings.System.getInt(getContext().getContentResolver(),
+                    Settings.System.EDGE_SWIPE_MOVE, 0) == 1;
+            mGestureStart = Settings.System.getInt(getContext().getContentResolver(),
+                    Settings.System.EDGE_SWIPE_START, 35);
+            mGestureDistance = Settings.System.getInt(getContext().getContentResolver(),
+                    Settings.System.EDGE_SWIPE_DISTANCE, 40);
+            mPhoneMode = getContext().getResources().getConfiguration()
+                    .smallestScreenWidthDp * DisplayMetrics.DENSITY_DEFAULT
+                    / DisplayMetrics.DENSITY_DEVICE < 600;
+            mHybridMode = Settings.System.getInt(getContext().getContentResolver(),
+                    Settings.System.TABLET_MODE, 0) == 0 && getContext().getResources().getConfiguration()
+                    .smallestScreenWidthDp * DisplayMetrics.DENSITY_DEFAULT
+                    / DisplayMetrics.DENSITY_DEVICE < 720 && !mPhoneMode;
+            boolean hasNavigationBar = getContext().getResources().getBoolean(
+                    com.android.internal.R.bool.config_showNavigationBar);
+            mHasNavigationBar = Settings.System.getInt(getContext().getContentResolver(),
+                    Settings.System.NAVIGATION_CONTROLS, hasNavigationBar ? 1 : 0) == 1;
+            boolean fullscreenMode = Settings.System.getInt(getContext().getContentResolver(),
+                    Settings.System.FULLSCREEN_MODE, 0) == 1 ||
+                    Settings.System.getInt(getContext().getContentResolver(),
+                    Settings.System.FULLSCREEN_MODE, 0) == 1;
+            if (fullscreenMode != mFullscreenMode) {
+                mFullscreenMode = fullscreenMode;
+                final int flags = View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                        | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                        | View.SYSTEM_UI_FLAG_LAYOUT_STABLE;
+                setSystemUiVisibility(mFullscreenMode ? flags : 0);
+            }
+            mBlacklist = Settings.System.getString(getContext().getContentResolver(),
+                    Settings.System.EDGE_SWIPE_BLACKLIST);
         }
 
         @Override
@@ -2032,12 +2095,6 @@ public class PhoneWindow extends Window implements MenuBuilder.Callback {
                 case 6:
                     dispatchKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_MENU));
                     dispatchKeyEvent(new KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_MENU));
-                    break;
-                case 7:
-                    final int flags = View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                            | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                            | View.SYSTEM_UI_FLAG_LAYOUT_STABLE;
-                    if (mFullscreenMode) setSystemUiVisibility(flags);
                     break;
             }
         }
@@ -2593,15 +2650,6 @@ public class PhoneWindow extends Window implements MenuBuilder.Callback {
             if (cb != null && !isDestroyed() && mFeatureId < 0) {
                 cb.onWindowFocusChanged(hasWindowFocus);
             }
-
-            updateGestureSettings();
-            final int flags = View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                    | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                    | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                    | View.SYSTEM_UI_FLAG_LOW_PROFILE
-                    | View.SYSTEM_UI_FLAG_FULLSCREEN
-                    | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION;
-            if (mFullscreenMode) setSystemUiVisibility(flags);
         }
 
         void updateWindowResizeState() {
@@ -2614,6 +2662,8 @@ public class PhoneWindow extends Window implements MenuBuilder.Callback {
         protected void onAttachedToWindow() {
             super.onAttachedToWindow();
             
+            mSettingsObserver.observe();
+
             updateWindowResizeState();
             
             final Callback cb = getCallback();
@@ -2637,6 +2687,8 @@ public class PhoneWindow extends Window implements MenuBuilder.Callback {
         protected void onDetachedFromWindow() {
             super.onDetachedFromWindow();
             
+            mSettingsObserver.unobserve();
+
             final Callback cb = getCallback();
             if (cb != null && mFeatureId < 0) {
                 cb.onDetachedFromWindow();
@@ -2861,7 +2913,7 @@ public class PhoneWindow extends Window implements MenuBuilder.Callback {
         }
 
         if (a.getBoolean(com.android.internal.R.styleable.Window_backgroundDimEnabled,
-                mIsFloating) && mDimDialogBackground) {
+                mIsFloating)) {
             /* All dialogs should have the window dimmed */
             if ((getForcedWindowFlags()&WindowManager.LayoutParams.FLAG_DIM_BEHIND) == 0) {
                 params.flags |= WindowManager.LayoutParams.FLAG_DIM_BEHIND;
@@ -3805,43 +3857,5 @@ public class PhoneWindow extends Window implements MenuBuilder.Callback {
 
     void sendCloseSystemWindows(String reason) {
         PhoneWindowManager.sendCloseSystemWindows(getContext(), reason);
-    }
-
-    void updateGestureSettings() {
-        mGestureLeft = Settings.System.getInt(getContext().getContentResolver(),
-                Settings.System.EDGE_SWIPE_LEFT, 0);
-        mGestureTop = Settings.System.getInt(getContext().getContentResolver(),
-                Settings.System.EDGE_SWIPE_TOP, 0);
-        mGestureRight = Settings.System.getInt(getContext().getContentResolver(),
-                Settings.System.EDGE_SWIPE_RIGHT, 0);
-        mGestureBottom = Settings.System.getInt(getContext().getContentResolver(),
-                Settings.System.EDGE_SWIPE_BOTTOM, 0);
-        mGestureMove = Settings.System.getInt(getContext().getContentResolver(),
-                Settings.System.EDGE_SWIPE_MOVE, 0) == 1;
-        mGestureStart = Settings.System.getInt(getContext().getContentResolver(),
-                Settings.System.EDGE_SWIPE_START, 35);
-        mGestureDistance = Settings.System.getInt(getContext().getContentResolver(),
-                Settings.System.EDGE_SWIPE_DISTANCE, 40);
-        mPhoneMode = getContext().getResources().getConfiguration()
-                .smallestScreenWidthDp * DisplayMetrics.DENSITY_DEFAULT
-                / DisplayMetrics.DENSITY_DEVICE < 600;
-        mHybridMode = Settings.System.getInt(getContext().getContentResolver(),
-                Settings.System.TABLET_MODE, 0) == 0 && getContext().getResources().getConfiguration()
-                .smallestScreenWidthDp * DisplayMetrics.DENSITY_DEFAULT
-                / DisplayMetrics.DENSITY_DEVICE < 720 && !mPhoneMode;
-        mDimDialogBackground = Settings.System.getInt(getContext().getContentResolver(),
-                Settings.System.DIM_DIALOG_BG, 0) == 1;
-        boolean hasNavigationBar = getContext().getResources().getBoolean(
-                com.android.internal.R.bool.config_showNavigationBar);
-        mHasNavigationBar = Settings.System.getInt(getContext().getContentResolver(),
-                Settings.System.NAVIGATION_CONTROLS, hasNavigationBar ? 1 : 0) == 1;
-        mFullscreenMode = Settings.System.getInt(getContext().getContentResolver(),
-                Settings.System.FULLSCREEN_MODE, 0) == 1 ||
-                Settings.System.getInt(getContext().getContentResolver(),
-                Settings.System.STATUS_BAR_TOGGLED, 0) == 1;
-        mStatusBarTimeout = Settings.System.getInt(getContext().getContentResolver(),
-                Settings.System.FULLSCREEN_TIMEOUT, 2) * 1000;
-        mBlacklist = Settings.System.getString(getContext().getContentResolver(),
-                Settings.System.EDGE_SWIPE_BLACKLIST);
     }
 }

@@ -710,7 +710,7 @@ public class RecentsPanelView extends FrameLayout implements OnItemClickListener
     public void setFullscreen(boolean fullscreen) {
         FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) mRecentsScrim.getLayoutParams();
         int statusBarHeight = getResources().
-                getDimensionPixelSize(com.android.internal.R.dimen.status_bar_height);
+                getDimensionPixelSize(com.android.internal.R.dimen.navigation_bar_height);
         lp.setMargins(0, 0, 0, fullscreen ? 0 : statusBarHeight);
         mRecentsScrim.setLayoutParams(lp);
     }
