@@ -620,7 +620,9 @@ public class TabletStatusBar extends BaseStatusBar implements
         mBluetoothController = new BluetoothController(mContext);
         mBluetoothController.addIconView((ImageView)sb.findViewById(R.id.bluetooth));
 
-        mNetworkController = new NetworkController(mContext);
+        if (mNetworkController == null) {
+            mNetworkController = new NetworkController(mContext);
+        }
         final SignalClusterView signalCluster =
                 (SignalClusterView)sb.findViewById(R.id.signal_cluster);
         mNetworkController.addSignalCluster(signalCluster);
