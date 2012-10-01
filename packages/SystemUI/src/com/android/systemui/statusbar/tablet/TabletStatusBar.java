@@ -1033,11 +1033,13 @@ public class TabletStatusBar extends BaseStatusBar implements
 
         mVisible = !mVisible;
 
-        if (Settings.System.getInt(mContext.getContentResolver(),
+        int timeout = Settings.System.getInt(mContext.getContentResolver(),
+                    Settings.System.FULLSCREEN_TIMEOUT, 2);
+
+        if (timeout > 0 && Settings.System.getInt(mContext.getContentResolver(),
                 Settings.System.FULLSCREEN_MODE, 0) == 1 && mVisible) {
             mHandler.removeCallbacks(mHideBarRunnable);
-            mHandler.postDelayed(mHideBarRunnable, Settings.System.getInt(mContext.getContentResolver(),
-                    Settings.System.FULLSCREEN_TIMEOUT, 2) * 1000);
+            mHandler.postDelayed(mHideBarRunnable, timeout * 1000);
         }
         Settings.System.putInt(mContext.getContentResolver(),
                 Settings.System.STATUS_BAR_TOGGLED, mVisible ? 0 : 1);
