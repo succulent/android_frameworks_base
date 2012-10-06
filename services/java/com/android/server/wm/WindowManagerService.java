@@ -1654,8 +1654,8 @@ public class WindowManagerService extends IWindowManager.Stub
         mInnerFields.mWallpaperMayChange = false;
         int changed = 0;
 
-        final int dw = mAppDisplayWidth;
-        final int dh = mAppDisplayHeight;
+        final int dw = mCurDisplayWidth;
+        final int dh = mCurDisplayHeight;
 
         // First find top-most window that has asked to be on top of the
         // wallpaper; all wallpapers go behind it.
@@ -2069,8 +2069,8 @@ public class WindowManagerService extends IWindowManager.Stub
     }
 
     void updateWallpaperOffsetLocked(WindowState changingTarget, boolean sync) {
-        final int dw = mAppDisplayWidth;
-        final int dh = mAppDisplayHeight;
+        final int dw = mCurDisplayWidth;
+        final int dh = mCurDisplayHeight;
 
         WindowState target = mWallpaperTarget;
         if (target != null) {
@@ -2143,8 +2143,8 @@ public class WindowManagerService extends IWindowManager.Stub
 
     void updateWallpaperVisibilityLocked() {
         final boolean visible = isWallpaperVisible(mWallpaperTarget);
-        final int dw = mAppDisplayWidth;
-        final int dh = mAppDisplayHeight;
+        final int dw = mCurDisplayWidth;
+        final int dh = mCurDisplayHeight;
 
         int curTokenIndex = mWallpaperTokens.size();
         while (curTokenIndex > 0) {
@@ -2978,7 +2978,7 @@ public class WindowManagerService extends IWindowManager.Stub
             configChanged = updateOrientationFromAppTokensLocked(false);
             performLayoutAndPlaceSurfacesLocked();
             if (toBeDisplayed && win.mIsWallpaper) {
-                updateWallpaperOffsetLocked(win, mAppDisplayWidth, mAppDisplayHeight, false);
+                updateWallpaperOffsetLocked(win, mCurDisplayWidth, mCurDisplayHeight, false);
             }
             if (win.mAppToken != null) {
                 win.mAppToken.updateReportedVisibilityLocked();
