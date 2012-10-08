@@ -38,6 +38,7 @@ import android.content.res.CustomTheme;
 import android.content.res.Resources;
 import android.database.ContentObserver;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.ColorFilter;
 import android.graphics.Paint;
 import android.graphics.PixelFormat;
@@ -473,11 +474,19 @@ public class PhoneStatusBar extends BaseStatusBar {
                   View.STATUS_BAR_DISABLE_NOTIFICATION_TICKER
                 | (mNotificationPanelIsFullScreenWidth ? 0 : View.STATUS_BAR_DISABLE_SYSTEM_INFO));
 
+        int color = Settings.System.getInt(context.getContentResolver(),
+                Settings.System.NOTIFICATION_PANEL_COLOR, 0xFF000000);
+        boolean fullscreen = Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.FULLSCREEN_MODE, 0) == 1;
+        if (!fullscreen) color = Color.rgb(Color.red(color), Color.green(color), Color.blue(color));
+
         if (!ActivityManager.isHighEndGfx(mDisplay)) {
             mStatusBarWindow.setBackground(null);
-            mNotificationPanel.setBackground(new FastColorDrawable(context.getResources().getColor(
-                    R.color.notification_panel_solid_background)));
+            mNotificationPanel.setBackground(new FastColorDrawable(color));
+        } else {
+            mNotificationPanel.setBackgroundColor(color);
         }
+
         if (ENABLE_INTRUDERS) {
             mIntruderAlertView = (IntruderAlertView) View.inflate(context, R.layout.intruder_alert, null);
             mIntruderAlertView.setVisibility(View.GONE);
@@ -505,7 +514,7 @@ public class PhoneStatusBar extends BaseStatusBar {
         }
 
         // figure out which pixel-format to use for the status bar.
-        mPixelFormat = PixelFormat.OPAQUE;
+        mPixelFormat = PixelFormat.TRANSLUCENT;
         mStatusIcons = (LinearLayout)mStatusBarView.findViewById(R.id.statusIcons);
         mNotificationIcons = (IconMerger)mStatusBarView.findViewById(R.id.notificationIcons);
         mNotificationIcons.setOverflowIndicator(mMoreIcon);
@@ -812,8 +821,17 @@ public class PhoneStatusBar extends BaseStatusBar {
 
         prepareNavigationBarView();
 
-        WindowManagerImpl.getDefault().addView(
-                mNavigationBarView, getNavigationBarLayoutParams());
+        if (!WindowManagerImpl.getDefault().hasView(mNavigationBarView)) {
+            WindowManagerImpl.getDefault().addView(
+                    mNavigationBarView, getNavigationBarLayoutParams());
+        }
+
+        int color = Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.STATUS_BAR_COLOR, 0xFF000000);
+        boolean fullscreen = Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.FULLSCREEN_MODE, 0) == 1;
+        if (!fullscreen) color = Color.rgb(Color.red(color), Color.green(color), Color.blue(color));
+        mNavigationBarView.setBackgroundColor(color);
     }
 
     private void repositionNavigationBar() {
@@ -842,11 +860,10 @@ public class PhoneStatusBar extends BaseStatusBar {
                     | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
                     | WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
                     | WindowManager.LayoutParams.FLAG_SPLIT_TOUCH,
-                PixelFormat.OPAQUE);
+                PixelFormat.TRANSLUCENT);
         // this will allow the navbar to run in an overlay on devices that support this
-        if (ActivityManager.isHighEndGfx(mDisplay)) {
-            lp.flags |= WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED;
-        }
+
+        lp.flags |= WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED;
 
         lp.setTitle("NavigationBar");
         lp.windowAnimations = 0;
@@ -1232,11 +1249,13 @@ public class PhoneStatusBar extends BaseStatusBar {
 
         mVisible = !mVisible;
 
-        if (Settings.System.getInt(mContext.getContentResolver(),
+        int timeout = Settings.System.getInt(mContext.getContentResolver(),
+                    Settings.System.FULLSCREEN_TIMEOUT, 2);
+
+        if (timeout > 0 && Settings.System.getInt(mContext.getContentResolver(),
                 Settings.System.FULLSCREEN_MODE, 0) == 1 && mVisible) {
             mHandler.removeCallbacks(mHideBarRunnable);
-            mHandler.postDelayed(mHideBarRunnable, Settings.System.getInt(mContext.getContentResolver(),
-                    Settings.System.FULLSCREEN_TIMEOUT, 2) * 1000);
+            mHandler.postDelayed(mHideBarRunnable, timeout * 1000);
         }
 
         Settings.System.putInt(mContext.getContentResolver(),
@@ -1541,9 +1560,7 @@ public class PhoneStatusBar extends BaseStatusBar {
         }
 
         if (Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.STATUS_BAR_TOGGLED, 0) == 1 ||
-                Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.FULLSCREEN_MODE, 0) == 1) {
+                Settings.System.STATUS_BAR_TOGGLED, 0) == 1) {
             if (wm.hasView(mStatusBarContainer)) {
                 wm.removeView(mStatusBarContainer);
             }
@@ -2333,7 +2350,16 @@ public class PhoneStatusBar extends BaseStatusBar {
         makeStatusBarView();
 
         mStatusBarContainer.addView(mStatusBarWindow);
-        WindowManagerImpl.getDefault().addView(mStatusBarContainer, lp);
+        if (!WindowManagerImpl.getDefault().hasView(mStatusBarContainer)) {
+            WindowManagerImpl.getDefault().addView(mStatusBarContainer, lp);
+        }
+
+        int color = Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.STATUS_BAR_COLOR, 0xFF000000);
+        boolean fullscreen = Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.FULLSCREEN_MODE, 0) == 1;
+        if (!fullscreen) color = Color.rgb(Color.red(color), Color.green(color), Color.blue(color));
+        mStatusBarView.setBackgroundColor(color);
 
         showClock(true);
     }
@@ -2655,6 +2681,13 @@ public class PhoneStatusBar extends BaseStatusBar {
 
         updateExpandedViewPos(EXPANDED_LEAVE_ALONE);
         mRecreating = false;
+
+        int color = Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.STATUS_BAR_COLOR, 0xFF000000);
+        boolean fullscreen = Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.FULLSCREEN_MODE, 0) == 1;
+        if (!fullscreen) color = Color.rgb(Color.red(color), Color.green(color), Color.blue(color));
+        mStatusBarView.setBackgroundColor(color);
     }
 
     /**
@@ -2864,7 +2897,7 @@ public class PhoneStatusBar extends BaseStatusBar {
         private final int mColor;
 
         public FastColorDrawable(int color) {
-            mColor = 0xff000000 | color;
+            mColor = 0x00000000 | color;
         }
 
         @Override
@@ -2882,7 +2915,7 @@ public class PhoneStatusBar extends BaseStatusBar {
 
         @Override
         public int getOpacity() {
-            return PixelFormat.OPAQUE;
+            return PixelFormat.TRANSLUCENT;
         }
 
         @Override

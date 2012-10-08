@@ -2442,6 +2442,16 @@ public final class Settings {
         /**
          * @hide
          */
+        public static final String STATUS_BAR_COLOR = "status_bar_color";
+
+        /**
+         * @hide
+         */
+        public static final String NOTIFICATION_PANEL_COLOR = "notification_panel_color";
+
+        /**
+         * @hide
+         */
         public static final String COMBINED_BAR_SETTINGS = "combined_bar_settings";
 
         /**

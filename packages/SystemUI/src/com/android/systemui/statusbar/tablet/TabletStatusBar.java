@@ -32,8 +32,11 @@ import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.content.res.CustomTheme;
 import android.content.res.Resources;
+import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.graphics.Point;
+import android.graphics.PorterDuff;
+import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.LayerDrawable;
 import android.inputmethodservice.InputMethodService;
@@ -261,17 +264,32 @@ public class TabletStatusBar extends BaseStatusBar implements
                 // We use a pixel format of RGB565 for the status bar to save memory bandwidth and
                 // to ensure that the layer can be handled by HWComposer.  On some devices the
                 // HWComposer is unable to handle SW-rendered RGBX_8888 layers.
-                PixelFormat.RGB_565);
+                PixelFormat.TRANSLUCENT);
 
         // We explicitly leave FLAG_HARDWARE_ACCELERATED out of the flags.  The status bar occupies
         // very little screen real-estate and is updated fairly frequently.  By using CPU rendering
         // for the status bar, we prevent the GPU from having to wake up just to do these small
         // updates, which should help keep power consumption down.
 
+        lp.flags |= WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED;
+
         lp.gravity = getStatusBarGravity();
         lp.setTitle("SystemBar");
         lp.packageName = mContext.getPackageName();
         WindowManagerImpl.getDefault().addView(sb, lp);
+
+        ColorDrawable statuscolor;
+        try {
+            statuscolor = (ColorDrawable) mContext.getResources().getDrawable(R.drawable.system_bar_background);
+        } catch (Exception e) {
+            statuscolor = null;
+        }
+        int color = Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.STATUS_BAR_COLOR, 0xFF000000);
+        boolean fullscreen = Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.FULLSCREEN_MODE, 0) == 1;
+        if (!fullscreen) color = Color.rgb(Color.red(color), Color.green(color), Color.blue(color));
+        if (statuscolor != null) sb.setBackgroundColor(color);
     }
 
     // last theme that was applied in order to detect theme change (as opposed
@@ -357,6 +375,16 @@ public class TabletStatusBar extends BaseStatusBar implements
 //        lp.windowAnimations = com.android.internal.R.style.Animation_ZoomButtons; // simple fade
 
         WindowManagerImpl.getDefault().addView(mNotificationPanel, lp);
+
+        int color = Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.NOTIFICATION_PANEL_COLOR, 0xFF000000);
+        if (color != 0xFF000000) {
+            Drawable background = mContext.getResources().getDrawable(R.drawable.notification_panel_tablet_bg);
+            background.setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
+            background.setAlpha(Color.alpha(color));
+            mNotificationPanel.mContentFrame.setBackgroundDrawable(background);
+            mNotificationPanel.mTitleArea.setBackgroundResource(0);
+        }
 
         // Recents Panel
         mRecentTasksLoader = new RecentTasksLoader(context);
@@ -1081,18 +1109,40 @@ public class TabletStatusBar extends BaseStatusBar implements
                 // We use a pixel format of RGB565 for the status bar to save memory bandwidth and
                 // to ensure that the layer can be handled by HWComposer.  On some devices the
                 // HWComposer is unable to handle SW-rendered RGBX_8888 layers.
-                PixelFormat.RGB_565);
+                PixelFormat.TRANSLUCENT);
 
-        // We explicitly leave FLAG_HARDWARE_ACCELERATED out of the flags.  The status bar occupies
-        // very little screen real-estate and is updated fairly frequently.  By using CPU rendering
-        // for the status bar, we prevent the GPU from having to wake up just to do these small
-        // updates, which should help keep power consumption down.
+        lp.flags |= WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED;
 
         lp.gravity = getStatusBarGravity();
         lp.setTitle("SystemBar");
         lp.packageName = mContext.getPackageName();
         WindowManagerImpl.getDefault().addView(sb, lp);
 
+        ColorDrawable statuscolor;
+        try {
+            statuscolor = (ColorDrawable) mContext.getResources().getDrawable(R.drawable.system_bar_background);
+        } catch (Exception e) {
+            statuscolor = null;
+        }
+        int color = Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.STATUS_BAR_COLOR, 0xFF000000);
+        boolean fullscreen = Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.FULLSCREEN_MODE, 0) == 1;
+        if (!fullscreen) color = Color.rgb(Color.red(color), Color.green(color), Color.blue(color));
+        if (statuscolor != null) sb.setBackgroundColor(color);
+
+        int notifColor = Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.NOTIFICATION_PANEL_COLOR, 0xFF000000);
+        if (notifColor != 0xFF000000) {
+            Drawable background = mContext.getResources().getDrawable(R.drawable.notification_panel_tablet_bg);
+            background.setColorFilter(notifColor, PorterDuff.Mode.SRC_ATOP);
+            background.setAlpha(Color.alpha(notifColor));
+            mNotificationPanel.mContentFrame.setBackgroundDrawable(background);
+            mNotificationPanel.mTitleArea.setBackgroundResource(0);
+        } else {
+            mNotificationPanel.mContentFrame.setBackgroundResource(R.drawable.notification_panel_tablet_bg);
+            mNotificationPanel.mTitleArea.setBackgroundResource(R.drawable.system_bar_notification_header_bg);
+        }
 
         // Search Panel
         mStatusBarView.setBar(this);

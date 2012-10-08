@@ -21,6 +21,7 @@
     android:layout_width="match_parent"
     android:layout_weight="1"
     android:visibility="gone"
+    android:paddingBottom="16dp"
     android:id="@+id/scroll_settings" >
 
     <com.android.systemui.statusbar.tablet.SettingsView
