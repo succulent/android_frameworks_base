@@ -1050,14 +1050,20 @@ public class TabletStatusBar extends BaseStatusBar implements
 
     public void toggleVisibility() {
         final WindowManager wm = WindowManagerImpl.getDefault();
+        View space = mNotificationPanel.findViewById(R.id.system_bar_notification_panel_bottom_space);
+        ViewGroup.LayoutParams lp = space.getLayoutParams();
 
         if (mVisible && wm.hasView(mStatusBarView)) {
             wm.removeView(mStatusBarView);
             mRecentsPanel.setFullscreen(true);
+            lp.height = 0;
         } else {
             recreateAndAttach();
             mRecentsPanel.setFullscreen(false);
+            lp.height = mContext.getResources().getDimensionPixelSize(R.dimen.panel_float);
         }
+
+        space.setLayoutParams(lp);
 
         mVisible = !mVisible;
 
