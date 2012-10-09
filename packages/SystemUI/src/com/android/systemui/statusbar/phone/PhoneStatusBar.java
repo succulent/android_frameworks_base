@@ -1237,6 +1237,7 @@ public class PhoneStatusBar extends BaseStatusBar {
     boolean mVisible = true;
 
     public void toggleVisibility() {
+        if (mExpanded) return;
         final WindowManager wm = WindowManagerImpl.getDefault();
 
         if (mVisible) {
@@ -1254,7 +1255,7 @@ public class PhoneStatusBar extends BaseStatusBar {
                     Settings.System.FULLSCREEN_TIMEOUT, 2);
 
         if (timeout > 0 && Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.FULLSCREEN_MODE, 0) == 1 && mVisible) {
+                Settings.System.FULLSCREEN_MODE, 0) == 1 && mVisible && !mExpanded) {
             mHandler.removeCallbacks(mHideBarRunnable);
             mHandler.postDelayed(mHideBarRunnable, timeout * 1000);
         }
@@ -1565,7 +1566,18 @@ public class PhoneStatusBar extends BaseStatusBar {
             if (wm.hasView(mStatusBarContainer)) {
                 wm.removeView(mStatusBarContainer);
             }
+        } else if (Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.FULLSCREEN_MODE, 0) == 1) {
+            int timeout = Settings.System.getInt(mContext.getContentResolver(),
+                        Settings.System.FULLSCREEN_TIMEOUT, 2);
+
+            if (timeout > 0) {
+                mHandler.removeCallbacks(mHideBarRunnable);
+                mHandler.postDelayed(mHideBarRunnable, timeout * 1000);
+            }
         }
+
+
 
 
         if ((mDisabled & StatusBarManager.DISABLE_NOTIFICATION_ICONS) == 0) {
