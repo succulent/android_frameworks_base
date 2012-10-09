@@ -828,7 +828,7 @@ public class PhoneStatusBar extends BaseStatusBar {
         }
 
         int color = Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.STATUS_BAR_COLOR, 0xFF000000);
+                Settings.System.NAVIGATION_BAR_COLOR, 0xFF000000);
         boolean fullscreen = Settings.System.getInt(mContext.getContentResolver(),
                 Settings.System.FULLSCREEN_MODE, 0) == 1;
         if (!fullscreen) color = Color.rgb(Color.red(color), Color.green(color), Color.blue(color));
