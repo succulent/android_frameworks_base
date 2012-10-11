@@ -1039,6 +1039,8 @@ public abstract class BaseStatusBar extends SystemUI implements
             } else if (uri.equals(Settings.System.getUriFor(Settings.System.NAVIGATION_CONTROLS))
                     && hasNavBar) {
                 android.os.Process.killProcess(android.os.Process.myPid());
+            } else if (uri.equals(Settings.System.getUriFor(Settings.System.TABLET_FLIPPED))) {
+                android.os.Process.killProcess(android.os.Process.myPid());
             } else {
                 mHandler.removeMessages(MSG_RECREATE);
                 mHandler.sendEmptyMessage(MSG_RECREATE);
