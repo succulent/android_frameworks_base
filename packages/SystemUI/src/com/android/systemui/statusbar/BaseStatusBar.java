@@ -1028,16 +1028,9 @@ public abstract class BaseStatusBar extends SystemUI implements
 
         @Override
         public void onChange(boolean selfChange, Uri uri) {
-            boolean hasNavBar = false;
-            try {
-                hasNavBar = mWm.hasNavigationBar();
-            } catch (Exception e) {
-            }
-
             if (uri.equals(Settings.System.getUriFor(Settings.System.TABLET_MODE))) {
                 android.os.Process.killProcess(android.os.Process.myPid());
-            } else if (uri.equals(Settings.System.getUriFor(Settings.System.NAVIGATION_CONTROLS))
-                    && hasNavBar) {
+            } else if (uri.equals(Settings.System.getUriFor(Settings.System.NAVIGATION_CONTROLS))) {
                 android.os.Process.killProcess(android.os.Process.myPid());
             } else if (uri.equals(Settings.System.getUriFor(Settings.System.TABLET_FLIPPED))) {
                 android.os.Process.killProcess(android.os.Process.myPid());
