@@ -54,12 +54,11 @@
             />
 
         <ScrollView
-
             android:id="@+id/notification_scroller"
             android:layout_height="wrap_content"
             android:layout_width="match_parent"
             android:layout_weight="1"
-            android:paddingBottom="16dp"
+            android:layout_marginBottom="16dp"
             >
             <com.android.systemui.statusbar.policy.NotificationRowLayout
                 android:id="@+id/content"
