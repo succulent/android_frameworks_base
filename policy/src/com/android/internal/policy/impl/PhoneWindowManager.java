@@ -1574,8 +1574,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             mCanHideNavigationBar = false;
         }
 
-        mLongPressOnHomeBehavior = -1;
-
         mFullscreenMode = Settings.System.getInt(resolver,
                 Settings.System.FULLSCREEN_MODE, 0) == 1;
     }
