@@ -2515,6 +2515,11 @@ public final class Settings {
         public static final String PHONE_STATUS_BAR_VOLUME = "phone_status_bar_volume";
 
         /**
+         * @hide
+         */
+        public static final String SHOW_GESTURES = "show_gestures";
+
+        /**
          * Use the Notification Power Widget? (Who wouldn't!)
          *
          * @hide
