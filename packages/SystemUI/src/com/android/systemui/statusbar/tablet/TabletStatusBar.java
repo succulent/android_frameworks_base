@@ -296,7 +296,7 @@ public class TabletStatusBar extends BaseStatusBar implements
     // to some other configuration change).
     CustomTheme mCurrentTheme;
     private boolean mRecreating = false;
-
+    private int mNotificationPanelColor = 0xFF000000;
 
     protected void addPanelWindows() {
         final Context context = mContext;
@@ -376,14 +376,16 @@ public class TabletStatusBar extends BaseStatusBar implements
 
         WindowManagerImpl.getDefault().addView(mNotificationPanel, lp);
 
-        int color = Settings.System.getInt(mContext.getContentResolver(),
+        mNotificationPanelColor = Settings.System.getInt(mContext.getContentResolver(),
                 Settings.System.NOTIFICATION_PANEL_COLOR, 0xFF000000);
-        if (color != 0xFF000000) {
+        if (mNotificationPanelColor != 0xFF000000) {
             Drawable background = mContext.getResources().getDrawable(R.drawable.notification_panel_tablet_bg);
-            background.setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
-            background.setAlpha(Color.alpha(color));
+            background.setColorFilter(mNotificationPanelColor, PorterDuff.Mode.SRC_ATOP);
+            background.setAlpha(Color.alpha(mNotificationPanelColor));
             mNotificationPanel.mContentFrame.setBackgroundDrawable(background);
             mNotificationPanel.mTitleArea.setBackgroundResource(0);
+            mNotificationPanel.mTitleArea.setPadding(26, 14, 26, 0);
+            mNotificationPanel.mContentFrame.setPadding(16, 8, 16, 8);
         }
 
         // Recents Panel
@@ -1139,15 +1141,21 @@ public class TabletStatusBar extends BaseStatusBar implements
 
         int notifColor = Settings.System.getInt(mContext.getContentResolver(),
                 Settings.System.NOTIFICATION_PANEL_COLOR, 0xFF000000);
-        if (notifColor != 0xFF000000) {
-            Drawable background = mContext.getResources().getDrawable(R.drawable.notification_panel_tablet_bg);
-            background.setColorFilter(notifColor, PorterDuff.Mode.SRC_ATOP);
-            background.setAlpha(Color.alpha(notifColor));
-            mNotificationPanel.mContentFrame.setBackgroundDrawable(background);
-            mNotificationPanel.mTitleArea.setBackgroundResource(0);
-        } else {
-            mNotificationPanel.mContentFrame.setBackgroundResource(R.drawable.notification_panel_tablet_bg);
-            mNotificationPanel.mTitleArea.setBackgroundResource(R.drawable.system_bar_notification_header_bg);
+        if (notifColor != mNotificationPanelColor) {
+            if (notifColor != 0xFF000000) {
+                Drawable background = mContext.getResources().getDrawable(R.drawable.notification_panel_tablet_bg);
+                background.setColorFilter(notifColor, PorterDuff.Mode.SRC_ATOP);
+                background.setAlpha(Color.alpha(notifColor));
+                mNotificationPanel.mContentFrame.setBackgroundDrawable(background);
+                mNotificationPanel.mTitleArea.setBackgroundResource(0);
+            } else {
+                mNotificationPanel.mContentFrame.setBackgroundResource(R.drawable.notification_panel_tablet_bg);
+                mNotificationPanel.mTitleArea.setBackgroundResource(R.drawable.system_bar_notification_header_bg);
+            }
+
+            mNotificationPanel.mTitleArea.setPadding(26, 14, 26, 0);
+            mNotificationPanel.mContentFrame.setPadding(16, 8, 16, 8);
+            mNotificationPanelColor = notifColor;
         }
 
         // Search Panel
