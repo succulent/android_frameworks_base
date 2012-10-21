@@ -1024,6 +1024,8 @@ public abstract class BaseStatusBar extends SystemUI implements
                     Settings.System.STATUS_BAR_COLOR), false, this);
             mResolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.NOTIFICATION_PANEL_COLOR), false, this);
+            mResolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.EXPANDED_CLOCK_ONCLICK), false, this);
         }
 
         @Override
@@ -1033,6 +1035,8 @@ public abstract class BaseStatusBar extends SystemUI implements
             } else if (uri.equals(Settings.System.getUriFor(Settings.System.NAVIGATION_CONTROLS))) {
                 android.os.Process.killProcess(android.os.Process.myPid());
             } else if (uri.equals(Settings.System.getUriFor(Settings.System.TABLET_FLIPPED))) {
+                android.os.Process.killProcess(android.os.Process.myPid());
+            } else if (uri.equals(Settings.System.getUriFor(Settings.System.EXPANDED_CLOCK_ONCLICK))) {
                 android.os.Process.killProcess(android.os.Process.myPid());
             } else {
                 mHandler.removeMessages(MSG_RECREATE);

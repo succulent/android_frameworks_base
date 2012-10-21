@@ -2526,6 +2526,11 @@ public final class Settings {
         public static final String SHOW_GESTURES = "show_gestures";
 
         /**
+         * @hide
+         */
+        public static final String EXPANDED_CLOCK_ONCLICK = "expanded_clock_onclick";
+
+        /**
          * Use the Notification Power Widget? (Who wouldn't!)
          *
          * @hide
