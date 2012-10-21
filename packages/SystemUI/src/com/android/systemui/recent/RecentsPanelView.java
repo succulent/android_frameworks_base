@@ -497,6 +497,10 @@ public class RecentsPanelView extends FrameLayout implements OnItemClickListener
                 // In order to save space, we make the background texture repeat in the Y direction
                 ((BitmapDrawable) mRecentsScrim.getBackground()).setTileModeY(TileMode.REPEAT);
             }
+            if (Settings.System.getInt(mContext.getContentResolver(),
+                    Settings.System.PHONE_STYLE_RECENTS, 0) == 1) {
+                setTabletMargins();
+            }
         }
 
         mPreloadTasksRunnable = new Runnable() {
@@ -712,6 +716,14 @@ public class RecentsPanelView extends FrameLayout implements OnItemClickListener
         int statusBarHeight = getResources().
                 getDimensionPixelSize(com.android.internal.R.dimen.navigation_bar_height);
         lp.setMargins(0, 0, 0, fullscreen ? 0 : statusBarHeight);
+        mRecentsScrim.setLayoutParams(lp);
+    }
+
+    private void setTabletMargins() {
+        FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) mRecentsScrim.getLayoutParams();
+        int statusBarHeight = getResources().
+                getDimensionPixelSize(com.android.internal.R.dimen.navigation_bar_height);
+        lp.setMargins(0, 0, 0, statusBarHeight);
         mRecentsScrim.setLayoutParams(lp);
     }
 

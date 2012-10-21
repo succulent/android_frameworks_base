@@ -47,9 +47,8 @@
             android:visibility="invisible" />
 
         <com.android.systemui.recent.RecentsHorizontalScrollView android:id="@+id/recents_container"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_marginRight="@dimen/status_bar_recents_right_glow_margin"
             android:divider="@null"
             android:stackFromBottom="true"
             android:fadingEdge="horizontal"

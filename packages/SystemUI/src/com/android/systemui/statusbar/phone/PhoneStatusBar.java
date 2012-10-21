@@ -425,9 +425,7 @@ public class PhoneStatusBar extends BaseStatusBar {
         mIconPolicy = new PhoneStatusBarPolicy(mContext);
 
         if (Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.STATUS_BAR_TOGGLED, 0) == 1 ||
-                Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.FULLSCREEN_MODE, 0) == 1) {
+                Settings.System.STATUS_BAR_TOGGLED, 0) == 1) {
             toggleVisibility();
         }
     }

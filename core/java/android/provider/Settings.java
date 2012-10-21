@@ -2531,6 +2531,11 @@ public final class Settings {
         public static final String EXPANDED_CLOCK_ONCLICK = "expanded_clock_onclick";
 
         /**
+         * @hide
+         */
+        public static final String PHONE_STYLE_RECENTS = "phone_style_recents";
+
+        /**
          * Use the Notification Power Widget? (Who wouldn't!)
          *
          * @hide
