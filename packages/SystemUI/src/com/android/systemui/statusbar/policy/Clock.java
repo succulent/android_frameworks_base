@@ -106,9 +106,14 @@ public class Clock extends TextView implements OnClickListener, OnLongClickListe
         mHandler = new Handler();
         SettingsObserver settingsObserver = new SettingsObserver(mHandler);
         settingsObserver.observe();
-        if(isClickable()){
-            setOnClickListener(this);
-            setOnLongClickListener(this);
+        if (Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.EXPANDED_CLOCK_ONCLICK, 0) == 1) {
+            if(isClickable()){
+                setOnClickListener(this);
+                setOnLongClickListener(this);
+            }
+        } else {
+            setClickable(false);
         }
         updateSettings();
     }

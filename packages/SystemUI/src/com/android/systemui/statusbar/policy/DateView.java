@@ -25,6 +25,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.Uri;
 import android.provider.CalendarContract;
+import android.provider.Settings;
 import android.text.TextUtils.TruncateAt;
 import android.text.format.DateFormat;
 import android.util.AttributeSet;
@@ -83,8 +84,14 @@ public final class DateView extends LinearLayout implements OnClickListener, OnL
         mDate.setEllipsize(TruncateAt.END);
         mDate.setTextAppearance(context, R.style.TextAppearance_StatusBar_Expanded_Date);
         mDate.setIncludeFontPadding(false);
-        setOnClickListener(this);
-        setOnLongClickListener(this);
+
+        if (Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.EXPANDED_CLOCK_ONCLICK, 0) == 1) {
+            setOnClickListener(this);
+            setOnLongClickListener(this);
+        } else {
+            setClickable(false);
+        }
 
         // Extract how DoW and Date are distributed in the layout
         // The format is distributed as %1$s\n%2$s or %2$s\n%1$s but always in

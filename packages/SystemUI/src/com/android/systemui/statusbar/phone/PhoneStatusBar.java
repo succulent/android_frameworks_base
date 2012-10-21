@@ -425,9 +425,7 @@ public class PhoneStatusBar extends BaseStatusBar {
         mIconPolicy = new PhoneStatusBarPolicy(mContext);
 
         if (Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.STATUS_BAR_TOGGLED, 0) == 1 ||
-                Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.FULLSCREEN_MODE, 0) == 1) {
+                Settings.System.STATUS_BAR_TOGGLED, 0) == 1) {
             toggleVisibility();
         }
     }
@@ -700,7 +698,7 @@ public class PhoneStatusBar extends BaseStatusBar {
         View volumeLayout = mStatusBarWindow.findViewById(R.id.volume_layout);
         volumeLayout.setVisibility(show ? View.VISIBLE : View.GONE);
         ToggleSlider volume = (ToggleSlider) mStatusBarWindow.findViewById(R.id.volume);
-        if (mVolume == null && show) mVolume = new VolumeController(mContext, volume);
+        if (show) mVolume = new VolumeController(mContext, volume);
     }
 
     @Override

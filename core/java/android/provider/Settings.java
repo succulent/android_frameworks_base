@@ -2526,6 +2526,16 @@ public final class Settings {
         public static final String SHOW_GESTURES = "show_gestures";
 
         /**
+         * @hide
+         */
+        public static final String EXPANDED_CLOCK_ONCLICK = "expanded_clock_onclick";
+
+        /**
+         * @hide
+         */
+        public static final String PHONE_STYLE_RECENTS = "phone_style_recents";
+
+        /**
          * Use the Notification Power Widget? (Who wouldn't!)
          *
          * @hide
@@ -2713,6 +2723,12 @@ public final class Settings {
          * @hide
          */
         public static final String MENU_UNLOCK_SCREEN = "menu_unlock_screen";
+
+        /**
+         * Whether to unlock the screen with the home key.  The value is boolean (1 or 0).
+         * @hide
+         */
+        public static final String HOME_UNLOCK_SCREEN = "home_unlock_screen";
 
         /**
          * Whether to wake the screen with the volume keys, the value is boolean.

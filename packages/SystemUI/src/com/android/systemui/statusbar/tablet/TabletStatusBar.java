@@ -244,9 +244,7 @@ public class TabletStatusBar extends BaseStatusBar implements
         addStatusBarWindow();
         addPanelWindows();
         if (Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.STATUS_BAR_TOGGLED, 0) == 1 ||
-                Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.FULLSCREEN_MODE, 0) == 1) {
+                Settings.System.STATUS_BAR_TOGGLED, 0) == 1) {
             toggleVisibility();
         }
     }
@@ -501,6 +499,14 @@ public class TabletStatusBar extends BaseStatusBar implements
         WindowManagerImpl.getDefault().updateViewLayout(mNotificationPanel,
                 mNotificationPanelParams);
         mRecentsPanel.updateValuesFromResources();
+        if (Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.PHONE_STYLE_RECENTS, 0) == 1) {
+            try {
+                updateRecentsPanel();
+            } catch(android.view.InflateException avIE) {
+            }
+            mRecentsPanel.setFullscreen(!mVisible);
+        }
         mShowSearchHoldoff = mContext.getResources().getInteger(
                 R.integer.config_show_search_delay);
         updateSearchPanel();
@@ -749,7 +755,10 @@ public class TabletStatusBar extends BaseStatusBar implements
 
     @Override
     protected WindowManager.LayoutParams getRecentsLayoutParams(LayoutParams layoutParams) {
-        WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
+        boolean phoneStyle = Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.PHONE_STYLE_RECENTS, 0) == 1;
+        WindowManager.LayoutParams lp = new WindowManager.LayoutParams(phoneStyle ?
+                ViewGroup.LayoutParams.MATCH_PARENT :
                 (int) mContext.getResources().getDimension(R.dimen.status_bar_recents_width),
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 WindowManager.LayoutParams.TYPE_NAVIGATION_BAR_PANEL,
@@ -794,8 +803,11 @@ public class TabletStatusBar extends BaseStatusBar implements
     }
 
     protected void updateRecentsPanel() {
-        super.updateRecentsPanel(mRightButtons ? R.layout.system_bar_recent_panel_flipped :
-                R.layout.system_bar_recent_panel);
+        boolean phoneStyle = Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.PHONE_STYLE_RECENTS, 0) == 1;
+        super.updateRecentsPanel(phoneStyle ? R.layout.status_bar_recent_panel :
+                (mRightButtons ? R.layout.system_bar_recent_panel_flipped :
+                R.layout.system_bar_recent_panel));
         mRecentsPanel.setStatusBarView(mStatusBarView);
     }
 
