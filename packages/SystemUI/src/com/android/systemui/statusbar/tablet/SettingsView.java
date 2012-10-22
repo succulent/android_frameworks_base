@@ -142,13 +142,8 @@ public class SettingsView extends LinearLayout implements View.OnClickListener,
             LinearLayout ll = new LinearLayout(context);
             ll.setOrientation(LinearLayout.HORIZONTAL);
             ll.setPadding(0, 0, 16, 0);
-            int color = Settings.System.getInt(context.getContentResolver(),
-                    Settings.System.NOTIFICATION_PANEL_COLOR, 0xFF000000);
-            if (color == 0xFF000000) {
-                ll.setBackgroundResource(R.drawable.expanded_settings_background);
-            } else {
-                ll.setBackgroundColor(0);
-            }
+            ll.setBackgroundResource(R.drawable.expanded_settings_background);
+
             ImageView icon = new ImageView(context);
             icon.setScaleType(ImageView.ScaleType.CENTER);
             if (settingsRow[i].contains(BUTTON_WIFI)) {
@@ -238,32 +233,28 @@ public class SettingsView extends LinearLayout implements View.OnClickListener,
                 icon.setImageResource(R.drawable.stat_media_previous);
                 icon.setId(MEDIA_PREVIOUS);
                 icon.setOnClickListener(this);
-                if (color == 0xFF000000) icon.setBackgroundResource(R.drawable.expanded_settings_background);
-                else icon.setBackgroundColor(0);
+                icon.setBackgroundResource(R.drawable.expanded_settings_background);
                 ll.addView(icon, medialp);
                 ImageView iconTwo = new ImageView(context);
                 iconTwo.setScaleType(ImageView.ScaleType.CENTER);
                 iconTwo.setImageResource(R.drawable.stat_media_pause);
                 iconTwo.setId(MEDIA_PAUSE);
                 iconTwo.setOnClickListener(this);
-                if (color == 0xFF000000) iconTwo.setBackgroundResource(R.drawable.expanded_settings_background);
-                else iconTwo.setBackgroundColor(0);
+                iconTwo.setBackgroundResource(R.drawable.expanded_settings_background);
                 ll.addView(iconTwo, medialp);
                 ImageView iconThree = new ImageView(context);
                 iconThree.setScaleType(ImageView.ScaleType.CENTER);
                 iconThree.setImageResource(R.drawable.stat_media_play);
                 iconThree.setId(MEDIA_PLAY);
                 iconThree.setOnClickListener(this);
-                if (color == 0xFF000000) iconThree.setBackgroundResource(R.drawable.expanded_settings_background);
-                else iconThree.setBackgroundColor(0);
+                iconThree.setBackgroundResource(R.drawable.expanded_settings_background);
                 ll.addView(iconThree, medialp);
                 ImageView iconFour = new ImageView(context);
                 iconFour.setScaleType(ImageView.ScaleType.CENTER);
                 iconFour.setImageResource(R.drawable.stat_media_next);
                 iconFour.setId(MEDIA_NEXT);
                 iconFour.setOnClickListener(this);
-                if (color == 0xFF000000) iconFour.setBackgroundResource(R.drawable.expanded_settings_background);
-                else iconFour.setBackgroundColor(0);
+                iconFour.setBackgroundResource(R.drawable.expanded_settings_background);
                 ll.addView(iconFour, medialp);
             }
             if (!(settingsRow[i].contains(BUTTON_SETTINGS) &&
