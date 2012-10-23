@@ -23,6 +23,7 @@ import android.animation.ObjectAnimator;
 import android.content.res.Resources;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
+import android.provider.Settings;
 import android.util.Slog;
 import android.view.View;
 import android.view.ViewRootImpl;
@@ -116,7 +117,11 @@ import com.android.systemui.R;
             }
         } else {
             final Resources res = mRootView.getResources();
-            boolean isTablet = res.getBoolean(R.bool.config_recents_interface_for_tablets);
+            boolean isTablet = res.getConfiguration().smallestScreenWidthDp > 720 ||
+                    Settings.System.getInt(mRootView.getContext().getContentResolver(),
+                    Settings.System.TABLET_MODE, 0) > 0;
+            isTablet = isTablet && !(Settings.System.getInt(mRootView.getContext().getContentResolver(),
+                    Settings.System.PHONE_STYLE_RECENTS, 0) == 1);
             if (!isTablet) {
                 View recentsTransitionBackground =
                         mRootView.findViewById(R.id.recents_transition_background);

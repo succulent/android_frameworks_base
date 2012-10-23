@@ -30,6 +30,7 @@ import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.Process;
+import android.provider.Settings;
 import android.util.Log;
 
 import com.android.systemui.R;
@@ -66,7 +67,11 @@ public class RecentTasksLoader {
         final Resources res = context.getResources();
 
         // get the icon size we want -- on tablets, we use bigger icons
-        boolean isTablet = res.getBoolean(R.bool.config_recents_interface_for_tablets);
+        boolean isTablet = res.getConfiguration().smallestScreenWidthDp > 720 ||
+                Settings.System.getInt(context.getContentResolver(),
+                Settings.System.TABLET_MODE, 0) > 0;
+        isTablet = isTablet && !(Settings.System.getInt(context.getContentResolver(),
+                Settings.System.PHONE_STYLE_RECENTS, 0) == 1);
         if (isTablet) {
             ActivityManager activityManager =
                     (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);

@@ -37,7 +37,7 @@
     <!-- The width that is used when creating thumbnails of applications. -->
     <dimen name="thumbnail_width">400dp</dimen>
     <!-- The height that is used when creating thumbnails of applications. -->
-    <dimen name="thumbnail_height">235dp</dimen>
+    <dimen name="thumbnail_height">215dp</dimen>
 
     <!-- Preference activity, vertical padding for the header list -->
     <dimen name="preference_screen_header_vertical_padding">32dp</dimen>

@@ -25,6 +25,7 @@ import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Shader;
 import android.graphics.drawable.Drawable;
+import android.provider.Settings;
 import android.util.AttributeSet;
 import android.view.View;
 import android.view.ViewConfiguration;
@@ -47,8 +48,11 @@ public class RecentsScrollViewPerformanceHelper {
 
     public static RecentsScrollViewPerformanceHelper create(Context context,
             AttributeSet attrs, View scrollView, boolean isVertical) {
-        boolean isTablet = context.getResources().
-                getBoolean(R.bool.config_recents_interface_for_tablets);
+        boolean isTablet = context.getResources().getConfiguration().smallestScreenWidthDp > 720 ||
+                Settings.System.getInt(context.getContentResolver(),
+                Settings.System.TABLET_MODE, 0) > 0;
+        isTablet = isTablet && !(Settings.System.getInt(context.getContentResolver(),
+                Settings.System.PHONE_STYLE_RECENTS, 0) == 1);
         if (!isTablet && (OPTIMIZE_SW_RENDERED_RECENTS || USE_DARK_FADE_IN_HW_ACCELERATED_MODE)) {
             return new RecentsScrollViewPerformanceHelper(context, attrs, scrollView, isVertical);
         } else {
