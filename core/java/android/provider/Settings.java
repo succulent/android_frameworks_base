@@ -2536,6 +2536,11 @@ public final class Settings {
         public static final String PHONE_STYLE_RECENTS = "phone_style_recents";
 
         /**
+         * @hide
+         */
+        public static final String UMS_NOTIFICATION_CONNECT = "ums_notification_connect";
+
+        /**
          * Use the Notification Power Widget? (Who wouldn't!)
          *
          * @hide
