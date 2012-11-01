@@ -182,10 +182,6 @@ public class NavigationBarView extends LinearLayout {
         mBarSize = res.getDimensionPixelSize(R.dimen.navigation_bar_size);
         mVertical = false;
         mShowMenu = false;
-        //Silly way to identify 600dp
-        //TODO come up with a better way
-        DisplayMetrics displayMetrics = res.getDisplayMetrics();
-        mIs600dp = (res.getConfiguration().smallestScreenWidthDp * displayMetrics.density) >= 600;
         mDelegateHelper = new DelegateViewHelper(this);
         updateResources();
 
