@@ -3940,6 +3940,12 @@
   <java-symbol type="string" name="toast_rotation_unlocked" />
   <java-symbol type="string" name="toast_rotation_locked" />
 
+  <!-- IME Picker showing upon pressing Sym Key -->
+  <java-symbol type="bool" name="config_symKeyShowsImePicker" />
+
+  <!-- Stylus gestures -->
+  <java-symbol type="bool" name="config_stylusGestures" />
+
   <!-- Hide Navbar -->
   <java-symbol type="layout" name="global_actions_navbar_mode" />
   <java-symbol type="id" name="navbarrecent" />
