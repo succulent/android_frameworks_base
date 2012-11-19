@@ -2565,6 +2565,11 @@ public final class Settings {
         /**
          * @hide
          */
+        public static final String PHONE_STATUS_BAR_BRIGHTNESS = "phone_status_bar_brightness";
+
+        /**
+         * @hide
+         */
         public static final String SHOW_GESTURES = "show_gestures";
 
         /**
