@@ -36,6 +36,7 @@
         android:background="@drawable/status_bar_recents_background"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:layout_marginTop="@*android:dimen/status_bar_height"
         android:layout_alignParentBottom="true">
 
         <ImageView
@@ -82,6 +83,7 @@
         android:id="@+id/recents_no_apps"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:layout_marginTop="@*android:dimen/status_bar_height"
         android:visibility="invisible" />
 
 </com.android.systemui.recent.RecentsPanelView>

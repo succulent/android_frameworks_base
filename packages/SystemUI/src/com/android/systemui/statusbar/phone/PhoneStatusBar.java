@@ -1065,6 +1065,7 @@ public class PhoneStatusBar extends BaseStatusBar {
             Log.d(TAG, "Reinflation failure for the recents panel, new theme is '" + newConfig.customTheme + "' vs current '" + mContext.getResources().getConfiguration().customTheme + "'");
         }
         updateShowSearchHoldoff();
+        mRecentsPanel.setFullscreenPhone(!mVisible);
     }
 
     private void updateShowSearchHoldoff() {
@@ -1292,10 +1293,12 @@ public class PhoneStatusBar extends BaseStatusBar {
         if (mVisible) {
             if (wm.hasView((View) mStatusBarContainer)) wm.removeView(mStatusBarContainer);
             if (wm.hasView(mNavigationBarView)) wm.removeView(mNavigationBarView);
+            mRecentsPanel.setFullscreenPhone(true);
         } else {
             addNavigationBar();
             addStatusBarWindow();
             recreateStatusBar();
+            mRecentsPanel.setFullscreenPhone(false);
         }
 
         mVisible = !mVisible;

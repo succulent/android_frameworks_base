@@ -2500,6 +2500,11 @@ public final class Settings {
         /**
          * @hide
          */
+        public static final String RECENTS_PANEL_COLOR = "recents_panel_color";
+
+        /**
+         * @hide
+         */
         public static final String COMBINED_BAR_SETTINGS = "combined_bar_settings";
 
         /**
