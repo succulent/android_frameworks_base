@@ -504,6 +504,15 @@ public class RecentsPanelView extends FrameLayout implements OnItemClickListener
             });
         }
 
+        if (mRecentsNoApps != null){
+            mRecentsNoApps.setOnClickListener(new OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    dismiss();
+                }
+            });
+        }
+
         if (mRecentsScrim != null) {
             int color = Settings.System.getInt(mContext.getContentResolver(),
                     Settings.System.RECENTS_PANEL_COLOR, 0xC0000000);
