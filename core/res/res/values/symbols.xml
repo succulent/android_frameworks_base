@@ -1828,6 +1828,7 @@
   <java-symbol type="bool" name="config_show_cmIMESwitcher"/>
   <java-symbol type="bool" name="config_smsSamsungCdmaAlternateMessageIDEncoding" />
   <java-symbol type="string" name="config_legacyUmsLunFile" />
+  <java-symbol type="bool" name="config_samsung_stk" />
 
   <!-- Notification and battery light -->
   <java-symbol type="bool" name="config_intrusiveBatteryLed" />
