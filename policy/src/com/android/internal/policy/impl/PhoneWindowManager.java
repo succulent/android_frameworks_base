@@ -578,6 +578,9 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.ACCELEROMETER_ROTATION_ANGLES), false, this,
                     UserHandle.USER_ALL);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.NAVIGATION_CONTROLS), false, this,
+                    UserHandle.USER_ALL);
 
             updateSettings();
         }
@@ -1191,7 +1194,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         if (!mHasSystemNavBar) {
             mHasNavigationBar = mContext.getResources().getBoolean(
                     com.android.internal.R.bool.config_showNavigationBar);
-            mHasNavigationBar = Settings.System.getInt(resolver,
+            mHasNavigationBar = Settings.System.getInt(mContext.getContentResolver(),
                         Settings.System.NAVIGATION_CONTROLS, mHasNavigationBar ? 1 : 0) == 1;
             // Allow a system property to override this. Used by the emulator.
             // See also hasNavigationBar().
@@ -1296,6 +1299,32 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         }
         if (updateRotation) {
             updateRotation(true);
+        }
+
+        if (!mHasSystemNavBar) {
+            mHasNavigationBar = mContext.getResources().getBoolean(
+                    com.android.internal.R.bool.config_showNavigationBar);
+            mHasNavigationBar = Settings.System.getInt(mContext.getContentResolver(),
+                        Settings.System.NAVIGATION_CONTROLS, mHasNavigationBar ? 1 : 0) == 1;
+            // Allow a system property to override this. Used by the emulator.
+            // See also hasNavigationBar().
+            String navBarOverride = SystemProperties.get("qemu.hw.mainkeys");
+            if (! "".equals(navBarOverride)) {
+                if      (navBarOverride.equals("1")) mHasNavigationBar = false;
+                else if (navBarOverride.equals("0")) mHasNavigationBar = true;
+            }
+        } else {
+            mHasNavigationBar = false;
+        }
+
+        if (mHasSystemNavBar) {
+            mCanHideNavigationBar = true;
+        } else if (mHasNavigationBar) {
+            // The navigation bar is at the right in landscape; it seems always
+            // useful to hide it for showing a video.
+            mCanHideNavigationBar = true;
+        } else {
+            mCanHideNavigationBar = false;
         }
     }
 
