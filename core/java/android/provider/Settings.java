@@ -2890,6 +2890,11 @@ public final class Settings {
         public static final String NAVIGATION_CONTROLS = "navigation_controls";
 
         /**
+         * @hide
+         */
+        public static final String UMS_NOTIFICATION_CONNECT = "ums_notification_connect";
+
+        /**
          * Settings to backup. This is here so that it's in the same place as the settings
          * keys and easy to update.
          *
