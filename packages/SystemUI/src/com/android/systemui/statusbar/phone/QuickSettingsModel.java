@@ -16,8 +16,7 @@
 
 package com.android.systemui.statusbar.phone;
 
-import java.util.List;
-
+import android.app.ActivityManager;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothAdapter.BluetoothStateChangeCallback;
 import android.content.BroadcastReceiver;
@@ -31,6 +30,7 @@ import android.database.ContentObserver;
 import android.graphics.drawable.Drawable;
 import android.hardware.display.WifiDisplayStatus;
 import android.os.Handler;
+import android.os.UserHandle;
 import android.provider.Settings;
 import android.provider.Settings.SettingNotFoundException;
 import android.text.TextUtils;
@@ -46,6 +46,8 @@ import com.android.systemui.statusbar.policy.BrightnessController.BrightnessStat
 import com.android.systemui.statusbar.policy.CurrentUserTracker;
 import com.android.systemui.statusbar.policy.LocationController.LocationGpsStateChangeCallback;
 import com.android.systemui.statusbar.policy.NetworkController.NetworkSignalChangedCallback;
+
+import java.util.List;
 
 
 class QuickSettingsModel implements BluetoothStateChangeCallback,
