@@ -2611,6 +2611,13 @@ public final class Settings {
         public static final String QS_DYNAMIC_WIFI = "qs_dyanmic_wifi";
 
         /**
+         * Quick Settings Quick Pulldown
+         *
+         * @hide
+         */
+        public static final String QS_QUICK_PULLDOWN = "qs_quick_pulldown";
+
+        /**
          * Use the Notification Power Widget? (Who wouldn't!)
          *
          * @hide
@@ -3016,6 +3023,15 @@ public final class Settings {
          * @hide
          */
         public static final String UI_FORCE_OVERFLOW_BUTTON = "ui_force_overflow_button";
+
+         /**
+          * Volume keys control cursor in text fields (default is 0)
+          * 0 - Disabled
+          * 1 - Volume up/down moves cursor left/right
+          * 2 - Volume up/down moves cursor right/left
+          * @hide
+          */
+         public static final String VOLUME_KEY_CURSOR_CONTROL = "volume_key_cursor_control";
 
 
         /**
