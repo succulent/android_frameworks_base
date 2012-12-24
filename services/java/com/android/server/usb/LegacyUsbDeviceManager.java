@@ -40,7 +40,6 @@ import android.os.storage.StorageManager;
 import android.os.storage.StorageVolume;
 import android.os.SystemProperties;
 import android.os.UEventObserver;
-import android.os.UserHandle;
 import android.provider.Settings;
 import android.util.Slog;
 
@@ -508,7 +507,7 @@ public class LegacyUsbDeviceManager extends UsbDeviceManager {
                 }
             }
 
-            mContext.sendStickyBroadcastAsUser(intent, UserHandle.ALL);
+            mContext.sendStickyBroadcast(intent);
         }
 
         @Override
