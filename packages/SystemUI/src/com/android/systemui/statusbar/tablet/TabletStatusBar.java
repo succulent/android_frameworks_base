@@ -41,6 +41,7 @@ import android.os.IBinder;
 import android.os.Message;
 import android.os.RemoteException;
 import android.os.ServiceManager;
+import android.os.storage.StorageManager;
 import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.Pair;
@@ -190,6 +191,8 @@ public class TabletStatusBar extends BaseStatusBar implements
     private int mShowSearchHoldoff = 0;
 
     public Context getContext() { return mContext; }
+
+    private StorageManager mStorageManager;
 
     private Runnable mShowSearchPanel = new Runnable() {
         public void run() {
@@ -374,6 +377,11 @@ public class TabletStatusBar extends BaseStatusBar implements
 
         ScrollView scroller = (ScrollView)mPile.getParent();
         scroller.setFillViewport(true);
+
+        // storage
+        mStorageManager = (StorageManager) context.getSystemService(Context.STORAGE_SERVICE);
+        mStorageManager.registerListener(
+                new com.android.systemui.usb.StorageNotification(context));
     }
 
     @Override
