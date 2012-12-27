@@ -645,6 +645,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.NAVIGATION_CONTROLS), false, this,
                     UserHandle.USER_ALL);
+             resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.TABLET_MODE), false, this);
 
             updateSettings();
         }
@@ -1249,13 +1251,21 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         // SystemUI (status bar) layout policy
         int shortSizeDp = shortSize * DisplayMetrics.DENSITY_DEFAULT / density;
 
-        if (shortSizeDp < 600) {
+        ContentResolver resolver = mContext.getContentResolver();
+        boolean tabletModeOverride = Settings.System.getInt(resolver,
+                        Settings.System.TABLET_MODE, 0) == 1;
+
+        if (shortSizeDp < 600 && !tabletModeOverride) {
             // 0-599dp: "phone" UI with a separate status & navigation bar
             mHasSystemNavBar = false;
             mNavigationBarCanMove = true;
-        } else if (shortSizeDp < 720) {
+        } else if (shortSizeDp < 720 && !tabletModeOverride) {
             // 600+dp: "phone" UI with modifications for larger screens
             mHasSystemNavBar = false;
+            mNavigationBarCanMove = false;
+        } else {
+            // forced "tablet" UI with a single combined status & navigation bar
+            mHasSystemNavBar = true;
             mNavigationBarCanMove = false;
         }
 
