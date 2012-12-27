@@ -21,6 +21,7 @@ import java.io.PrintWriter;
 
 import android.app.Service;
 import android.content.BroadcastReceiver;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -29,6 +30,7 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.os.ServiceManager;
+import android.provider.Settings;
 import android.util.Slog;
 import android.view.IWindowManager;
 import android.view.WindowManagerGlobal;
@@ -36,6 +38,8 @@ import android.view.accessibility.AccessibilityManager;
 
 public class SystemUIService extends Service {
     static final String TAG = "SystemUIService";
+
+    Context context = this;
 
     /**
      * The class names of the stuff to start.
@@ -73,14 +77,12 @@ public class SystemUIService extends Service {
         AccessibilityManager.createAsSharedAcrossUsers(this);
 
         // Pick status bar or system bar.
-        IWindowManager wm = WindowManagerGlobal.getWindowManagerService();
-        try {
-            SERVICES[0] = wm.hasSystemNavBar()
-                    ? R.string.config_systemBarComponent
-                    : R.string.config_statusBarComponent;
-        } catch (RemoteException e) {
-            Slog.w(TAG, "Failing checking whether status bar can hide", e);
-        }
+        boolean tabletModeOverride = (Settings.System.getInt(
+                        context.getContentResolver(),
+                        Settings.System.TABLET_MODE, 0) == 1);
+        SERVICES[0] = tabletModeOverride
+                ? R.string.config_systemBarComponent
+                : R.string.config_statusBarComponent;
 
         final int N = SERVICES.length;
         mServices = new SystemUI[N];
