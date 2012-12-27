@@ -3065,11 +3065,6 @@ public final class Settings {
         /**
          * @hide
          */
-        public static final String KG_ALL_WIDGETS = "kg_all_widgets";
-
-        /**
-         * @hide
-         */
         public static final String TABLET_MODE = "tablet_mode";
 
         /**
