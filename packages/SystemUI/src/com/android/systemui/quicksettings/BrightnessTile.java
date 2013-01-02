@@ -9,10 +9,12 @@ import android.os.Handler;
 import android.os.RemoteException;
 import android.provider.Settings;
 import android.provider.Settings.SettingNotFoundException;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.Window;
+import android.view.WindowManager.LayoutParams;
 import android.view.WindowManager;
 import android.view.WindowManagerGlobal;
 import android.widget.ImageView;
@@ -78,6 +80,20 @@ public class BrightnessTile extends QuickSettingsTile implements BrightnessState
             mBrightnessDialog.getWindow().getAttributes().privateFlags |=
                     WindowManager.LayoutParams.PRIVATE_FLAG_SHOW_FOR_ALL_USERS;
             mBrightnessDialog.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
+
+            Window window = mBrightnessDialog.getWindow();
+            window.setGravity(Gravity.TOP);
+            LayoutParams lp = window.getAttributes();
+            lp.token = null;
+            // Offset from the top
+            lp.y = mContext.getResources().getDimensionPixelOffset(
+                    com.android.internal.R.dimen.volume_panel_top);
+            lp.type = LayoutParams.TYPE_VOLUME_OVERLAY;
+            lp.width = LayoutParams.WRAP_CONTENT;
+            lp.height = LayoutParams.WRAP_CONTENT;
+            window.setAttributes(lp);
+            window.addFlags(LayoutParams.FLAG_NOT_FOCUSABLE | LayoutParams.FLAG_NOT_TOUCH_MODAL
+                    | LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH);
         }
         if (!mBrightnessDialog.isShowing()) {
             try {
