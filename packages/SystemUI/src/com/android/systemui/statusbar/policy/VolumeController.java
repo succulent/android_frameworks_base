@@ -20,46 +20,31 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.os.RemoteException;
 import android.os.ServiceManager;
-import android.os.Vibrator;
 import android.media.AudioManager;
 import android.provider.Settings;
 import android.util.Slog;
 import android.view.IWindowManager;
-import android.widget.CompoundButton;
 
 public class VolumeController implements ToggleSlider.Listener {
     private static final String TAG = "StatusBar.VolumeController";
     private static final int STREAM = AudioManager.STREAM_MUSIC;
 
     private Context mContext;
-    private ToggleSlider mControl;
     private AudioManager mAudioManager;
-
-    private boolean mMute;
-    private int mVolume;
-    // Is there a vibrator
-    private final boolean mHasVibrator;
 
     public VolumeController(Context context, ToggleSlider control) {
         mContext = context;
-        mControl = control;
-
-        Vibrator vibrator = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
-        mHasVibrator = vibrator == null ? false : vibrator.hasVibrator();
-
         mAudioManager = (AudioManager)context.getSystemService(Context.AUDIO_SERVICE);
-
-        mVolume = mAudioManager.getStreamVolume(STREAM);
-        mMute = mVolume < 1;
-
+        int volume = mAudioManager.getStreamVolume(STREAM);
+        boolean mute = volume < 1;
+        control.setMax(mAudioManager.getStreamMaxVolume(STREAM));
+        control.setValue(volume);
+        control.setChecked(mute);
         control.setOnChangedListener(this);
     }
 
     @Override
     public void onInit(ToggleSlider control) {
-        control.setMax(mAudioManager.getStreamMaxVolume(STREAM));
-        control.setValue(mVolume);
-        control.setChecked(mMute);
     }
 
     public void onChanged(ToggleSlider view, boolean tracking, boolean mute, int level) {

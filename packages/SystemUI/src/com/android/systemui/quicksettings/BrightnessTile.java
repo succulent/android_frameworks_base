@@ -11,6 +11,7 @@ import android.provider.Settings;
 import android.provider.Settings.SettingNotFoundException;
 import android.view.Gravity;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.Window;
@@ -64,7 +65,15 @@ public class BrightnessTile extends QuickSettingsTile implements BrightnessState
 
     private void showBrightnessDialog() {
         if (mBrightnessDialog == null) {
-            mBrightnessDialog = new Dialog(mContext);
+            mBrightnessDialog = new Dialog(mContext) {
+                public boolean onTouchEvent(MotionEvent event) {
+                    if (isShowing() && event.getAction() == MotionEvent.ACTION_OUTSIDE) {
+                        dismissBrightnessDialog(0);
+                        return true;
+                    }
+                    return false;
+                }
+            };
             mBrightnessDialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
             mBrightnessDialog.setContentView(R.layout.quick_settings_brightness_dialog);
             mBrightnessDialog.setCanceledOnTouchOutside(true);
