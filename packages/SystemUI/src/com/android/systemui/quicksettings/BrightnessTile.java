@@ -33,7 +33,7 @@ public class BrightnessTile extends QuickSettingsTile implements BrightnessState
     private Dialog mBrightnessDialog;
     private BrightnessController mBrightnessController;
     private final Handler mHandler;
-    private boolean autoBrightness = true;
+    private boolean mAutoBrightnessAvailable = true;
 
     public BrightnessTile(Context context, LayoutInflater inflater,
             QuickSettingsContainerView container, final QuickSettingsController qsc, Handler handler) {
@@ -43,6 +43,9 @@ public class BrightnessTile extends QuickSettingsTile implements BrightnessState
 
         mBrightnessDialogLongTimeout = mContext.getResources().getInteger(R.integer.quick_settings_brightness_dialog_long_timeout);
         mBrightnessDialogShortTimeout = mContext.getResources().getInteger(R.integer.quick_settings_brightness_dialog_short_timeout);
+
+        mAutoBrightnessAvailable = context.getResources().getBoolean(
+                com.android.internal.R.bool.config_automatic_brightness_available);
 
         mOnClick = new OnClickListener() {
 
@@ -94,6 +97,10 @@ public class BrightnessTile extends QuickSettingsTile implements BrightnessState
             window.setAttributes(lp);
             window.addFlags(LayoutParams.FLAG_NOT_FOCUSABLE | LayoutParams.FLAG_NOT_TOUCH_MODAL
                     | LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH);
+
+            if (!mAutoBrightnessAvailable) {
+                ((ToggleSlider) mBrightnessDialog.findViewById(R.id.brightness_slider)).hideToggle();
+            }
         }
         if (!mBrightnessDialog.isShowing()) {
             try {
@@ -107,6 +114,7 @@ public class BrightnessTile extends QuickSettingsTile implements BrightnessState
 
     private void dismissBrightnessDialog(int timeout) {
         if (mBrightnessDialog != null) {
+            mHandler.removeCallbacks(mDismissBrightnessDialogRunnable);
             mHandler.postDelayed(mDismissBrightnessDialogRunnable, timeout);
         }
     }
@@ -127,7 +135,7 @@ public class BrightnessTile extends QuickSettingsTile implements BrightnessState
             mode = Settings.System.getIntForUser(mContext.getContentResolver(),
                     Settings.System.SCREEN_BRIGHTNESS_MODE,
                     Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL);
-            autoBrightness =
+            boolean autoBrightness = mAutoBrightnessAvailable &&
                     (mode == Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC);
             mDrawable = autoBrightness
                     ? R.drawable.ic_qs_brightness_auto_on
@@ -137,9 +145,10 @@ public class BrightnessTile extends QuickSettingsTile implements BrightnessState
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
-        if(mTile != null){
+        if (mTile != null){
             updateQuickSettings();
         }
+        dismissBrightnessDialog(mBrightnessDialogLongTimeout);
     }
 
     @Override
