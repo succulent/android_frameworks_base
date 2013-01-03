@@ -1343,6 +1343,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     } else {
                         mLongPressOnHomeBehavior = KEY_ACTION_APP_SWITCH;
                     }
+                } else {
+                    mLongPressOnHomeBehavior = KEY_ACTION_NOTHING;
                 }
                 if (mHasMenuKey) {
                     mPressOnMenuBehavior = KEY_ACTION_MENU;
