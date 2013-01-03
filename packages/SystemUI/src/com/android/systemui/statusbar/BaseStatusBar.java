@@ -459,11 +459,15 @@ public abstract class BaseStatusBar extends SystemUI implements
             visible = mSearchPanelView.isShowing();
             mWindowManager.removeView(mSearchPanelView);
         }
-
+        boolean tabletModeOverride = (Settings.System.getInt(
+                        mContext.getContentResolver(),
+                        Settings.System.TABLET_MODE, 0) == 1);
         // Provide SearchPanel with a temporary parent to allow layout params to work.
         LinearLayout tmpRoot = new LinearLayout(mContext);
         mSearchPanelView = (SearchPanelView) LayoutInflater.from(mContext).inflate(
-                 R.layout.status_bar_search_panel, tmpRoot, false);
+                tabletModeOverride ?
+                R.layout.status_bar_search_panel_tablet :
+                R.layout.status_bar_search_panel, tmpRoot, false);
         mSearchPanelView.setOnTouchListener(
                  new TouchOutsideListener(MSG_CLOSE_SEARCH_PANEL, mSearchPanelView));
         mSearchPanelView.setVisibility(View.GONE);
