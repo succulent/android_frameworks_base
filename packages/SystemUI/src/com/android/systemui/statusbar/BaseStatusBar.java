@@ -1189,6 +1189,8 @@ public abstract class BaseStatusBar extends SystemUI implements
             ContentResolver resolver = context.getContentResolver();
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.TABLET_MODE), false, this);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.TABLET_FLIPPED), false, this);
         }
 
         @Override

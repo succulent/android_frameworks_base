@@ -3078,6 +3078,11 @@ public final class Settings {
         /**
          * @hide
          */
+        public static final String TABLET_FLIPPED = "tablet_flipped";
+
+        /**
+         * @hide
+         */
         public static final String DUAL_PANE_PREFS = "dual_pane_prefs";
 
         /**
