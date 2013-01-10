@@ -22,6 +22,7 @@ import android.app.ActivityManagerNative;
 import android.app.IActivityManager;
 import android.app.ProgressDialog;
 import android.app.SearchManager;
+import android.app.StatusBarManager;
 import android.app.UiModeManager;
 import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
@@ -215,6 +216,9 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     private static final int KEY_ACTION_SEARCH = 3;
     private static final int KEY_ACTION_VOICE_SEARCH = 4;
     private static final int KEY_ACTION_IN_APP_SEARCH = 5;
+    private static final int KEY_ACTION_EXPAND_SB = 6;
+    private static final int KEY_ACTION_EXPAND_QS = 7;
+    private static final int KEY_ACTION_HIDE = 8;
 
     // Masks for checking presence of hardware keys.
     // Must match values in core/res/res/values/config.xml
@@ -977,6 +981,9 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     }
 
     private void performKeyAction(int behavior) {
+        StatusBarManager sbm = (StatusBarManager)
+                mContext.getSystemService(Context.STATUS_BAR_SERVICE);
+
         switch (behavior) {
             case KEY_ACTION_NOTHING:
                 break;
@@ -1005,6 +1012,18 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 break;
             case KEY_ACTION_IN_APP_SEARCH:
                 triggerVirtualKeypress(KeyEvent.KEYCODE_SEARCH);
+                break;
+            case KEY_ACTION_EXPAND_SB:
+                sbm.expandNotificationsPanel();
+                break;
+            case KEY_ACTION_EXPAND_QS:
+                sbm.expandSettingsPanel();
+                break;
+            case KEY_ACTION_HIDE:
+                boolean hidden = Settings.System.getInt(mContext.getContentResolver(),
+                        Settings.System.EXPANDED_DESKTOP_STATE, 0) == 1;
+                Settings.System.putInt(mContext.getContentResolver(),
+                        Settings.System.EXPANDED_DESKTOP_STATE, hidden ? 0 : 1);
                 break;
             default:
                 break;
