@@ -1039,10 +1039,17 @@ public class TabletStatusBar extends BaseStatusBar implements
         boolean disableHome = ((visibility & StatusBarManager.DISABLE_HOME) != 0);
         boolean disableRecent = ((visibility & StatusBarManager.DISABLE_RECENT) != 0);
         boolean disableBack = ((visibility & StatusBarManager.DISABLE_BACK) != 0);
+        boolean disableMenu = disableHome && disableBack && disableRecent;
 
         mBackButton.setVisibility(disableBack ? View.INVISIBLE : View.VISIBLE);
         mHomeButton.setVisibility(disableHome ? View.INVISIBLE : View.VISIBLE);
         mRecentButton.setVisibility(disableRecent ? View.INVISIBLE : View.VISIBLE);
+
+        if (Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.TABLET_FORCE_MENU, 0) == 1) {
+            mMenuButton.setVisibility(mNavigationDisabled ? View.GONE : (disableMenu ?
+                    View.INVISIBLE : View.VISIBLE));
+        }
 
         mInputMethodSwitchButton.setScreenLocked(
                 (visibility & StatusBarManager.DISABLE_SYSTEM_INFO) != 0);
@@ -1055,7 +1062,7 @@ public class TabletStatusBar extends BaseStatusBar implements
 
         if (Settings.System.getInt(mContext.getContentResolver(),
                 Settings.System.TABLET_FORCE_MENU, 0) == 1) {
-            mMenuButton.setVisibility(View.VISIBLE);
+            mMenuButton.setVisibility(disabled ? View.INVISIBLE : View.VISIBLE);
         }
     }
 
@@ -1205,7 +1212,9 @@ public class TabletStatusBar extends BaseStatusBar implements
         boolean forceMenu = Settings.System.getInt(mContext.getContentResolver(),
                 Settings.System.TABLET_FORCE_MENU, 0) == 1;
 
-        mMenuButton.setVisibility(((showMenu && !mNavigationDisabled) || forceMenu) ? View.VISIBLE : View.GONE);
+        if (!mNavigationDisabled && !forceMenu) {
+            mMenuButton.setVisibility(showMenu ? View.VISIBLE : View.GONE);
+        }
 
         // See above re: lights-out policy for legacy apps.
         if (showMenu) setLightsOn(true);
