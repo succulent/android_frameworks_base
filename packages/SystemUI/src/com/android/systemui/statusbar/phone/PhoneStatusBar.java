@@ -2062,6 +2062,11 @@ public class PhoneStatusBar extends BaseStatusBar {
 
                 if (mNavigationBarView != null) {
                     mNavigationBarView.setLowProfile(lightsOut);
+                    if (Settings.System.getInt(mContext.getContentResolver(),
+                            Settings.System.HIDE_SB_LIGHTS_OUT, 0) == 1) {
+                        Settings.System.putInt(mContext.getContentResolver(),
+                                Settings.System.EXPANDED_DESKTOP_STATE, lightsOut ? 1 : 0);
+                    }
                 }
 
                 setStatusBarLowProfile(lightsOut);

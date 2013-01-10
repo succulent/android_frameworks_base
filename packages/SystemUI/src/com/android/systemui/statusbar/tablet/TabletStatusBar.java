@@ -139,6 +139,7 @@ public class TabletStatusBar extends BaseStatusBar implements
     View mMenuButton;
     View mRecentButton;
     private boolean mAltBackButtonEnabledForIme;
+    private boolean mNavigationDisabled;
 
     ViewGroup mFeedbackIconArea; // notification icons, IME icon, compat icon
     InputMethodButton mInputMethodSwitchButton;
@@ -672,6 +673,13 @@ public class TabletStatusBar extends BaseStatusBar implements
         filter.addAction(Intent.ACTION_SCREEN_OFF);
         context.registerReceiver(mBroadcastReceiver, filter);
 
+        boolean hasNavigationBar = mContext.getResources().getBoolean(
+                    com.android.internal.R.bool.config_showNavigationBar);
+
+        mNavigationDisabled = Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.NAVIGATION_CONTROLS, hasNavigationBar ? 0 : 1) == 0;
+        setNavigationDisabled(mNavigationDisabled);
+
         return sb;
     }
 
@@ -890,6 +898,11 @@ public class TabletStatusBar extends BaseStatusBar implements
                     mShadow.setVisibility(View.GONE);
                     mSystemUiVisibility &= ~View.SYSTEM_UI_FLAG_LOW_PROFILE;
                     notifyUiVisibilityChanged();
+                    if (Settings.System.getInt(mContext.getContentResolver(),
+                            Settings.System.HIDE_SB_LIGHTS_OUT, 0) == 1) {
+                        Settings.System.putInt(mContext.getContentResolver(),
+                                Settings.System.EXPANDED_DESKTOP_STATE, 0);
+                    }
                     break;
                 case MSG_HIDE_CHROME:
                     if (DEBUG) Slog.d(TAG, "showing shadows (lights out)");
@@ -899,6 +912,11 @@ public class TabletStatusBar extends BaseStatusBar implements
                     mShadow.setVisibility(View.VISIBLE);
                     mSystemUiVisibility |= View.SYSTEM_UI_FLAG_LOW_PROFILE;
                     notifyUiVisibilityChanged();
+                    if (Settings.System.getInt(mContext.getContentResolver(),
+                            Settings.System.HIDE_SB_LIGHTS_OUT, 0) == 1) {
+                        Settings.System.putInt(mContext.getContentResolver(),
+                                Settings.System.EXPANDED_DESKTOP_STATE, 1);
+                    }
                     break;
                 case MSG_STOP_TICKER:
                     mTicker.halt();
@@ -1004,7 +1022,7 @@ public class TabletStatusBar extends BaseStatusBar implements
                 mTicker.halt();
             }
         }
-        if ((diff & (StatusBarManager.DISABLE_RECENT
+        if (!mNavigationDisabled && (diff & (StatusBarManager.DISABLE_RECENT
                         | StatusBarManager.DISABLE_BACK
                         | StatusBarManager.DISABLE_HOME)) != 0) {
             setNavigationVisibility(state);
@@ -1028,6 +1046,17 @@ public class TabletStatusBar extends BaseStatusBar implements
 
         mInputMethodSwitchButton.setScreenLocked(
                 (visibility & StatusBarManager.DISABLE_SYSTEM_INFO) != 0);
+    }
+
+    private void setNavigationDisabled(boolean disabled) {
+        mBackButton.setVisibility(disabled ? View.INVISIBLE : View.VISIBLE);
+        mHomeButton.setVisibility(disabled ? View.INVISIBLE : View.VISIBLE);
+        mRecentButton.setVisibility(disabled ? View.INVISIBLE : View.VISIBLE);
+
+        if (Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.TABLET_FORCE_MENU, 0) == 1) {
+            mMenuButton.setVisibility(View.VISIBLE);
+        }
     }
 
     private boolean hasTicker(Notification n) {
@@ -1172,7 +1201,11 @@ public class TabletStatusBar extends BaseStatusBar implements
         if (DEBUG) {
             Slog.d(TAG, (showMenu?"showing":"hiding") + " the MENU button");
         }
-        mMenuButton.setVisibility(showMenu ? View.VISIBLE : View.GONE);
+
+        boolean forceMenu = Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.TABLET_FORCE_MENU, 0) == 1;
+
+        mMenuButton.setVisibility(((showMenu && !mNavigationDisabled) || forceMenu) ? View.VISIBLE : View.GONE);
 
         // See above re: lights-out policy for legacy apps.
         if (showMenu) setLightsOn(true);
@@ -1612,5 +1645,4 @@ public class TabletStatusBar extends BaseStatusBar implements
                 || (mDisabled & StatusBarManager.DISABLE_HOME) != 0;
     }
 }
-
 

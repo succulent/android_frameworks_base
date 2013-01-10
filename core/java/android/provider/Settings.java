@@ -3200,7 +3200,12 @@ public final class Settings {
         /**
          * @hide
          */
-        public static final String LARGE_RECENTS = "large_recents";
+        public static final String TABLET_FORCE_MENU = "tablet_force_menu";
+
+        /**
+         * @hide
+         */
+        public static final String HIDE_SB_LIGHTS_OUT = "hide_sb_lights_out";
 
         /**
          * Settings to backup. This is here so that it's in the same place as the settings
