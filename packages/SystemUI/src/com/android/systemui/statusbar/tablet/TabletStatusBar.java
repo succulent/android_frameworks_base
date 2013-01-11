@@ -677,7 +677,7 @@ public class TabletStatusBar extends BaseStatusBar implements
                     com.android.internal.R.bool.config_showNavigationBar);
 
         mNavigationDisabled = Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.NAVIGATION_CONTROLS, hasNavigationBar ? 0 : 1) == 0;
+                Settings.System.NAVIGATION_CONTROLS, hasNavigationBar ? 1 : 0) == 0;
         setNavigationDisabled(mNavigationDisabled);
 
         return sb;
