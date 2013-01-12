@@ -463,8 +463,11 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
         }
 
         // Next NavBar Hide
-        if (Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.EXPANDED_DESKTOP_STATE, 0) == 1) {
+        if ((Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.EXPANDED_DESKTOP_STATE, 0) == 1) &&
+                (Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.NAVIGATION_CONTROLS, (mContext.getResources().getBoolean(
+                    com.android.internal.R.bool.config_showNavigationBar) ? 1 : 0)) == 1)) {
             mItems.add(mNavBarHideToggle);
         }
 

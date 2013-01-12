@@ -524,10 +524,17 @@ public abstract class BaseStatusBar extends SystemUI implements
                 Bitmap first = firstTask.getThumbnail();
                 final Resources res = mContext.getResources();
 
+                boolean largeThumbs = Settings.System.getInt(mContext.getContentResolver(),
+                        Settings.System.LARGE_RECENT_THUMBS, 0) == 1;
+
                 float thumbWidth = res
-                        .getDimensionPixelSize(R.dimen.status_bar_recents_thumbnail_width);
+                        .getDimensionPixelSize(largeThumbs ?
+                        R.dimen.status_bar_recents_thumbnail_width_large :
+                        R.dimen.status_bar_recents_thumbnail_width);
                 float thumbHeight = res
-                        .getDimensionPixelSize(R.dimen.status_bar_recents_thumbnail_height);
+                        .getDimensionPixelSize(largeThumbs ?
+                        R.dimen.status_bar_recents_thumbnail_height_large :
+                        R.dimen.status_bar_recents_thumbnail_height);
                 if (first == null) {
                     throw new RuntimeException("Recents thumbnail is null");
                 }
@@ -1193,6 +1200,8 @@ public abstract class BaseStatusBar extends SystemUI implements
                     Settings.System.TABLET_FLIPPED), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.TABLET_FORCE_MENU), false, this);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.LARGE_RECENT_THUMBS), false, this);
         }
 
         @Override

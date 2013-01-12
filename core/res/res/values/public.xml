@@ -2035,4 +2035,7 @@
   <java-symbol type="id" name="navbarback" />
   <java-symbol type="id" name="navbarmenu" />
 
+  <java-symbol type="dimen" name="thumbnail_height_large" />
+  <java-symbol type="dimen" name="thumbnail_width_large" />
+
 </resources>
