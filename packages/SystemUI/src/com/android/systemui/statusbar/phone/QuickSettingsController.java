@@ -27,6 +27,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.database.ContentObserver;
+import android.net.ConnectivityManager;
 import android.net.Uri;
 import android.os.Handler;
 import android.provider.Settings;
@@ -56,6 +57,7 @@ import com.android.systemui.quicksettings.RingerModeTile;
 import com.android.systemui.quicksettings.SleepScreenTile;
 import com.android.systemui.quicksettings.SyncTile;
 import com.android.systemui.quicksettings.ToggleLockscreenTile;
+import com.android.systemui.quicksettings.UsbTetherTile;
 import com.android.systemui.quicksettings.UserTile;
 import com.android.systemui.quicksettings.WiFiDisplayTile;
 import com.android.systemui.quicksettings.WiFiTile;
@@ -101,6 +103,7 @@ public class QuickSettingsController {
     public static final String TILE_WIMAX = "toggleWimax";
     public static final String TILE_PROFILE = "toggleProfile";
     public static final String TILE_NFC = "toggleNfc";
+    public static final String TILE_USBTETHER = "toggleUsbTether";
     public static final String TILE_VOLUME = "toggleVolume";
 
     private static final String TILE_DELIMITER = "|";
@@ -109,6 +112,7 @@ public class QuickSettingsController {
     static {
         TILES_DEFAULT.add(TILE_USER);
         TILES_DEFAULT.add(TILE_BRIGHTNESS);
+        TILES_DEFAULT.add(TILE_VOLUME);
         TILES_DEFAULT.add(TILE_SETTINGS);
         TILES_DEFAULT.add(TILE_WIFI);
         TILES_DEFAULT.add(TILE_MOBILEDATA);
@@ -154,7 +158,8 @@ public class QuickSettingsController {
     public static final int SYNC_TILE = 20;
     public static final int NFC_TILE = 21;
     public static final int SCREENTIMEOUT_TILE = 22;
-    public static final int VOLUME_TILE = 23;
+    public static final int USBTETHER_TILE = 23;
+    public static final int VOLUME_TILE = 24;
     public static final int USER_TILE = 99;
     private InputMethodTile IMETile;
 
@@ -272,6 +277,9 @@ public class QuickSettingsController {
         if (Settings.System.getInt(resolver, Settings.System.QS_DYNAMIC_IME, 1) == 1) {
             mQuickSettings.add(IME_TILE);
         }
+        if (deviceSupportsUsbTether() && Settings.System.getInt(resolver, Settings.System.QS_DYNAMIC_USBTETHER, 1) == 1) {
+            mQuickSettings.add(USBTETHER_TILE);
+        }
     }
 
     private void setupQuickSettings() {
@@ -364,6 +372,11 @@ public class QuickSettingsController {
         return (BluetoothAdapter.getDefaultAdapter() != null);
     }
 
+    boolean deviceSupportsUsbTether() {
+        ConnectivityManager cm = (ConnectivityManager) mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
+        return (cm.getTetherableUsbRegexs().length != 0);
+    }
+
     boolean systemProfilesEnabled(ContentResolver resolver) {
         return (Settings.System.getInt(resolver, Settings.System.SYSTEM_PROFILES_ENABLED, 1) == 1);
     }
@@ -452,6 +465,9 @@ public class QuickSettingsController {
                 break;
             case SCREENTIMEOUT_TILE:
                 qs = new ScreenTimeoutTile(mContext, inflater, mContainerView, this);
+                break;
+            case USBTETHER_TILE:
+                qs = new UsbTetherTile(mContext, inflater, mContainerView, this);
                 break;
             case VOLUME_TILE:
                 qs = new VolumeTile(mContext, inflater, mContainerView, this);
