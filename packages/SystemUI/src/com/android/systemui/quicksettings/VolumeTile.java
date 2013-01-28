@@ -16,6 +16,7 @@ import android.provider.Settings.SettingNotFoundException;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.View.OnLongClickListener;
 import android.view.VolumePanel;
 import android.view.Window;
 import android.view.WindowManager;
@@ -49,6 +50,14 @@ public class VolumeTile extends QuickSettingsTile {
                         AudioManager.STREAM_NOTIFICATION;
                 final int volume = am.getStreamVolume(stream);
                 am.setStreamVolume(stream, volume, AudioManager.FLAG_SHOW_UI);
+            }
+        };
+
+        mOnLongClick = new OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                startSettingsActivity(android.provider.Settings.ACTION_SOUND_SETTINGS);
+                return true;
             }
         };
     }
