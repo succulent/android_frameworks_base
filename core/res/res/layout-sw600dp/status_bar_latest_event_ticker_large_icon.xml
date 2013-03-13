@@ -29,6 +29,7 @@
             android:fadingEdge="horizontal"
             />
     </LinearLayout>
+
     <TextView android:id="@+id/info"
         android:textAppearance="@style/TextAppearance.StatusBar.EventContent.Info"
         android:layout_width="wrap_content"
