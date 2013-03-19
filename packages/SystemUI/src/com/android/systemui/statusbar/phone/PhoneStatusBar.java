@@ -475,14 +475,14 @@ public class PhoneStatusBar extends BaseStatusBar {
 
         if (color != 0xFF000000) {
             Drawable background = mNotificationPanel.getBackground();
-			int top = mNotificationPanel.getPaddingTop();
-			int bottom = mNotificationPanel.getPaddingBottom();
-			int left = mNotificationPanel.getPaddingLeft();
-			int right = mNotificationPanel.getPaddingRight();
+            int top = mNotificationPanel.getPaddingTop();
+            int bottom = mNotificationPanel.getPaddingBottom();
+            int left = mNotificationPanel.getPaddingLeft();
+            int right = mNotificationPanel.getPaddingRight();
             background.setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
             background.setAlpha(Color.alpha(color));
             mNotificationPanel.setBackgroundDrawable(background);
-			mNotificationPanel.setPadding(left, top, right, bottom);
+            mNotificationPanel.setPadding(left, top, right, bottom);
         }
 
         if (ENABLE_INTRUDERS) {
@@ -1502,15 +1502,12 @@ public class PhoneStatusBar extends BaseStatusBar {
             switch (m.what) {
                 case MSG_OPEN_NOTIFICATION_PANEL:
                     animateExpandNotificationsPanel();
-                    barExpanded(true);
                     break;
                 case MSG_OPEN_SETTINGS_PANEL:
                     animateExpandSettingsPanel();
-                    barExpanded(true);
                     break;
                 case MSG_CLOSE_PANELS:
                     animateCollapsePanels();
-                    barExpanded(false);
                     break;
                 case MSG_SHOW_INTRUDER:
                     setIntruderAlertVisibility(true);
@@ -1566,6 +1563,7 @@ public class PhoneStatusBar extends BaseStatusBar {
         }
 
         visibilityChanged(true);
+        barExpanded(true);
     }
 
     public void animateCollapsePanels() {
@@ -1902,6 +1900,7 @@ public class PhoneStatusBar extends BaseStatusBar {
         if (mNavigationBarView != null)
             mNavigationBarView.setSlippery(false);
         visibilityChanged(false);
+        barExpanded(false);
 
         // Shrink the window to the size of the status bar only
         WindowManager.LayoutParams lp = (WindowManager.LayoutParams) mStatusBarContainer.getLayoutParams();

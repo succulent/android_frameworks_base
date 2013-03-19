@@ -901,7 +901,6 @@ public class TabletStatusBar extends BaseStatusBar implements
                         mNotificationArea.setVisibility(View.INVISIBLE);
                         mTicker.halt();
                     }
-                    barExpanded(true);
                     break;
                 case MSG_CLOSE_NOTIFICATION_PANEL:
                     if (DEBUG) Slog.d(TAG, "closing notifications panel");
@@ -909,7 +908,6 @@ public class TabletStatusBar extends BaseStatusBar implements
                         mNotificationPanel.show(false, true);
                         mNotificationArea.setVisibility(View.VISIBLE);
                     }
-                    barExpanded(false);
                     break;
                 case MSG_OPEN_INPUT_METHODS_PANEL:
                     if (DEBUG) Slog.d(TAG, "opening input methods panel");
