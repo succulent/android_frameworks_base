@@ -1571,22 +1571,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
         mFullscreenMode = Settings.System.getInt(resolver,
                 Settings.System.FULLSCREEN_MODE, 0) == 1;
-
-        int fullscreenTimeout = Settings.System.getInt(resolver,
-                Settings.System.FULLSCREEN_TIMEOUT, 0);
-
-        if (fullscreenTimeout > 0) {
-            mHandler.removeCallbacks(mStatusBarTimeout);
-            mHandler.postDelayed(mStatusBarTimeout, fullscreenTimeout * 1000);
-        }
     }
-
-    private final Runnable mStatusBarTimeout = new Runnable() {
-        public void run() {
-            Settings.System.putInt(mContext.getContentResolver(),
-                    Settings.System.EXPANDED_DESKTOP_STATE, 1);
-        }
-    };
 
     private void enablePointerLocation() {
         if (mPointerLocationView == null) {

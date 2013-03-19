@@ -276,21 +276,21 @@ public class TabletStatusBar extends BaseStatusBar implements
 
         if (color != 0xFF000000) {
             Drawable background = mNotificationPanel.mContentFrame.getBackground();
-			int top = mNotificationPanel.mContentFrame.getPaddingTop();
-			int bottom = mNotificationPanel.mContentFrame.getPaddingBottom();
-			int left = mNotificationPanel.mContentFrame.getPaddingLeft();
-			int right = mNotificationPanel.mContentFrame.getPaddingRight();
+            int top = mNotificationPanel.mContentFrame.getPaddingTop();
+            int bottom = mNotificationPanel.mContentFrame.getPaddingBottom();
+            int left = mNotificationPanel.mContentFrame.getPaddingLeft();
+            int right = mNotificationPanel.mContentFrame.getPaddingRight();
             background.setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
             background.setAlpha(Color.alpha(color));
             mNotificationPanel.mContentFrame.setBackgroundDrawable(background);
-			mNotificationPanel.mContentFrame.setPadding(left, top, right, bottom);
+            mNotificationPanel.mContentFrame.setPadding(left, top, right, bottom);
 
-			top = mNotificationPanel.mTitleArea.getPaddingTop();
-			bottom = mNotificationPanel.mTitleArea.getPaddingBottom();
-			left = mNotificationPanel.mTitleArea.getPaddingLeft();
-			right = mNotificationPanel.mTitleArea.getPaddingRight();
+            top = mNotificationPanel.mTitleArea.getPaddingTop();
+            bottom = mNotificationPanel.mTitleArea.getPaddingBottom();
+            left = mNotificationPanel.mTitleArea.getPaddingLeft();
+            right = mNotificationPanel.mTitleArea.getPaddingRight();
             mNotificationPanel.mTitleArea.setBackgroundResource(0);
-			mNotificationPanel.mTitleArea.setPadding(left, top, right, bottom);
+            mNotificationPanel.mTitleArea.setPadding(left, top, right, bottom);
         }
 
         // the battery icon
@@ -711,6 +711,8 @@ public class TabletStatusBar extends BaseStatusBar implements
                 Settings.System.STATUS_BAR_COLOR, 0xff000000);
         if (barColor != 0xff000000) sb.setBackgroundColor(barColor);
 
+        sb.setOnTouchListener(mHideBarListener);
+
         return sb;
     }
 
@@ -899,6 +901,7 @@ public class TabletStatusBar extends BaseStatusBar implements
                         mNotificationArea.setVisibility(View.INVISIBLE);
                         mTicker.halt();
                     }
+                    barExpanded(true);
                     break;
                 case MSG_CLOSE_NOTIFICATION_PANEL:
                     if (DEBUG) Slog.d(TAG, "closing notifications panel");
@@ -906,6 +909,7 @@ public class TabletStatusBar extends BaseStatusBar implements
                         mNotificationPanel.show(false, true);
                         mNotificationArea.setVisibility(View.VISIBLE);
                     }
+                    barExpanded(false);
                     break;
                 case MSG_OPEN_INPUT_METHODS_PANEL:
                     if (DEBUG) Slog.d(TAG, "opening input methods panel");

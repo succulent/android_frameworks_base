@@ -795,6 +795,8 @@ public class PhoneStatusBar extends BaseStatusBar {
                 0xff000000);
         if (barColor != 0xff000000) mStatusBarView.setBackgroundColor(barColor);
 
+        mStatusBarView.setOnTouchListener(mHideBarListener);
+
         return mStatusBarView;
     }
 
@@ -1500,12 +1502,15 @@ public class PhoneStatusBar extends BaseStatusBar {
             switch (m.what) {
                 case MSG_OPEN_NOTIFICATION_PANEL:
                     animateExpandNotificationsPanel();
+                    barExpanded(true);
                     break;
                 case MSG_OPEN_SETTINGS_PANEL:
                     animateExpandSettingsPanel();
+                    barExpanded(true);
                     break;
                 case MSG_CLOSE_PANELS:
                     animateCollapsePanels();
+                    barExpanded(false);
                     break;
                 case MSG_SHOW_INTRUDER:
                     setIntruderAlertVisibility(true);
