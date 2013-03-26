@@ -503,7 +503,9 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     boolean mSearchKeyShortcutPending;
     boolean mConsumeSearchKeyUp;
     boolean mAssistKeyLongPressed;
-    boolean mFullscreenMode, mBootFullscreenMode = false;
+    boolean mFullscreenMode = false;
+    boolean mBootFullscreenMode = false;
+    int mShortSizeDp;
 
     // Used when key is pressed and performing non-default action
     boolean mMenuDoCustomAction;
@@ -1308,6 +1310,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
         // SystemUI (status bar) layout policy
         int shortSizeDp = shortSize * DisplayMetrics.DENSITY_DEFAULT / density;
+        mShortSizeDp = shortSizeDp;
 
         ContentResolver resolver = mContext.getContentResolver();
         boolean tabletModeOverride = Settings.System.getInt(resolver,
@@ -1555,6 +1558,24 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             updateRotation(true);
         } else if (updateDisplayMetrics) {
             updateDisplayMetrics();
+        }
+
+        boolean tabletModeOverride = Settings.System.getInt(resolver,
+                Settings.System.TABLET_MODE, mContext.getResources().getBoolean(
+                com.android.internal.R.bool.config_showTabletNavigationBar) ? 1 : 0) == 1;
+
+        if (mShortSizeDp < 600 && !tabletModeOverride) {
+            // 0-599dp: "phone" UI with a separate status & navigation bar
+            mHasSystemNavBar = false;
+            mNavigationBarCanMove = true;
+        } else if (!tabletModeOverride) {
+            // 600+dp: "phone" UI with modifications for larger screens
+            mHasSystemNavBar = false;
+            mNavigationBarCanMove = false;
+        } else {
+            // forced "tablet" UI with a single combined status & navigation bar
+            mHasSystemNavBar = true;
+            mNavigationBarCanMove = false;
         }
 
         if (!mHasSystemNavBar) {
