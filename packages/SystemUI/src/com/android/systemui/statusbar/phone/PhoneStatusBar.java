@@ -1664,7 +1664,9 @@ public class PhoneStatusBar extends BaseStatusBar {
         }
 
         if (Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.EXPANDED_DESKTOP_STATE, 0) == 1) {
+                Settings.System.EXPANDED_DESKTOP_STATE, 0) == 1 &&
+                Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.EXPANDED_DESKTOP_STYLE, 0) == 2) {
             mRestoreExpandedDesktop = true;
             Settings.System.putInt(mContext.getContentResolver(),
                     Settings.System.EXPANDED_DESKTOP_STATE, 0);
@@ -1738,7 +1740,9 @@ public class PhoneStatusBar extends BaseStatusBar {
         }
 
         if (Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.EXPANDED_DESKTOP_STATE, 0) == 1) {
+                Settings.System.EXPANDED_DESKTOP_STATE, 0) == 1 &&
+                Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.EXPANDED_DESKTOP_STYLE, 0) == 2) {
             mRestoreExpandedDesktop = true;
             Settings.System.putInt(mContext.getContentResolver(),
                     Settings.System.EXPANDED_DESKTOP_STATE, 0);
@@ -2362,11 +2366,6 @@ public class PhoneStatusBar extends BaseStatusBar {
         if (n.notification.tickerText != null && mStatusBarContainer.getWindowToken() != null) {
             if (0 == (mDisabled & (StatusBarManager.DISABLE_NOTIFICATION_ICONS
                             | StatusBarManager.DISABLE_NOTIFICATION_TICKER))) {
-                if (Settings.System.getInt(mContext.getContentResolver(),
-                        Settings.System.EXPANDED_DESKTOP_STATE, 0) == 1) {
-                    Settings.System.putInt(mContext.getContentResolver(),
-                            Settings.System.EXPANDED_DESKTOP_STATE, 0);
-                }
                 mTicker.addEntry(n);
             }
         }
@@ -2384,6 +2383,14 @@ public class PhoneStatusBar extends BaseStatusBar {
             mTickerView.setVisibility(View.VISIBLE);
             mTickerView.startAnimation(loadAnim(com.android.internal.R.anim.push_up_in, null));
             mStatusBarContents.startAnimation(loadAnim(com.android.internal.R.anim.push_up_out, null));
+            if (Settings.System.getInt(mContext.getContentResolver(),
+                    Settings.System.EXPANDED_DESKTOP_STATE, 0) == 1 &&
+                Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.EXPANDED_DESKTOP_STYLE, 0) == 2) {
+                mRestoreExpandedDesktop = true;
+                Settings.System.putInt(mContext.getContentResolver(),
+                        Settings.System.EXPANDED_DESKTOP_STATE, 0);
+            }
         }
 
         @Override
@@ -2393,6 +2400,14 @@ public class PhoneStatusBar extends BaseStatusBar {
             mStatusBarContents.startAnimation(loadAnim(com.android.internal.R.anim.push_down_in, null));
             mTickerView.startAnimation(loadAnim(com.android.internal.R.anim.push_down_out,
                         mTickingDoneListener));
+            if (mRestoreExpandedDesktop) {
+                mRestoreExpandedDesktop = false;
+                if (Settings.System.getInt(mContext.getContentResolver(),
+                         Settings.System.FULLSCREEN_TIMEOUT, 0) == 0) {
+                    Settings.System.putInt(mContext.getContentResolver(),
+                            Settings.System.EXPANDED_DESKTOP_STATE, 1);
+                }
+            }
         }
 
         @Override
@@ -2401,6 +2416,14 @@ public class PhoneStatusBar extends BaseStatusBar {
             mTickerView.setVisibility(View.GONE);
             mStatusBarContents.startAnimation(loadAnim(com.android.internal.R.anim.fade_in, null));
             // we do not animate the ticker away at this point, just get rid of it (b/6992707)
+            if (mRestoreExpandedDesktop) {
+                mRestoreExpandedDesktop = false;
+                if (Settings.System.getInt(mContext.getContentResolver(),
+                         Settings.System.FULLSCREEN_TIMEOUT, 0) == 0) {
+                    Settings.System.putInt(mContext.getContentResolver(),
+                            Settings.System.EXPANDED_DESKTOP_STATE, 1);
+                }
+            }
         }
     }
 
