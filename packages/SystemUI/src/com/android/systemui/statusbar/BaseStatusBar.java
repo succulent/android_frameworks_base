@@ -874,6 +874,7 @@ public abstract class BaseStatusBar extends SystemUI implements
                          lp.flags |= WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL;
                          lp.flags &= ~WindowManager.LayoutParams.FLAG_SLIPPERY;
                          mWindowManager.updateViewLayout(bottom, lp);
+                     }
                  }
                  break;
              case MSG_HIDE_STATUSBAR:
