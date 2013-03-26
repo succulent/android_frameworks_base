@@ -305,6 +305,8 @@ public class PhoneStatusBar extends BaseStatusBar {
     // for disabling the status bar
     int mDisabled = 0;
 
+    private boolean mRestoreExpandedDesktop = false;
+
     // tracking calls to View.setSystemUiVisibility()
     int mSystemUiVisibility = View.SYSTEM_UI_FLAG_VISIBLE;
 
@@ -1570,6 +1572,14 @@ public class PhoneStatusBar extends BaseStatusBar {
     }
 
     public void animateCollapsePanels() {
+        if (mRestoreExpandedDesktop) {
+            mRestoreExpandedDesktop = false;
+            if (Settings.System.getInt(mContext.getContentResolver(),
+                     Settings.System.FULLSCREEN_TIMEOUT, 0) == 0) {
+                Settings.System.putInt(mContext.getContentResolver(),
+                        Settings.System.EXPANDED_DESKTOP_STATE, 1);
+            }
+        }
         animateCollapsePanels(CommandQueue.FLAG_EXCLUDE_NONE);
     }
 
@@ -1653,6 +1663,13 @@ public class PhoneStatusBar extends BaseStatusBar {
             return ;
         }
 
+        if (Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.EXPANDED_DESKTOP_STATE, 0) == 1) {
+            mRestoreExpandedDesktop = true;
+            Settings.System.putInt(mContext.getContentResolver(),
+                    Settings.System.EXPANDED_DESKTOP_STATE, 0);
+        }
+
         mNotificationPanel.expand();
         if (mHasFlipSettings && mScrollView.getVisibility() != View.VISIBLE) {
             flipToNotifications();
@@ -1718,6 +1735,13 @@ public class PhoneStatusBar extends BaseStatusBar {
         if (SPEW) Slog.d(TAG, "animateExpand: mExpandedVisible=" + mExpandedVisible);
         if ((mDisabled & StatusBarManager.DISABLE_EXPAND) != 0) {
             return;
+        }
+
+        if (Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.EXPANDED_DESKTOP_STATE, 0) == 1) {
+            mRestoreExpandedDesktop = true;
+            Settings.System.putInt(mContext.getContentResolver(),
+                    Settings.System.EXPANDED_DESKTOP_STATE, 0);
         }
 
         // Settings are not available in setup
