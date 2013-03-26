@@ -1187,7 +1187,7 @@ public class TabletStatusBar extends BaseStatusBar implements
     @Override
     public void animateExpandSettingsPanel() {
         mHandler.removeMessages(MSG_OPEN_SETTINGS_PANEL);
-        mHandler.sendEmptyMessage(MSG_OPEN_SETTINGS_PANEL)
+        mHandler.sendEmptyMessage(MSG_OPEN_SETTINGS_PANEL);
     }
 
     @Override // CommandQueue
