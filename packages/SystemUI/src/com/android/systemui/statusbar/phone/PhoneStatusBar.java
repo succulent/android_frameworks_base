@@ -1736,7 +1736,7 @@ public class PhoneStatusBar extends BaseStatusBar {
             return;
         }
 
-        if (mExpandedDesktopState == 2) {{
+        if (mExpandedDesktopState == 2) {
             mRestoreExpandedDesktop = true;
             Settings.System.putInt(mContext.getContentResolver(),
                     Settings.System.EXPANDED_DESKTOP_STATE, 0);
