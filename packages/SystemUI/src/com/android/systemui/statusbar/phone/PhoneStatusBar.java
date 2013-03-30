@@ -1662,16 +1662,8 @@ public class PhoneStatusBar extends BaseStatusBar {
         if ((mDisabled & StatusBarManager.DISABLE_EXPAND) != 0) {
             return ;
         }
-        // don't allow expanding via e.g. service call while status bar is hidden
-        // due to expanded desktop
-        if (mExpandedDesktopState == 2) {
-            return;
-        }
 
-        if (Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.EXPANDED_DESKTOP_STATE, 0) == 1 &&
-                Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.EXPANDED_DESKTOP_STYLE, 0) == 2) {
+        if (mExpandedDesktopState == 2) {
             mRestoreExpandedDesktop = true;
             Settings.System.putInt(mContext.getContentResolver(),
                     Settings.System.EXPANDED_DESKTOP_STATE, 0);
@@ -1743,16 +1735,8 @@ public class PhoneStatusBar extends BaseStatusBar {
         if ((mDisabled & StatusBarManager.DISABLE_EXPAND) != 0) {
             return;
         }
-        // don't allow expanding via e.g. service call while status bar is hidden
-        // due to expanded desktop
-        if (mExpandedDesktopState == 2) {
-            return;
-        }
 
-        if (Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.EXPANDED_DESKTOP_STATE, 0) == 1 &&
-                Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.EXPANDED_DESKTOP_STYLE, 0) == 2) {
+        if (mExpandedDesktopState == 2) {{
             mRestoreExpandedDesktop = true;
             Settings.System.putInt(mContext.getContentResolver(),
                     Settings.System.EXPANDED_DESKTOP_STATE, 0);
@@ -2393,10 +2377,7 @@ public class PhoneStatusBar extends BaseStatusBar {
             mTickerView.setVisibility(View.VISIBLE);
             mTickerView.startAnimation(loadAnim(com.android.internal.R.anim.push_up_in, null));
             mStatusBarContents.startAnimation(loadAnim(com.android.internal.R.anim.push_up_out, null));
-            if (Settings.System.getInt(mContext.getContentResolver(),
-                    Settings.System.EXPANDED_DESKTOP_STATE, 0) == 1 &&
-                Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.EXPANDED_DESKTOP_STYLE, 0) == 2) {
+            if (mExpandedDesktopState == 2) {
                 mRestoreExpandedDesktop = true;
                 Settings.System.putInt(mContext.getContentResolver(),
                         Settings.System.EXPANDED_DESKTOP_STATE, 0);
