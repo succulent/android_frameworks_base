@@ -1662,6 +1662,11 @@ public class PhoneStatusBar extends BaseStatusBar {
         if ((mDisabled & StatusBarManager.DISABLE_EXPAND) != 0) {
             return ;
         }
+        // don't allow expanding via e.g. service call while status bar is hidden
+        // due to expanded desktop
+        if (mExpandedDesktopState == 2) {
+            return;
+        }
 
         if (Settings.System.getInt(mContext.getContentResolver(),
                 Settings.System.EXPANDED_DESKTOP_STATE, 0) == 1 &&
@@ -1736,6 +1741,11 @@ public class PhoneStatusBar extends BaseStatusBar {
     public void animateExpandSettingsPanel() {
         if (SPEW) Slog.d(TAG, "animateExpand: mExpandedVisible=" + mExpandedVisible);
         if ((mDisabled & StatusBarManager.DISABLE_EXPAND) != 0) {
+            return;
+        }
+        // don't allow expanding via e.g. service call while status bar is hidden
+        // due to expanded desktop
+        if (mExpandedDesktopState == 2) {
             return;
         }
 
