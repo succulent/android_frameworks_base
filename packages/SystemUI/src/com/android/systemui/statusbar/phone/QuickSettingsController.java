@@ -239,7 +239,7 @@ public class QuickSettingsController {
             } else if (tile.equals(TILE_QUIETHOURS)) {
                 qs = new QuietHoursTile(mContext, inflater, mContainerView, this);
             } else if (tile.equals(TILE_VOLUME)) {
-                qs = new VolumeTile(mContext, inflater, mContainerView, this, mHandler);
+                qs = new VolumeTile(mContext, inflater, mContainerView, this);
             } else if (tile.equals(TILE_EXPANDEDDESKTOP)) {
                 mTileStatusUris.add(Settings.System.getUriFor(Settings.System.EXPANDED_DESKTOP_STYLE));
                 if (expandedDesktopEnabled(resolver)) {
