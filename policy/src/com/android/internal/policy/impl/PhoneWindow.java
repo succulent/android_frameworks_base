@@ -1924,7 +1924,7 @@ public class PhoneWindow extends Window implements MenuBuilder.Callback {
         public DecorView(Context context, int featureId) {
             super(context);
             mFeatureId = featureId;
-            mGestureSettingsObserver = new GestureSettingsObserver(mHandler);
+            mGestureSettingsObserver = new GestureSettingsObserver(new Handler());
             mSettingsObserver = new SettingsObserver();
 
             if (mFullscreenMode) {
