@@ -1875,7 +1875,7 @@ public class PhoneWindow extends Window implements MenuBuilder.Callback {
         private Runnable mShowActionModePopup;
 
         private SettingsObserver mSettingsObserver;
-        private SettingsObserver mGestureSettingsObserver;
+        private GestureSettingsObserver mGestureSettingsObserver;
 
         private int mGestureOne;
         private int mGestureTwo;
