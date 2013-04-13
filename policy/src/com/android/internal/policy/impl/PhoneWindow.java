@@ -222,7 +222,7 @@ public class PhoneWindow extends Window implements MenuBuilder.Callback {
     private KeyguardManager mKeyguardManager;
 
     private final class GestureSettingsObserver extends ContentObserver {
-        SettingsObserver(Handler handler) {
+        GestureSettingsObserver(Handler handler) {
             super(handler);
         }
 
