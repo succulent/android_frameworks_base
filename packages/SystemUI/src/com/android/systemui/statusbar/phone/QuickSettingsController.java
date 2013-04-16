@@ -18,6 +18,7 @@ package com.android.systemui.statusbar.phone;
 
 import static com.android.internal.util.cm.QSConstants.TILES_DEFAULT;
 import static com.android.internal.util.cm.QSConstants.TILE_AIRPLANE;
+import static com.android.internal.util.cm.QSConstants.TILE_APPDRAWER;
 import static com.android.internal.util.cm.QSConstants.TILE_AUTOROTATE;
 import static com.android.internal.util.cm.QSConstants.TILE_BATTERY;
 import static com.android.internal.util.cm.QSConstants.TILE_BLUETOOTH;
@@ -69,6 +70,7 @@ import android.view.LayoutInflater;
 
 import com.android.systemui.quicksettings.AirplaneModeTile;
 import com.android.systemui.quicksettings.AlarmTile;
+import com.android.systemui.quicksettings.AppDrawerTile;
 import com.android.systemui.quicksettings.AutoRotateTile;
 import com.android.systemui.quicksettings.BatteryTile;
 import com.android.systemui.quicksettings.BluetoothTile;
@@ -247,6 +249,8 @@ public class QuickSettingsController {
                 }
             } else if (tile.equals(TILE_DAYDREAM)) {
                 qs = new DaydreamTile(mContext, this);
+            } else if (tile.equals(TILE_APPDRAWER)) {
+                qs = new AppDrawerTile(mContext, this);
             }
 
             if (qs != null) {
