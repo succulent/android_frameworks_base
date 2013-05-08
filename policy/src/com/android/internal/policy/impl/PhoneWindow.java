@@ -41,6 +41,7 @@ import com.android.internal.widget.ActionBarView;
 
 import android.app.ActivityManager;
 import android.app.ActivityManager.RunningAppProcessInfo;
+import android.app.ActivityOptions;
 import android.app.KeyguardManager;
 import android.app.StatusBarManager;
 import android.content.ComponentName;
@@ -2497,7 +2498,10 @@ public class PhoneWindow extends Window implements MenuBuilder.Callback {
                     intent.addCategory("android.intent.category.HOME");
                     intent.addCategory("com.cyanogenmod.trebuchet.APP_DRAWER");
                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                    mContext.startActivity(intent);
+                    ActivityOptions opts = ActivityOptions.makeCustomAnimation(mContext,
+                            com.android.internal.R.anim.slide_in_left,
+                            com.android.internal.R.anim.slide_out_right);
+                    mContext.startActivity(intent, opts.toBundle());
                     break;
                 case 10:
                     Intent switchIntent = new Intent("com.android.systemui.APP_SWITCH");
