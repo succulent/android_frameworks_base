@@ -432,15 +432,10 @@ public abstract class BaseStatusBar extends SystemUI implements
             }
         }, switchFilter);
 
-        mPieController = new PieController(mContext);
-        mPieController.attachTo(this);
-        addNavigationBarCallback(mPieController);
-
         mPieSettingsObserver = new PieSettingsObserver(new Handler());
 
         // this calls attachPie() implicitly
         mPieSettingsObserver.onChange(true);
-
         mPieSettingsObserver.observe();
 
         mActivityManager = (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
