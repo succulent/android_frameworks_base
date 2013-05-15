@@ -213,6 +213,8 @@ public abstract class BaseStatusBar extends SystemUI implements
                                         + event.getAxisValue(MotionEvent.AXIS_Y) + ") with position: "
                                         + tracker.position.name());
                             }
+                            // set the snap points depending on current trigger and mask
+                            mPieContainer.setSnapPoints(mPieTriggerMask & ~mPieTriggerSlots);
                             // send the activation to the controller
                             mPieController.activateFromTrigger(v, event, tracker.position);
                             // forward a spoofed ACTION_DOWN event
