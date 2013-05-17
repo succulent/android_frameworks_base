@@ -2498,10 +2498,26 @@ public class PhoneWindow extends Window implements MenuBuilder.Callback {
                     intent.addCategory("android.intent.category.HOME");
                     intent.addCategory("com.cyanogenmod.trebuchet.APP_DRAWER");
                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                    ActivityOptions opts = ActivityOptions.makeCustomAnimation(mContext,
-                            com.android.internal.R.anim.slide_in_left,
-                            com.android.internal.R.anim.slide_out_right);
-                    mContext.startActivity(intent, opts.toBundle());
+                    int in = 0;
+                    int out = 0;
+                    switch (Settings.System.getInt(mContext.getContentResolver(),
+                            Settings.System.DRAWER_TRANSITION, 0)) {
+                        case 1:
+                            in = com.android.internal.R.anim.slide_in_left;
+                            out = com.android.internal.R.anim.slide_out_right;
+                            break;
+                        case 2:
+                            in = com.android.internal.R.anim.slide_in_right;
+                            out = com.android.internal.R.anim.slide_out_left;
+                            break;
+                    }
+                    if (in != 0) {
+                        ActivityOptions opts = ActivityOptions.makeCustomAnimation(mContext,
+                                in, out);
+                        mContext.startActivity(intent, opts.toBundle());
+                    } else {
+                        mContext.startActivity(intent);
+                    }
                     break;
                 case 10:
                     Intent switchIntent = new Intent("com.android.systemui.APP_SWITCH");

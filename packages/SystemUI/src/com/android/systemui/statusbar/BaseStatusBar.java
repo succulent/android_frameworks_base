@@ -798,11 +798,31 @@ public abstract class BaseStatusBar extends SystemUI implements
                     if (switchIntent.getComponent().getPackageName().equals(mContext.getPackageName())) {
                         return;
                     }
-                    ActivityOptions opts = ActivityOptions.makeCustomAnimation(mContext,
-                            com.android.internal.R.anim.slide_in_right,
-                            com.android.internal.R.anim.slide_out_left);
-                    mContext.startActivityAsUser(switchIntent, opts.toBundle(), new UserHandle(
-                            UserHandle.USER_CURRENT));
+
+                    int in = 0;
+                    int out = 0;
+                    switch (Settings.System.getInt(mContext.getContentResolver(),
+                            Settings.System.APP_SWITCH_TRANSITION, 0)) {
+                        case 1:
+                            in = com.android.internal.R.anim.slide_in_left;
+                            out = com.android.internal.R.anim.slide_out_right;
+                            break;
+                        case 2:
+                            in = com.android.internal.R.anim.slide_in_right;
+                            out = com.android.internal.R.anim.slide_out_left;
+                            break;
+                    }
+                    if (in != 0) {
+                        ActivityOptions opts = ActivityOptions.makeCustomAnimation(mContext,
+                                in, out);
+                        mContext.startActivityAsUser(switchIntent, opts.toBundle(), new UserHandle(
+                                UserHandle.USER_CURRENT));
+                    } else {
+                        mContext.startActivityAsUser(switchIntent, new UserHandle(
+                                UserHandle.USER_CURRENT));
+                    }
+
+
                 }
             }
         }
