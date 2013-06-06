@@ -10359,7 +10359,6 @@ public class WindowManagerService extends IWindowManager.Stub
         synchronized (mWindowMap) {
             mLastStatusBarVisibility = visibility;
             visibility = mPolicy.adjustSystemUiVisibilityLw(visibility);
-            visibility &= ~mStatusBarVisibilityMask;
             updateStatusBarVisibilityLocked(visibility);
         }
     }
@@ -10398,7 +10397,6 @@ public class WindowManagerService extends IWindowManager.Stub
     public void reevaluateStatusBarVisibility() {
         synchronized (mWindowMap) {
             int visibility = mPolicy.adjustSystemUiVisibilityLw(mLastStatusBarVisibility);
-            visibility &= ~mStatusBarVisibilityMask;
             updateStatusBarVisibilityLocked(visibility);
             performLayoutAndPlaceSurfacesLocked();
         }
