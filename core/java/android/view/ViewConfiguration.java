@@ -301,7 +301,7 @@ public class ViewConfiguration {
     	    boolean hasMenuKey = (mContext.getResources().getInteger(
     	            com.android.internal.R.integer.config_deviceHardwareKeys) & KEY_MASK_MENU) != 0;
     	    try {
-                sHasPermanentMenuKey = hasMenuKey || (!wm.hasSystemNavBar() && !wm.hasNavigationBar())) {
+                sHasPermanentMenuKey = hasMenuKey || (!wm.hasSystemNavBar() && !wm.hasNavigationBar())
                 sHasPermanentMenuKeySet = true;
     	    } catch (RemoteException ex) {
                 sHasPermanentMenuKey = false;
