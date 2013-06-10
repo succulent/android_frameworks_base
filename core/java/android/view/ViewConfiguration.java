@@ -301,11 +301,10 @@ public class ViewConfiguration {
     	    boolean hasMenuKey = (mContext.getResources().getInteger(
     	            com.android.internal.R.integer.config_deviceHardwareKeys) & KEY_MASK_MENU) != 0;
     	    try {
-    	        if (!hasMenuKey || (wm.hasSystemNavBar() || wm.hasNavigationBar())) {
-    	            return false;
-    	        }
+                sHasPermanentMenuKey = hasMenuKey || (!wm.hasSystemNavBar() && !wm.hasNavigationBar())) {
+                sHasPermanentMenuKeySet = true;
     	    } catch (RemoteException ex) {
-    	        // do nothing, continue trying to guess
+                sHasPermanentMenuKey = false;
     	    }
         }
 
