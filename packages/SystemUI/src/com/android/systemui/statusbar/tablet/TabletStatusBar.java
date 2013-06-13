@@ -524,7 +524,16 @@ public class TabletStatusBar extends BaseStatusBar implements
             reloadAllNotificationIcons(); // reload the tray
         }
 
-        final int numIcons = res.getInteger(R.integer.config_maxNotificationIcons);
+        boolean hasNavigationBar = mContext.getResources().getBoolean(
+                    com.android.internal.R.bool.config_showNavigationBar);
+
+        mNavigationDisabled = Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.NAVIGATION_CONTROLS, hasNavigationBar ? 1 : 0) == 0;
+
+        final int numIcons = Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.TABLET_NOTIFICATIONS,  mNavigationDisabled ? mMaxNotificationIcons :
+                res.getInteger(R.integer.config_maxNotificationIcons));
+
         if (numIcons != mMaxNotificationIcons) {
             mMaxNotificationIcons = numIcons;
             if (DEBUG) Slog.d(TAG, "max notification icons: " + mMaxNotificationIcons);
@@ -704,11 +713,6 @@ public class TabletStatusBar extends BaseStatusBar implements
         filter.addAction(Intent.ACTION_SCREEN_OFF);
         context.registerReceiver(mBroadcastReceiver, filter);
 
-        boolean hasNavigationBar = mContext.getResources().getBoolean(
-                    com.android.internal.R.bool.config_showNavigationBar);
-
-        mNavigationDisabled = Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.NAVIGATION_CONTROLS, hasNavigationBar ? 1 : 0) == 0;
         setNavigationDisabled(mNavigationDisabled);
 
         showClock(true);
@@ -1584,39 +1588,43 @@ public class TabletStatusBar extends BaseStatusBar implements
         // The IME switcher and compatibility mode icons take the place of notifications. You didn't
         // need to see all those new emails, did you?
         int maxNotificationIconsCount = mMaxNotificationIcons;
-        if (mInputMethodSwitchButton.getVisibility() != View.GONE) maxNotificationIconsCount --;
-        if (mCompatModeButton.getVisibility()        != View.GONE) maxNotificationIconsCount --;
+        if (maxNotificationIconsCount > 0) {
+            if (mInputMethodSwitchButton.getVisibility() != View.GONE) maxNotificationIconsCount --;
+            if (mCompatModeButton.getVisibility()        != View.GONE) maxNotificationIconsCount --;
 
-        final boolean provisioned = isDeviceProvisioned();
-        // If the device hasn't been through Setup, we only show system notifications
-        for (int i=0; toShow.size()< maxNotificationIconsCount; i++) {
-            if (i >= N) break;
-            Entry ent = mNotificationData.get(N-i-1);
-            if ((provisioned && ent.notification.score >= HIDE_ICONS_BELOW_SCORE)
-                    || showNotificationEvenIfUnprovisioned(ent.notification)) {
-                toShow.add(ent.icon);
+            final boolean provisioned = isDeviceProvisioned();
+            // If the device hasn't been through Setup, we only show system notifications
+            for (int i=0; toShow.size()< maxNotificationIconsCount; i++) {
+                if (i >= N) break;
+                Entry ent = mNotificationData.get(N-i-1);
+                if ((provisioned && ent.notification.score >= HIDE_ICONS_BELOW_SCORE)
+                        || showNotificationEvenIfUnprovisioned(ent.notification)) {
+                    toShow.add(ent.icon);
+                }
+            }
+
+            ArrayList<View> toRemove = new ArrayList<View>();
+            for (int i=0; i<mIconLayout.getChildCount(); i++) {
+                View child = mIconLayout.getChildAt(i);
+                if (!toShow.contains(child)) {
+                    toRemove.add(child);
+                }
+            }
+
+            for (View remove : toRemove) {
+                mIconLayout.removeView(remove);
+            }
+
+            for (int i=0; i<toShow.size(); i++) {
+                View v = toShow.get(i);
+                v.setPadding(mIconHPadding, 0, mIconHPadding, 0);
+                if (v.getParent() == null) {
+                    mIconLayout.addView(v, i, params);
+                }
             }
         }
-
-        ArrayList<View> toRemove = new ArrayList<View>();
-        for (int i=0; i<mIconLayout.getChildCount(); i++) {
-            View child = mIconLayout.getChildAt(i);
-            if (!toShow.contains(child)) {
-                toRemove.add(child);
-            }
-        }
-
-        for (View remove : toRemove) {
-            mIconLayout.removeView(remove);
-        }
-
-        for (int i=0; i<toShow.size(); i++) {
-            View v = toShow.get(i);
-            v.setPadding(mIconHPadding, 0, mIconHPadding, 0);
-            if (v.getParent() == null) {
-                mIconLayout.addView(v, i, params);
-            }
-        }
+        mCompatModeButton.setDisabled(maxNotificationIconsCount < 1);
+        mInputMethodSwitchButton.setDisabled(maxNotificationIconsCount < 1);
     }
 
     private void loadNotificationPanel() {

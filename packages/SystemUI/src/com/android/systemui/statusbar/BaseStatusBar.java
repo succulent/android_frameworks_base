@@ -1389,6 +1389,8 @@ public abstract class BaseStatusBar extends SystemUI implements
                     Settings.System.PIE_OUTLINE_COLOR), false, this);
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.NAVIGATION_CONTROLS), false, this);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.TABLET_NOTIFICATIONS), false, this);
         }
 
         @Override

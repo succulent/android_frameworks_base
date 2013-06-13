@@ -3405,6 +3405,16 @@ public final class Settings {
         public static final String DRAWER_TRANSITION = "drawer_transition";
 
         /**
+         * @hide
+         */
+        public static final String COMPAT_BUTTON = "compat_button";
+
+        /**
+         * @hide
+         */
+        public static final String TABLET_NOTIFICATIONS = "tablet_notifications";
+
+        /**
          * Settings to backup. This is here so that it's in the same place as the settings
          * keys and easy to update.
          *
