@@ -169,6 +169,7 @@ import android.media.IAudioService;
 import android.media.AudioService;
 import android.media.AudioManager;
 
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
@@ -512,6 +513,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     boolean mFullscreenMode = false;
     boolean mBootFullscreenMode = false;
     int mShortSizeDp;
+    int mDensity;
 
     // Used when key is pressed and performing non-default action
     boolean mMenuDoCustomAction;
@@ -1304,6 +1306,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         // SystemUI (status bar) layout policy
         int shortSizeDp = shortSize * DisplayMetrics.DENSITY_DEFAULT / density;
         mShortSizeDp = shortSizeDp;
+        mDensity = density;
 
         ContentResolver resolver = mContext.getContentResolver();
         boolean tabletModeOverride = Settings.System.getInt(resolver,
@@ -3823,11 +3826,31 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             if (hdmiResX > 0 && hdmiResY > 0) {
                 try {
                     if (plugged) {
+                        mWindowManager.setForcedDisplayDensity(Display.DEFAULT_DISPLAY,
+                                hdmiResX * mDensity / (mUnrestrictedScreenWidth >
+                                mUnrestrictedScreenHeight ? mUnrestrictedScreenWidth :
+                                mUnrestrictedScreenHeight));
                         mWindowManager.setForcedDisplaySize(Display.DEFAULT_DISPLAY,
                                 hdmiResX, hdmiResY);
                     } else {
+                        mWindowManager.clearForcedDisplayDensity(Display.DEFAULT_DISPLAY);
                         mWindowManager.clearForcedDisplaySize(Display.DEFAULT_DISPLAY);
                     }
+                    mHandler.postDelayed(new Runnable() {
+                        public void run() {
+                            try {
+                                final PackageManager pm = mContext.getPackageManager();
+                                ActivityInfo homeInfo = new Intent(Intent.ACTION_MAIN)
+                                        .addCategory(Intent.CATEGORY_HOME)
+                                        .resolveActivityInfo(pm, 0);
+                                java.lang.Process p = Runtime.getRuntime().exec("su");
+                                DataOutputStream os = new DataOutputStream(p.getOutputStream());
+                                String cmd = "pkill com.android.systemui" + "\n" +
+                                        "pkill " + homeInfo.packageName + "\n";
+                                os.writeBytes(cmd);
+                            } catch (Exception e) {}
+                        }
+                    }, 1000);
                 } catch (Exception e) {
                 }
             }
