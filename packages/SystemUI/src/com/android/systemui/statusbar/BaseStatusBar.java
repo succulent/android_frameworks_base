@@ -592,15 +592,13 @@ public abstract class BaseStatusBar extends SystemUI implements
 
                 boolean largeThumbs = Settings.System.getInt(mContext.getContentResolver(),
                         Settings.System.LARGE_RECENT_THUMBS, 0) == 1;
-
-                float thumbWidth = res
-                        .getDimensionPixelSize(largeThumbs ?
+                float thumbWidth = res.getDimensionPixelSize(largeThumbs ?
                         R.dimen.status_bar_recents_thumbnail_width_large :
                         R.dimen.status_bar_recents_thumbnail_width);
-                float thumbHeight = res
-                        .getDimensionPixelSize(largeThumbs ?
-                        R.dimen.status_bar_recents_thumbnail_height_large :
-                        R.dimen.status_bar_recents_thumbnail_height);
+                int h = res.getDisplayMetrics().heightPixels;
+                int w = res.getDisplayMetrics().widthPixels;
+                float thumbHeight = (h > w ? w : h) * thumbWidth / (h > w ? h : w);
+
                 if (first == null) {
                     throw new RuntimeException("Recents thumbnail is null");
                 }
@@ -640,7 +638,7 @@ public abstract class BaseStatusBar extends SystemUI implements
                     x = (int) ((dm.widthPixels - width) / 2f + appLabelLeftMargin + appLabelWidth
                             + thumbBgPadding + thumbLeftMargin);
                     y = (int) (dm.heightPixels
-                            - res.getDimensionPixelSize(R.dimen.status_bar_recents_thumbnail_height) - thumbBgPadding);
+                            - thumbHeight - thumbBgPadding);
                 } else { // if (config.orientation == Configuration.ORIENTATION_LANDSCAPE) {
                     float thumbTopMargin = res
                             .getDimensionPixelSize(R.dimen.status_bar_recents_thumbnail_top_margin);
@@ -672,8 +670,7 @@ public abstract class BaseStatusBar extends SystemUI implements
                             .getDimensionPixelSize(R.dimen.status_bar_recents_item_padding);
                     float recentsScrollViewRightPadding = res
                             .getDimensionPixelSize(R.dimen.status_bar_recents_right_glow_margin);
-                    x = (int) (dm.widthPixels - res
-                            .getDimensionPixelSize(R.dimen.status_bar_recents_thumbnail_width)
+                    x = (int) (dm.widthPixels - thumbWidth
                             - thumbBgPadding - recentsItemRightPadding - recentsScrollViewRightPadding);
                     y = (int) ((dm.heightPixels - statusBarHeight - height) / 2f + thumbTopMargin
                             + recentsItemTopPadding + thumbBgPadding + statusBarHeight);

@@ -430,9 +430,10 @@ public class RecentsPanelView extends FrameLayout implements OnItemClickListener
         mThumbnailWidth = Math.round(res.getDimension(largeThumbs ?
                 R.dimen.status_bar_recents_thumbnail_width_large :
                 R.dimen.status_bar_recents_thumbnail_width));
-        mThumbnailHeight = Math.round(res.getDimension(largeThumbs ?
-                R.dimen.status_bar_recents_thumbnail_height_large :
-                R.dimen.status_bar_recents_thumbnail_height));
+        int height = res.getDisplayMetrics().heightPixels;
+        int width = res.getDisplayMetrics().widthPixels;
+        mThumbnailHeight = (height > width ? width : height) * mThumbnailWidth /
+                (height > width ? height : width);
         mFitThumbnailToXY = res.getBoolean(R.bool.config_recents_thumbnail_image_fits_to_xy);
     }
 
@@ -522,12 +523,13 @@ public class RecentsPanelView extends FrameLayout implements OnItemClickListener
             if (h.thumbnailViewImageBitmap == null ||
                 h.thumbnailViewImageBitmap.getWidth() != thumbnail.getWidth() ||
                 h.thumbnailViewImageBitmap.getHeight() != thumbnail.getHeight()) {
-                if (mFitThumbnailToXY) {
+                if (false) {
                     h.thumbnailViewImage.setScaleType(ScaleType.FIT_XY);
                 } else {
                     Matrix scaleMatrix = new Matrix();
-                    float scale = mThumbnailWidth / (float) thumbnail.getWidth();
-                    scaleMatrix.setScale(scale, scale);
+                    float wscale = mThumbnailWidth / (float) thumbnail.getWidth();
+                    float hscale = mThumbnailHeight / (float) thumbnail.getHeight();
+                    scaleMatrix.setScale(wscale, hscale);
                     h.thumbnailViewImage.setScaleType(ScaleType.MATRIX);
                     h.thumbnailViewImage.setImageMatrix(scaleMatrix);
                 }

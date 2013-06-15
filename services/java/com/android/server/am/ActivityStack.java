@@ -936,16 +936,14 @@ final class ActivityStack {
         if (w < 0) {
             boolean largeThumbs = Settings.System.getInt(mContext.getContentResolver(),
                     Settings.System.LARGE_RECENT_THUMBS, 0) == 1;
-
-            mThumbnailHeight = h =
-                    res.getDimensionPixelSize(largeThumbs ?
-                    com.android.internal.R.dimen.thumbnail_height_large :
-                    com.android.internal.R.dimen.thumbnail_height);
-
             mThumbnailWidth = w =
                     res.getDimensionPixelSize(largeThumbs ?
                     com.android.internal.R.dimen.thumbnail_width_large :
                     com.android.internal.R.dimen.thumbnail_width);
+            int height = res.getDisplayMetrics().heightPixels;
+            int width = res.getDisplayMetrics().widthPixels;
+            mThumbnailHeight = h = (height > width ? width : height) * mThumbnailWidth /
+                    (height > width ? height : width);
         }
 
         if (w > 0) {
