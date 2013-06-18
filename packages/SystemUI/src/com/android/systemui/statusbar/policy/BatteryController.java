@@ -162,6 +162,10 @@ public class BatteryController extends BroadcastReceiver {
         return R.drawable.stat_sys_battery_charge_min;
     }
 
+    protected int getBatteryLevel() {
+        return mBatteryLevel;
+    }
+
     protected int getBatteryStyle() {
         return mBatteryStyle;
     }
