@@ -138,7 +138,7 @@ public class BatteryController extends BroadcastReceiver {
     public void addStateChangedCallback(BatteryStateChangeCallback cb) {
         mChangeCallbacks.add(cb);
         // trigger initial update
-        cb.onBatteryLevelChanged(mBatteryLevel, isBatteryStatusCharging());
+        cb.onBatteryLevelChanged(getBatteryLevel(), isBatteryStatusCharging());
     }
 
     public void removeStateChangedCallback(BatteryStateChangeCallback cb) {
@@ -206,13 +206,14 @@ public class BatteryController extends BroadcastReceiver {
     }
 
     protected void updateViews() {
+        int level = getBatteryLevel();
         if (mUiController) {
             int N = mIconViews.size();
             for (int i=0; i<N; i++) {
                 ImageView v = mIconViews.get(i);
-                v.setImageLevel(mBatteryLevel);
+                v.setImageLevel(level);
                 v.setContentDescription(mContext.getString(R.string.accessibility_battery_level,
-                        mBatteryLevel));
+                        level));
                 if (mTabletMode && v.getVisibility() == View.VISIBLE && v.getId() == mViewId) {
                     scaleImage(v);
                 }
@@ -220,13 +221,12 @@ public class BatteryController extends BroadcastReceiver {
             N = mLabelViews.size();
             for (int i=0; i<N; i++) {
                 TextView v = mLabelViews.get(i);
-                v.setText(mContext.getString(BATTERY_TEXT_STYLE_MIN,
-                        mBatteryLevel));
+                v.setText(mContext.getString(BATTERY_TEXT_STYLE_MIN, level));
             }
         }
 
         for (BatteryStateChangeCallback cb : mChangeCallbacks) {
-            cb.onBatteryLevelChanged(mBatteryLevel, isBatteryStatusCharging());
+            cb.onBatteryLevelChanged(level, isBatteryStatusCharging());
         }
     }
 
