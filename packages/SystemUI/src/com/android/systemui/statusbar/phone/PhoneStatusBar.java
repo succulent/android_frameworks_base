@@ -993,10 +993,10 @@ public class PhoneStatusBar extends BaseStatusBar {
     }
 
     private void prepareNavigationBarView() {
-        mNavigationBarView.reorient();
         mNavigationBarView.setListener(mRecentsClickListener,mRecentsPreloadOnTouchListener,
                 mHomeSearchActionListener, mNotificationsClickListener, mQSClickListener,
                 mDrawerClickListener, mVolumeClickListener);
+        mNavigationBarView.reorient();
         updateSearchPanel();
         int navColor = Settings.System.getIntForUser(mContext.getContentResolver(), Settings.System.NAVIGATION_BAR_COLOR,
                 0xff000000, UserHandle.USER_CURRENT);
