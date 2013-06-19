@@ -24,6 +24,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.drawable.Drawable;
+import android.os.UserHandle;
 import android.provider.Settings;
 import android.view.View;
 import android.widget.CompoundButton;
@@ -61,11 +62,12 @@ public class BluetoothController extends BroadcastReceiver
     public BluetoothController(Context context) {
         mContext = context;
 
-        mTabletMode = Settings.System.getInt(mContext.getContentResolver(),
+        mTabletMode = Settings.System.getIntForUser(mContext.getContentResolver(),
                 Settings.System.TABLET_MODE, mContext.getResources().getBoolean(
-                com.android.internal.R.bool.config_showTabletNavigationBar) ? 1 : 0) == 1 &&
-                Settings.System.getInt(context.getContentResolver(),
-                Settings.System.TABLET_SCALED_ICONS, 1) == 1;
+                com.android.internal.R.bool.config_showTabletNavigationBar) ? 1 : 0,
+                UserHandle.USER_CURRENT) == 1 &&
+                Settings.System.getIntForUser(context.getContentResolver(),
+                Settings.System.TABLET_SCALED_ICONS, 1, UserHandle.USER_CURRENT) == 1;
 
         IntentFilter filter = new IntentFilter();
         filter.addAction(BluetoothAdapter.ACTION_STATE_CHANGED);

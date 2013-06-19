@@ -31,6 +31,7 @@ import android.graphics.RectF;
 import android.hardware.input.InputManager;
 import android.os.Handler;
 import android.os.SystemClock;
+import android.os.UserHandle;
 import android.provider.Settings;
 import android.util.AttributeSet;
 import android.view.HapticFeedbackConstants;
@@ -81,11 +82,11 @@ public class KeyButtonView extends ImageView {
         void observe() {
             ContentResolver resolver = mContext.getContentResolver();
             resolver.registerContentObserver(Settings.System.getUriFor(
-                    Settings.System.NAVIGATION_BUTTON_COLOR), false, this);
+                    Settings.System.NAVIGATION_BUTTON_COLOR), false, this, UserHandle.USER_ALL);
             resolver.registerContentObserver(Settings.System.getUriFor(
-                    Settings.System.NAVIGATION_BUTTON_GLOW_TIME), false, this);
+                    Settings.System.NAVIGATION_BUTTON_GLOW_TIME), false, this, UserHandle.USER_ALL);
             resolver.registerContentObserver(Settings.System.getUriFor(
-                    Settings.System.NAVIGATION_BUTTON_GLOW_COLOR), false, this);
+                    Settings.System.NAVIGATION_BUTTON_GLOW_COLOR), false, this, UserHandle.USER_ALL);
             update();
         }
 
@@ -96,15 +97,15 @@ public class KeyButtonView extends ImageView {
 
         public void update() {
             ContentResolver resolver = mContext.getContentResolver();
-            mGlowTime = Settings.System.getInt(resolver,
-                    Settings.System.NAVIGATION_BUTTON_GLOW_TIME, mGlowTime);
+            mGlowTime = Settings.System.getIntForUser(resolver,
+                    Settings.System.NAVIGATION_BUTTON_GLOW_TIME, mGlowTime, UserHandle.USER_CURRENT);
             setGlowBG(mGlowTime > 0);
 
-            mGlowBGColor = Settings.System.getInt(resolver,
-                    Settings.System.NAVIGATION_BUTTON_GLOW_COLOR, 0);
+            mGlowBGColor = Settings.System.getIntForUser(resolver,
+                    Settings.System.NAVIGATION_BUTTON_GLOW_COLOR, 0, UserHandle.USER_CURRENT);
 
-            mButtonColor = Settings.System.getInt(resolver,
-                    Settings.System.NAVIGATION_BUTTON_COLOR, 0);
+            mButtonColor = Settings.System.getIntForUser(resolver,
+                    Settings.System.NAVIGATION_BUTTON_COLOR, 0, UserHandle.USER_CURRENT);
             if (mButtonColor != 0) {
                 setColorFilter(mButtonColor, PorterDuff.Mode.SRC_ATOP);
                 setDrawingAlpha((float) Color.alpha(mButtonColor) / 255f);

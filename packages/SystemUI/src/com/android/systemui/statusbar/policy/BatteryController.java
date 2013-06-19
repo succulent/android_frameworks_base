@@ -27,6 +27,7 @@ import android.database.ContentObserver;
 import android.graphics.drawable.Drawable;
 import android.os.BatteryManager;
 import android.os.Handler;
+import android.os.UserHandle;
 import android.provider.Settings;
 import android.view.View;
 import android.widget.ImageView;
@@ -80,7 +81,7 @@ public class BatteryController extends BroadcastReceiver {
         void observe() {
             ContentResolver resolver = mContext.getContentResolver();
             resolver.registerContentObserver(Settings.System.getUriFor(
-                    Settings.System.STATUS_BAR_BATTERY), false, this);
+                    Settings.System.STATUS_BAR_BATTERY), false, this, UserHandle.USER_ALL);
         }
 
         @Override public void onChange(boolean selfChange) {
@@ -114,11 +115,12 @@ public class BatteryController extends BroadcastReceiver {
         filter.addAction(Intent.ACTION_BATTERY_CHANGED);
         mContext.registerReceiver(this, filter);
 
-        mTabletMode = Settings.System.getInt(mContext.getContentResolver(),
+        mTabletMode = Settings.System.getIntForUser(mContext.getContentResolver(),
                 Settings.System.TABLET_MODE, mContext.getResources().getBoolean(
-                com.android.internal.R.bool.config_showTabletNavigationBar) ? 1 : 0) == 1 &&
-                Settings.System.getInt(context.getContentResolver(),
-                Settings.System.TABLET_SCALED_ICONS, 1) == 1;
+                com.android.internal.R.bool.config_showTabletNavigationBar) ? 1 : 0,
+                UserHandle.USER_CURRENT) == 1 &&
+                Settings.System.getIntForUser(context.getContentResolver(),
+                Settings.System.TABLET_SCALED_ICONS, 1, UserHandle.USER_CURRENT) == 1;
     }
 
     public void addPanelIconView(ImageView v) {
@@ -290,8 +292,8 @@ public class BatteryController extends BroadcastReceiver {
 
     private void updateSettings() {
         ContentResolver resolver = mContext.getContentResolver();
-        mBatteryStyle = (Settings.System.getInt(resolver,
-                Settings.System.STATUS_BAR_BATTERY, BATTERY_STYLE_NORMAL));
+        mBatteryStyle = (Settings.System.getIntForUser(resolver,
+                Settings.System.STATUS_BAR_BATTERY, BATTERY_STYLE_NORMAL, UserHandle.USER_CURRENT));
         updateBattery();
     }
 }

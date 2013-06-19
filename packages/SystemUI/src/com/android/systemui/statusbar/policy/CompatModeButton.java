@@ -20,6 +20,7 @@ import android.app.ActivityManager;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.os.RemoteException;
+import android.os.UserHandle;
 import android.provider.Settings;
 import android.util.AttributeSet;
 import android.util.Slog;
@@ -56,8 +57,8 @@ public class CompatModeButton extends ImageView {
             return;
         }
 
-        if (Settings.System.getInt(getContext().getContentResolver(), Settings.System.COMPAT_BUTTON,
-                1) == 0) {
+        if (Settings.System.getIntForUser(getContext().getContentResolver(),
+                Settings.System.COMPAT_BUTTON, 1, UserHandle.USER_CURRENT) == 0) {
             return;
         }
 

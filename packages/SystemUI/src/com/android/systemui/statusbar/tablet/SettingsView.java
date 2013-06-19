@@ -114,8 +114,8 @@ public class SettingsView extends LinearLayout implements View.OnClickListener,
 
         final Context context = getContext();
 
-        String rows = Settings.System.getString(context.getContentResolver(),
-                Settings.System.COMBINED_BAR_SETTINGS);
+        String rows = Settings.System.getStringForUser(context.getContentResolver(),
+                Settings.System.COMBINED_BAR_SETTINGS, UserHandle.USER_CURRENT);
 
         if (rows == null) {
             rows = BUTTONS_DEFAULT;
@@ -447,8 +447,8 @@ public class SettingsView extends LinearLayout implements View.OnClickListener,
     // Sleep
     // ----------------------------
     private void onClickSleep() {
-        int value = Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.SCREEN_OFF_TIMEOUT, 60000);
+        int value = Settings.System.getIntForUser(mContext.getContentResolver(),
+                Settings.System.SCREEN_OFF_TIMEOUT, 60000, UserHandle.USER_CURRENT);
         String[] entries = mContext.getResources().getStringArray(R.array.screen_timeout_entries);
         String[] values = mContext.getResources().getStringArray(R.array.screen_timeout_values);
         int best = 0;
@@ -459,14 +459,14 @@ public class SettingsView extends LinearLayout implements View.OnClickListener,
             }
         }
         value = Integer.parseInt(values[values.length - 1 == best ? 0 : best + 1].toString());
-        Settings.System.putInt(mContext.getContentResolver(),
-                Settings.System.SCREEN_OFF_TIMEOUT, value);
+        Settings.System.putIntForUser(mContext.getContentResolver(),
+                Settings.System.SCREEN_OFF_TIMEOUT, value, UserHandle.USER_CURRENT);
         updateSleepSummary();
     }
 
     private void updateSleepSummary() {
-        int value = Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.SCREEN_OFF_TIMEOUT, 60000);
+        int value = Settings.System.getIntForUser(mContext.getContentResolver(),
+                Settings.System.SCREEN_OFF_TIMEOUT, 60000, UserHandle.USER_CURRENT);
         String[] entries = mContext.getResources().getStringArray(R.array.screen_timeout_entries);
         String[] values = mContext.getResources().getStringArray(R.array.screen_timeout_values);
         int best = 0;

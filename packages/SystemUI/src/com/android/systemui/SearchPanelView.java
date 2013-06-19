@@ -342,7 +342,7 @@ public class SearchPanelView extends FrameLayout implements
             for (int i = 0; i < NavigationRingHelpers.MAX_ACTIONS; i++) {
                 resolver.registerContentObserver(
                         Settings.System.getUriFor(Settings.System.NAVIGATION_RING_TARGETS[i]),
-                        false, this);
+                        false, this, UserHandle.USER_ALL);
             }
         }
 

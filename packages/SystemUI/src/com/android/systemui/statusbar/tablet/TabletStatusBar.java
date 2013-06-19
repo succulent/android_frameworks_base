@@ -44,6 +44,7 @@ import android.os.Message;
 import android.os.RemoteException;
 import android.os.ServiceManager;
 import android.os.storage.StorageManager;
+import android.os.UserHandle;
 import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.Pair;
@@ -268,8 +269,8 @@ public class TabletStatusBar extends BaseStatusBar implements
         mNotificationPanel.setOnTouchListener(
                 new TouchOutsideListener(MSG_CLOSE_NOTIFICATION_PANEL, mNotificationPanel));
 
-        int color = Settings.System.getInt(context.getContentResolver(),
-                Settings.System.NOTIFICATION_PANEL_COLOR, 0xFF000000);
+        int color = Settings.System.getIntForUser(context.getContentResolver(),
+                Settings.System.NOTIFICATION_PANEL_COLOR, 0xFF000000, UserHandle.USER_CURRENT);
 
         if (color != 0xFF000000) {
             Drawable background = mNotificationPanel.mContentFrame.getBackground();
@@ -527,12 +528,13 @@ public class TabletStatusBar extends BaseStatusBar implements
         boolean hasNavigationBar = mContext.getResources().getBoolean(
                     com.android.internal.R.bool.config_showNavigationBar);
 
-        mNavigationDisabled = Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.NAVIGATION_CONTROLS, hasNavigationBar ? 1 : 0) == 0;
+        mNavigationDisabled = Settings.System.getIntForUser(mContext.getContentResolver(),
+                Settings.System.NAVIGATION_CONTROLS, hasNavigationBar ? 1 : 0,
+                UserHandle.USER_CURRENT) == 0;
 
-        final int numIcons = Settings.System.getInt(mContext.getContentResolver(),
+        final int numIcons = Settings.System.getIntForUser(mContext.getContentResolver(),
                 Settings.System.TABLET_NOTIFICATIONS,  mNavigationDisabled ? mMaxNotificationIcons :
-                res.getInteger(R.integer.config_maxNotificationIcons));
+                res.getInteger(R.integer.config_maxNotificationIcons), UserHandle.USER_CURRENT);
 
         if (numIcons != mMaxNotificationIcons) {
             mMaxNotificationIcons = numIcons;
@@ -556,8 +558,8 @@ public class TabletStatusBar extends BaseStatusBar implements
 
         loadDimens();
 
-        mFlipStatusBar = Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.TABLET_FLIPPED, 0) == 1;
+        mFlipStatusBar = Settings.System.getIntForUser(mContext.getContentResolver(),
+                Settings.System.TABLET_FLIPPED, 0, UserHandle.USER_CURRENT) == 1;
 
         final TabletStatusBarView sb = (TabletStatusBarView)View.inflate(
                 context, mFlipStatusBar ? R.layout.system_bar_flipped : R.layout.system_bar, null);
@@ -717,8 +719,8 @@ public class TabletStatusBar extends BaseStatusBar implements
 
         showClock(true);
 
-        int barColor = Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.STATUS_BAR_COLOR, 0xff000000);
+        int barColor = Settings.System.getIntForUser(mContext.getContentResolver(),
+                Settings.System.STATUS_BAR_COLOR, 0xff000000, UserHandle.USER_CURRENT);
         if (barColor != 0xff000000) sb.setBackgroundColor(barColor);
 
         sb.setOnTouchListener(mHideBarListener);
@@ -948,10 +950,10 @@ public class TabletStatusBar extends BaseStatusBar implements
                     mShadow.setVisibility(View.GONE);
                     mSystemUiVisibility &= ~View.SYSTEM_UI_FLAG_LOW_PROFILE;
                     notifyUiVisibilityChanged();
-                    if (Settings.System.getInt(mContext.getContentResolver(),
-                            Settings.System.HIDE_SB_LIGHTS_OUT, 0) == 1) {
-                        Settings.System.putInt(mContext.getContentResolver(),
-                                Settings.System.EXPANDED_DESKTOP_STATE, 0);
+                    if (Settings.System.getIntForUser(mContext.getContentResolver(),
+                            Settings.System.HIDE_SB_LIGHTS_OUT, 0, UserHandle.USER_CURRENT) == 1) {
+                        Settings.System.putIntForUser(mContext.getContentResolver(),
+                                Settings.System.EXPANDED_DESKTOP_STATE, 0, UserHandle.USER_CURRENT);
                     }
                     break;
                 case MSG_HIDE_CHROME:
@@ -962,10 +964,10 @@ public class TabletStatusBar extends BaseStatusBar implements
                     mShadow.setVisibility(View.VISIBLE);
                     mSystemUiVisibility |= View.SYSTEM_UI_FLAG_LOW_PROFILE;
                     notifyUiVisibilityChanged();
-                    if (Settings.System.getInt(mContext.getContentResolver(),
-                            Settings.System.HIDE_SB_LIGHTS_OUT, 0) == 1) {
-                        Settings.System.putInt(mContext.getContentResolver(),
-                                Settings.System.EXPANDED_DESKTOP_STATE, 1);
+                    if (Settings.System.getIntForUser(mContext.getContentResolver(),
+                            Settings.System.HIDE_SB_LIGHTS_OUT, 0, UserHandle.USER_CURRENT) == 1) {
+                        Settings.System.putIntForUser(mContext.getContentResolver(),
+                                Settings.System.EXPANDED_DESKTOP_STATE, 1, UserHandle.USER_CURRENT);
                     }
                     break;
                 case MSG_STOP_TICKER:
@@ -973,6 +975,15 @@ public class TabletStatusBar extends BaseStatusBar implements
                     break;
             }
         }
+    }
+
+    @Override
+    public void userSwitched(int newUserId) {
+        animateCollapsePanels();
+        updateNotificationIcons();
+        updateSearchPanel();
+        mHandler.removeCallbacks(mStatusBarReset);
+        mHandler.postDelayed(mStatusBarReset, 1000);
     }
 
     public void addIcon(String slot, int index, int viewIndex, StatusBarIcon icon) {
@@ -1021,8 +1032,8 @@ public class TabletStatusBar extends BaseStatusBar implements
         ContentResolver resolver = mContext.getContentResolver();
         TextView clock = (TextView) mBarContents.findViewById(R.id.clock);
         View network_text = mBarContents.findViewById(R.id.network_text);
-        mShowClock = (Settings.System.getInt(resolver,
-                Settings.System.STATUS_BAR_CLOCK, 1) == 1);
+        mShowClock = (Settings.System.getIntForUser(resolver,
+                Settings.System.STATUS_BAR_CLOCK, 1, UserHandle.USER_CURRENT) == 1);
         if (clock != null) {
             clock.setVisibility(show ? (mShowClock ? View.VISIBLE : View.GONE) : View.GONE);
         }
@@ -1030,12 +1041,12 @@ public class TabletStatusBar extends BaseStatusBar implements
             network_text.setVisibility((!show) ? View.VISIBLE : View.GONE);
         }
 
-        if (Settings.System.getInt(resolver, Settings.System.TABLET_SCALED_ICONS, 1) == 0) {
+        if (Settings.System.getIntForUser(resolver, Settings.System.TABLET_SCALED_ICONS, 1, UserHandle.USER_CURRENT) == 0) {
             clock.setTextSize(16);
         }
 
-        int clockColor = Settings.System.getInt(resolver, Settings.System.STATUS_BAR_CLOCK_COLOR,
-                0xff33b5e5);
+        int clockColor = Settings.System.getIntForUser(resolver, Settings.System.STATUS_BAR_CLOCK_COLOR,
+                0xff33b5e5, UserHandle.USER_CURRENT);
 
         if (clockColor != 0xff33b5e5) {
             clock.setTextColor(clockColor);
@@ -1114,8 +1125,8 @@ public class TabletStatusBar extends BaseStatusBar implements
         mHomeButton.setVisibility(disableHome ? View.INVISIBLE : View.VISIBLE);
         mRecentButton.setVisibility(disableRecent ? View.INVISIBLE : View.VISIBLE);
 
-        if (Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.TABLET_FORCE_MENU, 0) == 1) {
+        if (Settings.System.getIntForUser(mContext.getContentResolver(),
+                Settings.System.TABLET_FORCE_MENU, 0, UserHandle.USER_CURRENT) == 1) {
             mMenuButton.setVisibility(mNavigationDisabled ? View.GONE : (disableMenu ?
                     View.INVISIBLE : View.VISIBLE));
         }
@@ -1129,8 +1140,8 @@ public class TabletStatusBar extends BaseStatusBar implements
         mHomeButton.setVisibility(disabled ? View.INVISIBLE : View.VISIBLE);
         mRecentButton.setVisibility(disabled ? View.INVISIBLE : View.VISIBLE);
 
-        if (Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.TABLET_FORCE_MENU, 0) == 1) {
+        if (Settings.System.getIntForUser(mContext.getContentResolver(),
+                Settings.System.TABLET_FORCE_MENU, 0, UserHandle.USER_CURRENT) == 1) {
             mMenuButton.setVisibility(disabled ? View.INVISIBLE : View.VISIBLE);
         }
     }
@@ -1150,6 +1161,9 @@ public class TabletStatusBar extends BaseStatusBar implements
         if (!firstTime && (n.notification.flags & Notification.FLAG_ONLY_ALERT_ONCE) != 0) {
             return;
         }
+
+        if (!notificationIsForCurrentUser(n)) return;
+
         // Show the ticker if one is requested. Also don't do this
         // until status bar window is attached to the window manager,
         // because...  well, what's the point otherwise?  And trying to
@@ -1281,8 +1295,8 @@ public class TabletStatusBar extends BaseStatusBar implements
             Slog.d(TAG, (showMenu?"showing":"hiding") + " the MENU button");
         }
 
-        boolean forceMenu = Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.TABLET_FORCE_MENU, 0) == 1;
+        boolean forceMenu = Settings.System.getIntForUser(mContext.getContentResolver(),
+                Settings.System.TABLET_FORCE_MENU, 0, UserHandle.USER_CURRENT) == 1;
 
         if (!mNavigationDisabled && !forceMenu) {
             mMenuButton.setVisibility(showMenu ? View.VISIBLE : View.GONE);
@@ -1599,7 +1613,7 @@ public class TabletStatusBar extends BaseStatusBar implements
                 Entry ent = mNotificationData.get(N-i-1);
                 if ((provisioned && ent.notification.score >= HIDE_ICONS_BELOW_SCORE)
                         || showNotificationEvenIfUnprovisioned(ent.notification)) {
-                    toShow.add(ent.icon);
+                    if (notificationIsForCurrentUser(ent.notification)) toShow.add(ent.icon);
                 }
             }
 
@@ -1637,7 +1651,7 @@ public class TabletStatusBar extends BaseStatusBar implements
         for (int i=0; i<N; i++) {
             Entry ent = mNotificationData.get(N-i-1);
             if (provisioned || showNotificationEvenIfUnprovisioned(ent.notification)) {
-                toShow.add(ent.row);
+                if (notificationIsForCurrentUser(ent.notification)) toShow.add(ent.row);
             }
         }
 

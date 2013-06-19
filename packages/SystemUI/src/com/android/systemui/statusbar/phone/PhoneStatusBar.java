@@ -347,9 +347,9 @@ public class PhoneStatusBar extends BaseStatusBar {
         void observe() {
             ContentResolver resolver = mContext.getContentResolver();
             resolver.registerContentObserver(Settings.System.getUriFor(
-                    Settings.System.STATUS_BAR_BRIGHTNESS_CONTROL), false, this);
+                    Settings.System.STATUS_BAR_BRIGHTNESS_CONTROL), false, this, UserHandle.USER_ALL);
             resolver.registerContentObserver(Settings.System.getUriFor(
-                    Settings.System.SCREEN_BRIGHTNESS_MODE), false, this);
+                    Settings.System.SCREEN_BRIGHTNESS_MODE), false, this, UserHandle.USER_ALL);
             update();
         }
 
@@ -360,11 +360,11 @@ public class PhoneStatusBar extends BaseStatusBar {
 
         public void update() {
             ContentResolver resolver = mContext.getContentResolver();
-            boolean autoBrightness = Settings.System.getInt(
-                    resolver, Settings.System.SCREEN_BRIGHTNESS_MODE, 0) ==
+            boolean autoBrightness = Settings.System.getIntForUser(
+                    resolver, Settings.System.SCREEN_BRIGHTNESS_MODE, 0, UserHandle.USER_CURRENT) ==
                     Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC;
-            mBrightnessControl = !autoBrightness && Settings.System.getInt(
-                    resolver, Settings.System.STATUS_BAR_BRIGHTNESS_CONTROL, 0) == 1;
+            mBrightnessControl = !autoBrightness && Settings.System.getIntForUser(
+                    resolver, Settings.System.STATUS_BAR_BRIGHTNESS_CONTROL, 0, UserHandle.USER_CURRENT) == 1;
         }
     }
 
@@ -474,8 +474,8 @@ public class PhoneStatusBar extends BaseStatusBar {
                     }
                 });
 
-        int color = Settings.System.getInt(context.getContentResolver(),
-                Settings.System.NOTIFICATION_PANEL_COLOR, 0xFF000000);
+        int color = Settings.System.getIntForUser(context.getContentResolver(),
+                Settings.System.NOTIFICATION_PANEL_COLOR, 0xFF000000, UserHandle.USER_CURRENT);
 
         if (color != 0xFF000000) {
             Drawable background = mNotificationPanel.getBackground();
@@ -505,8 +505,8 @@ public class PhoneStatusBar extends BaseStatusBar {
             boolean showNav = mWindowManagerService.hasNavigationBar();
             if (DEBUG) Slog.v(TAG, "hasNavigationBar=" + showNav);
             if (mNavigationBarView == null && showNav && !mRecreating) {
-                int navAlign = Settings.System.getInt(mContext.getContentResolver(),
-                        Settings.System.NAVIGATION_ALIGNMENT, 0);
+                int navAlign = Settings.System.getIntForUser(mContext.getContentResolver(),
+                        Settings.System.NAVIGATION_ALIGNMENT, 0, UserHandle.USER_CURRENT);
                 switch (navAlign) {
                     case 0:
                         navAlign = R.layout.navigation_bar;
@@ -800,8 +800,8 @@ public class PhoneStatusBar extends BaseStatusBar {
 
         showClock(true);
 
-        int barColor = Settings.System.getInt(mContext.getContentResolver(), Settings.System.STATUS_BAR_COLOR,
-                0xff000000);
+        int barColor = Settings.System.getIntForUser(mContext.getContentResolver(), Settings.System.STATUS_BAR_COLOR,
+                0xff000000, UserHandle.USER_CURRENT);
         if (barColor != 0xff000000) mStatusBarView.setBackgroundColor(barColor);
 
         mStatusBarView.setOnTouchListener(mHideBarListener);
@@ -937,7 +937,7 @@ public class PhoneStatusBar extends BaseStatusBar {
             intent.addCategory("android.intent.category.HOME");
             intent.addCategory("com.cyanogenmod.trebuchet.APP_DRAWER");
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            mContext.startActivity(intent);
+            startActivityDismissingKeyguard(intent, false);
         }
     };
 
@@ -998,8 +998,8 @@ public class PhoneStatusBar extends BaseStatusBar {
                 mHomeSearchActionListener, mNotificationsClickListener, mQSClickListener,
                 mDrawerClickListener, mVolumeClickListener);
         updateSearchPanel();
-        int navColor = Settings.System.getInt(mContext.getContentResolver(), Settings.System.NAVIGATION_BAR_COLOR,
-                0xff000000);
+        int navColor = Settings.System.getIntForUser(mContext.getContentResolver(), Settings.System.NAVIGATION_BAR_COLOR,
+                0xff000000, UserHandle.USER_CURRENT);
         if (navColor != 0xff000000) mNavigationBarView.setBackgroundColor(navColor);
     }
 
@@ -1405,14 +1405,14 @@ public class PhoneStatusBar extends BaseStatusBar {
         if (mStatusBarView == null) return;
         ContentResolver resolver = mContext.getContentResolver();
         TextView clock = (TextView) mStatusBarView.findViewById(R.id.clock);
-        mShowClock = (Settings.System.getInt(resolver,
-                Settings.System.STATUS_BAR_CLOCK, 1) == 1);
+        mShowClock = (Settings.System.getIntForUser(resolver,
+                Settings.System.STATUS_BAR_CLOCK, 1, UserHandle.USER_CURRENT) == 1);
         if (clock != null) {
             clock.setVisibility(show ? (mShowClock ? View.VISIBLE : View.GONE) : View.GONE);
         }
 
-        int clockColor = Settings.System.getInt(resolver, Settings.System.STATUS_BAR_CLOCK_COLOR,
-                0xff33b5e5);
+        int clockColor = Settings.System.getIntForUser(resolver, Settings.System.STATUS_BAR_CLOCK_COLOR,
+                0xff33b5e5, UserHandle.USER_CURRENT);
 
         if (clockColor != 0xff33b5e5) {
             clock.setTextColor(clockColor);
@@ -1617,10 +1617,10 @@ public class PhoneStatusBar extends BaseStatusBar {
     public void animateCollapsePanels() {
         if (mRestoreExpandedDesktop) {
             mRestoreExpandedDesktop = false;
-            if (Settings.System.getInt(mContext.getContentResolver(),
-                     Settings.System.FULLSCREEN_TIMEOUT, 0) == 0) {
-                Settings.System.putInt(mContext.getContentResolver(),
-                        Settings.System.EXPANDED_DESKTOP_STATE, 1);
+            if (Settings.System.getIntForUser(mContext.getContentResolver(),
+                     Settings.System.FULLSCREEN_TIMEOUT, 0, UserHandle.USER_CURRENT) == 0) {
+                Settings.System.putIntForUser(mContext.getContentResolver(),
+                        Settings.System.EXPANDED_DESKTOP_STATE, 1, UserHandle.USER_CURRENT);
             }
         }
         animateCollapsePanels(CommandQueue.FLAG_EXCLUDE_NONE);
@@ -1706,13 +1706,13 @@ public class PhoneStatusBar extends BaseStatusBar {
             return ;
         }
 
-        if (Settings.System.getInt(mContext.getContentResolver(),
-                    Settings.System.EXPANDED_DESKTOP_STYLE, 0) == 2 &&
-                    Settings.System.getInt(mContext.getContentResolver(),
-                    Settings.System.EXPANDED_DESKTOP_STATE, 0) == 1) {
+        if (Settings.System.getIntForUser(mContext.getContentResolver(),
+                    Settings.System.EXPANDED_DESKTOP_STYLE, 0, UserHandle.USER_CURRENT) == 2 &&
+                    Settings.System.getIntForUser(mContext.getContentResolver(),
+                    Settings.System.EXPANDED_DESKTOP_STATE, 0, UserHandle.USER_CURRENT) == 1) {
             mRestoreExpandedDesktop = true;
-            Settings.System.putInt(mContext.getContentResolver(),
-                    Settings.System.EXPANDED_DESKTOP_STATE, 0);
+            Settings.System.putIntForUser(mContext.getContentResolver(),
+                    Settings.System.EXPANDED_DESKTOP_STATE, 0, UserHandle.USER_CURRENT);
         }
 
         mNotificationPanel.expand();
@@ -1782,13 +1782,13 @@ public class PhoneStatusBar extends BaseStatusBar {
             return;
         }
 
-        if (Settings.System.getInt(mContext.getContentResolver(),
-                    Settings.System.EXPANDED_DESKTOP_STYLE, 0) == 2 &&
-                    Settings.System.getInt(mContext.getContentResolver(),
-                    Settings.System.EXPANDED_DESKTOP_STATE, 0) == 1) {
+        if (Settings.System.getIntForUser(mContext.getContentResolver(),
+                    Settings.System.EXPANDED_DESKTOP_STYLE, 0, UserHandle.USER_CURRENT) == 2 &&
+                    Settings.System.getIntForUser(mContext.getContentResolver(),
+                    Settings.System.EXPANDED_DESKTOP_STATE, 0, UserHandle.USER_CURRENT) == 1) {
             mRestoreExpandedDesktop = true;
-            Settings.System.putInt(mContext.getContentResolver(),
-                    Settings.System.EXPANDED_DESKTOP_STATE, 0);
+            Settings.System.putIntForUser(mContext.getContentResolver(),
+                    Settings.System.EXPANDED_DESKTOP_STATE, 0, UserHandle.USER_CURRENT);
         }
 
         // Settings are not available in setup
@@ -2120,8 +2120,8 @@ public class PhoneStatusBar extends BaseStatusBar {
                     ServiceManager.getService("power"));
             if (power != null) {
                 power.setTemporaryScreenBrightnessSettingOverride(newBrightness);
-                Settings.System.putInt(mContext.getContentResolver(),
-                        Settings.System.SCREEN_BRIGHTNESS, newBrightness);
+                Settings.System.putIntForUser(mContext.getContentResolver(),
+                        Settings.System.SCREEN_BRIGHTNESS, newBrightness, UserHandle.USER_CURRENT);
             }
         } catch (RemoteException e) {
             Slog.w(TAG, "Setting Brightness failed: " + e);
@@ -2242,10 +2242,10 @@ public class PhoneStatusBar extends BaseStatusBar {
 
                 if (mNavigationBarView != null) {
                     mNavigationBarView.setLowProfile(lightsOut);
-                    if (Settings.System.getInt(mContext.getContentResolver(),
-                            Settings.System.HIDE_SB_LIGHTS_OUT, 0) == 1) {
-                        Settings.System.putInt(mContext.getContentResolver(),
-                                Settings.System.EXPANDED_DESKTOP_STATE, lightsOut ? 1 : 0);
+                    if (Settings.System.getIntForUser(mContext.getContentResolver(),
+                            Settings.System.HIDE_SB_LIGHTS_OUT, 0, UserHandle.USER_CURRENT) == 1) {
+                        Settings.System.putIntForUser(mContext.getContentResolver(),
+                                Settings.System.EXPANDED_DESKTOP_STATE, lightsOut ? 1 : 0, UserHandle.USER_CURRENT);
                     }
                 }
 
@@ -2426,13 +2426,13 @@ public class PhoneStatusBar extends BaseStatusBar {
             mTickerView.setVisibility(View.VISIBLE);
             mTickerView.startAnimation(loadAnim(com.android.internal.R.anim.push_up_in, null));
             mStatusBarContents.startAnimation(loadAnim(com.android.internal.R.anim.push_up_out, null));
-            if (Settings.System.getInt(mContext.getContentResolver(),
-                    Settings.System.EXPANDED_DESKTOP_STYLE, 0) == 2 &&
-                    Settings.System.getInt(mContext.getContentResolver(),
-                    Settings.System.EXPANDED_DESKTOP_STATE, 0) == 1) {
+            if (Settings.System.getIntForUser(mContext.getContentResolver(),
+                    Settings.System.EXPANDED_DESKTOP_STYLE, 0, UserHandle.USER_CURRENT) == 2 &&
+                    Settings.System.getIntForUser(mContext.getContentResolver(),
+                    Settings.System.EXPANDED_DESKTOP_STATE, 0, UserHandle.USER_CURRENT) == 1) {
                 mRestoreExpandedDesktop = true;
-                Settings.System.putInt(mContext.getContentResolver(),
-                        Settings.System.EXPANDED_DESKTOP_STATE, 0);
+                Settings.System.putIntForUser(mContext.getContentResolver(),
+                        Settings.System.EXPANDED_DESKTOP_STATE, 0, UserHandle.USER_CURRENT);
             }
         }
 
@@ -2445,10 +2445,10 @@ public class PhoneStatusBar extends BaseStatusBar {
                         mTickingDoneListener));
             if (mRestoreExpandedDesktop) {
                 mRestoreExpandedDesktop = false;
-                if (Settings.System.getInt(mContext.getContentResolver(),
-                         Settings.System.FULLSCREEN_TIMEOUT, 0) == 0) {
-                    Settings.System.putInt(mContext.getContentResolver(),
-                            Settings.System.EXPANDED_DESKTOP_STATE, 1);
+                if (Settings.System.getIntForUser(mContext.getContentResolver(),
+                         Settings.System.FULLSCREEN_TIMEOUT, 0, UserHandle.USER_CURRENT) == 0) {
+                    Settings.System.putIntForUser(mContext.getContentResolver(),
+                            Settings.System.EXPANDED_DESKTOP_STATE, 1, UserHandle.USER_CURRENT);
                 }
             }
         }
@@ -2461,10 +2461,10 @@ public class PhoneStatusBar extends BaseStatusBar {
             // we do not animate the ticker away at this point, just get rid of it (b/6992707)
             if (mRestoreExpandedDesktop) {
                 mRestoreExpandedDesktop = false;
-                if (Settings.System.getInt(mContext.getContentResolver(),
-                         Settings.System.FULLSCREEN_TIMEOUT, 0) == 0) {
-                    Settings.System.putInt(mContext.getContentResolver(),
-                            Settings.System.EXPANDED_DESKTOP_STATE, 1);
+                if (Settings.System.getIntForUser(mContext.getContentResolver(),
+                         Settings.System.FULLSCREEN_TIMEOUT, 0, UserHandle.USER_CURRENT) == 0) {
+                    Settings.System.putIntForUser(mContext.getContentResolver(),
+                            Settings.System.EXPANDED_DESKTOP_STATE, 1, UserHandle.USER_CURRENT);
                 }
             }
         }
@@ -2818,6 +2818,8 @@ public class PhoneStatusBar extends BaseStatusBar {
         updateNotificationIcons();
         resetUserSetupObserver();
         if (mNavigationBarView != null) updateSearchPanel();
+        mHandler.removeCallbacks(mStatusBarReset);
+        mHandler.postDelayed(mStatusBarReset, 1000);
     }
 
     private void resetUserSetupObserver() {
@@ -3036,8 +3038,8 @@ public class PhoneStatusBar extends BaseStatusBar {
 
     @Override
     protected boolean shouldDisableNavbarGestures() {
-        return !isDeviceProvisioned() || Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.EXPANDED_DESKTOP_STATE, 0) == 1
+        return !isDeviceProvisioned() || Settings.System.getIntForUser(mContext.getContentResolver(),
+                Settings.System.EXPANDED_DESKTOP_STATE, 0, UserHandle.USER_CURRENT) == 1
                 || mExpandedVisible || NavigationBarView.getEditMode()
                 || (mDisabled & StatusBarManager.DISABLE_SEARCH) != 0;
     }
@@ -3102,31 +3104,31 @@ public class PhoneStatusBar extends BaseStatusBar {
             final ContentResolver cr = mContext.getContentResolver();
             cr.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.QUICK_SETTINGS_TILES),
-                    false, this);
+                    false, this, UserHandle.USER_ALL);
 
             cr.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.QS_DYNAMIC_ALARM),
-                    false, this);
+                    false, this, UserHandle.USER_ALL);
 
             cr.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.QS_DYNAMIC_BUGREPORT),
-                    false, this);
+                    false, this, UserHandle.USER_ALL);
 
             cr.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.QS_DYNAMIC_DOCK_BATTERY),
-                    false, this);
+                    false, this, UserHandle.USER_ALL);
 
             cr.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.QS_DYNAMIC_IME),
-                    false, this);
+                    false, this, UserHandle.USER_ALL);
 
             cr.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.QS_DYNAMIC_USBTETHER),
-                    false, this);
+                    false, this, UserHandle.USER_ALL);
 
             cr.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.QS_DYNAMIC_WIFI),
-                    false, this);
+                    false, this, UserHandle.USER_ALL);
         }
     }
 }

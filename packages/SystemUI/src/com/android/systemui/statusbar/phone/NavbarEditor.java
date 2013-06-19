@@ -11,6 +11,7 @@ import android.content.DialogInterface;
 import android.content.res.Configuration;
 import android.database.DataSetObserver;
 import android.graphics.Color;
+import android.os.UserHandle;
 import android.provider.Settings;
 import android.util.DisplayMetrics;
 import android.view.DisplayInfo;
@@ -215,7 +216,7 @@ public class NavbarEditor implements OnTouchListener {
                     }
                 });
                 mDialog = builder.create();
-                mDialog.getWindow().setType(WindowManager.LayoutParams.TYPE_SYSTEM_ALERT);
+                mDialog.getWindow().setType(WindowManager.LayoutParams.TYPE_SYSTEM_DIALOG);
                 mDialog.setCanceledOnTouchOutside(false);
                 mDialog.show();
                 mLongPressed=false;
@@ -277,8 +278,8 @@ public class NavbarEditor implements OnTouchListener {
      */
     protected void reInflate() {
         ((ViewGroup)mParent).removeAllViews();
-        int navAlign = Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.NAVIGATION_ALIGNMENT, 0);
+        int navAlign = Settings.System.getIntForUser(mContext.getContentResolver(),
+                Settings.System.NAVIGATION_ALIGNMENT, 0, UserHandle.USER_CURRENT);
         if (mVertical) {
             switch (navAlign) {
                 case 0:

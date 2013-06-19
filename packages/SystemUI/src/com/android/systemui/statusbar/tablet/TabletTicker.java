@@ -29,6 +29,7 @@ import android.graphics.drawable.Drawable;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
+import android.os.UserHandle;
 import android.provider.Settings;
 import android.util.Slog;
 import android.view.Gravity;
@@ -227,8 +228,8 @@ public class TabletTicker
         WindowManager.LayoutParams lp = new WindowManager.LayoutParams(width, mLargeIconHeight,
                 WindowManager.LayoutParams.TYPE_NAVIGATION_BAR_PANEL, windowFlags,
                 PixelFormat.TRANSLUCENT);
-        boolean flipStatusBar = Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.TABLET_FLIPPED, 0) == 1;
+        boolean flipStatusBar = Settings.System.getIntForUser(mContext.getContentResolver(),
+                Settings.System.TABLET_FLIPPED, 0, UserHandle.USER_CURRENT) == 1;
         lp.gravity = Gravity.BOTTOM | (flipStatusBar ? Gravity.LEFT : Gravity.RIGHT);
 //        lp.windowAnimations = com.android.internal.R.style.Animation_Toast;
 

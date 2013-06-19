@@ -105,8 +105,8 @@ public class RecentTasksLoader implements View.OnTouchListener {
         mDefaultIconBackground = Bitmap.createBitmap(iconSize, iconSize, Bitmap.Config.ARGB_8888);
 
         // Render the default thumbnail background
-        boolean largeThumbs = Settings.System.getInt(context.getContentResolver(),
-                Settings.System.LARGE_RECENT_THUMBS, 0) == 1;
+        boolean largeThumbs = Settings.System.getIntForUser(context.getContentResolver(),
+                Settings.System.LARGE_RECENT_THUMBS, 0, UserHandle.USER_CURRENT) == 1;
         int thumbnailWidth =
                 res.getDimensionPixelSize(largeThumbs ?
                 com.android.internal.R.dimen.thumbnail_width_large :

@@ -21,6 +21,7 @@ import android.content.Context;
 import android.database.ContentObserver;
 import android.graphics.drawable.Drawable;
 import android.os.Handler;
+import android.os.UserHandle;
 import android.provider.Settings;
 import android.util.AttributeSet;
 import android.util.Slog;
@@ -73,7 +74,7 @@ public class SignalClusterView
         void observe() {
             ContentResolver resolver = mContext.getContentResolver();
             resolver.registerContentObserver(Settings.System.getUriFor(
-                    Settings.System.STATUS_BAR_SIGNAL_TEXT), false, this);
+                    Settings.System.STATUS_BAR_SIGNAL_TEXT), false, this, UserHandle.USER_ALL);
         }
 
         void unobserve() {
@@ -99,11 +100,12 @@ public class SignalClusterView
 
         mHandler = new Handler();
 
-        mTabletMode = Settings.System.getInt(context.getContentResolver(),
+        mTabletMode = Settings.System.getIntForUser(context.getContentResolver(),
                 Settings.System.TABLET_MODE, context.getResources().getBoolean(
-                com.android.internal.R.bool.config_showTabletNavigationBar) ? 1 : 0) == 1 &&
-                Settings.System.getInt(context.getContentResolver(),
-                Settings.System.TABLET_SCALED_ICONS, 1) == 1;
+                com.android.internal.R.bool.config_showTabletNavigationBar) ? 1 : 0,
+                UserHandle.USER_CURRENT) == 1 &&
+                Settings.System.getIntForUser(context.getContentResolver(),
+                Settings.System.TABLET_SCALED_ICONS, 1, UserHandle.USER_CURRENT) == 1;
 
         mObserver = new SettingsObserver(mHandler);
     }
@@ -287,8 +289,9 @@ public class SignalClusterView
 
     private void updateSettings() {
         ContentResolver resolver = mContext.getContentResolver();
-        mSignalClusterStyle = (Settings.System.getInt(resolver,
-                Settings.System.STATUS_BAR_SIGNAL_TEXT, SIGNAL_CLUSTER_STYLE_NORMAL));
+        mSignalClusterStyle = (Settings.System.getIntForUser(resolver,
+                Settings.System.STATUS_BAR_SIGNAL_TEXT, SIGNAL_CLUSTER_STYLE_NORMAL,
+                UserHandle.USER_CURRENT));
         updateSignalClusterStyle();
     }
 }

@@ -1330,8 +1330,9 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         if (!mHasSystemNavBar) {
             mHasNavigationBar = mContext.getResources().getBoolean(
                     com.android.internal.R.bool.config_showNavigationBar);
-            mHasNavigationBar = Settings.System.getInt(mContext.getContentResolver(),
-                        Settings.System.NAVIGATION_CONTROLS, mHasNavigationBar ? 1 : 0) == 1;
+            mHasNavigationBar = Settings.System.getIntForUser(mContext.getContentResolver(),
+                        Settings.System.NAVIGATION_CONTROLS, mHasNavigationBar ? 1 : 0,
+                        UserHandle.USER_CURRENT) == 1;
             // Allow a system property to override this. Used by the emulator.
             // See also hasNavigationBar().
             String navBarOverride = SystemProperties.get("qemu.hw.mainkeys");
@@ -1402,7 +1403,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
             boolean hasNavigationControls = Settings.System.getIntForUser(resolver,
                     Settings.System.NAVIGATION_CONTROLS, mContext.getResources().getBoolean(
-                    com.android.internal.R.bool.config_showNavigationBar) ? 1 : 0, UserHandle.USER_CURRENT) == 1;
+                    com.android.internal.R.bool.config_showNavigationBar) ? 1 : 0,
+                    UserHandle.USER_CURRENT) == 1;
 
             mHasMenuKeyEnabled = false;
 
@@ -1566,7 +1568,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             mHasNavigationBar = mContext.getResources().getBoolean(
                     com.android.internal.R.bool.config_showNavigationBar);
             mHasNavigationBar = Settings.System.getIntForUser(mContext.getContentResolver(),
-                        Settings.System.NAVIGATION_CONTROLS, mHasNavigationBar ? 1 : 0, UserHandle.USER_CURRENT) == 1;
+                    Settings.System.NAVIGATION_CONTROLS, mHasNavigationBar ? 1 : 0,
+                    UserHandle.USER_CURRENT) == 1;
             // Allow a system property to override this. Used by the emulator.
             // See also hasNavigationBar().
             String navBarOverride = SystemProperties.get("qemu.hw.mainkeys");

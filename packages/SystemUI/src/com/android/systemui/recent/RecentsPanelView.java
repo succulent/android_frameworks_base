@@ -425,8 +425,8 @@ public class RecentsPanelView extends FrameLayout implements OnItemClickListener
 
     public void updateValuesFromResources() {
         final Resources res = mContext.getResources();
-        boolean largeThumbs = Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.LARGE_RECENT_THUMBS, 0) == 1;
+        boolean largeThumbs = Settings.System.getIntForUser(mContext.getContentResolver(),
+                Settings.System.LARGE_RECENT_THUMBS, 0, UserHandle.USER_CURRENT) == 1;
         mThumbnailWidth = Math.round(res.getDimension(largeThumbs ?
                 R.dimen.status_bar_recents_thumbnail_width_large :
                 R.dimen.status_bar_recents_thumbnail_width));
@@ -466,22 +466,7 @@ public class RecentsPanelView extends FrameLayout implements OnItemClickListener
             });
         }
 
-        int color = Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.RECENTS_PANEL_COLOR, 0xe0000000);
-
-        if (mRecentsScrim != null) {
-            mHighEndGfx = ActivityManager.isHighEndGfx();
-            if (color == 0xe0000000) {
-                if (!mHighEndGfx) {
-                    mRecentsScrim.setBackground(null);
-                } else if (mRecentsScrim.getBackground() instanceof BitmapDrawable) {
-                    // In order to save space, we make the background texture repeat in the Y direction
-                    ((BitmapDrawable) mRecentsScrim.getBackground()).setTileModeY(TileMode.REPEAT);
-                }
-            } else {
-                mRecentsScrim.setBackgroundColor(color);
-            }
-        }
+        setColor();
     }
 
     public void setMinSwipeAlpha(float minAlpha) {
@@ -595,6 +580,25 @@ public class RecentsPanelView extends FrameLayout implements OnItemClickListener
             }
             mItemToAnimateInWhenWindowAnimationIsFinished = null;
             mAnimateIconOfFirstTask = false;
+        }
+    }
+
+    public void setColor() {
+        int color = Settings.System.getIntForUser(mContext.getContentResolver(),
+                Settings.System.RECENTS_PANEL_COLOR, 0xe0000000, UserHandle.USER_CURRENT);
+
+        if (mRecentsScrim != null) {
+            mHighEndGfx = ActivityManager.isHighEndGfx();
+            if (color == 0xe0000000) {
+                if (!mHighEndGfx) {
+                    mRecentsScrim.setBackground(null);
+                } else if (mRecentsScrim.getBackground() instanceof BitmapDrawable) {
+                    // In order to save space, we make the background texture repeat in the Y direction
+                    ((BitmapDrawable) mRecentsScrim.getBackground()).setTileModeY(TileMode.REPEAT);
+                }
+            } else {
+                mRecentsScrim.setBackgroundColor(color);
+            }
         }
     }
 

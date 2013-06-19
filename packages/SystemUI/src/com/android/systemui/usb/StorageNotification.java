@@ -343,8 +343,8 @@ public class StorageNotification extends StorageEventListener {
             mUsbStorageNotification.flags = Notification.FLAG_ONGOING_EVENT;
 
             mUsbStorageNotification.tickerText = title;
-            if (Settings.System.getInt(mContext.getContentResolver(),
-                    Settings.System.UMS_NOTIFICATION_CONNECT, 0) == 1) {
+            if (Settings.System.getIntForUser(mContext.getContentResolver(),
+                    Settings.System.UMS_NOTIFICATION_CONNECT, 0, UserHandle.USER_CURRENT) == 1) {
                 pi = PendingIntent.getBroadcast(mContext, 0, new Intent(UMS_INTENT), 0);
             } else if (pi == null) {
                 Intent intent = new Intent();
