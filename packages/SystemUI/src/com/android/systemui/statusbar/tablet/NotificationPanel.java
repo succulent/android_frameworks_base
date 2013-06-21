@@ -22,6 +22,8 @@ import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.graphics.Rect;
+import android.os.UserHandle;
+import android.provider.Settings;
 import android.util.AttributeSet;
 import android.util.Slog;
 import android.view.Gravity;
@@ -39,6 +41,7 @@ import android.widget.RelativeLayout;
 import com.android.systemui.ExpandHelper;
 import com.android.systemui.R;
 import com.android.systemui.statusbar.policy.NotificationRowLayout;
+import com.android.systemui.statusbar.powerwidget.PowerWidget;
 
 public class NotificationPanel extends RelativeLayout implements StatusBarPanel,
         View.OnClickListener {
@@ -65,6 +68,7 @@ public class NotificationPanel extends RelativeLayout implements StatusBarPanel,
     View mClearButton;
     static Interpolator sAccelerateInterpolator = new AccelerateInterpolator();
     static Interpolator sDecelerateInterpolator = new DecelerateInterpolator();
+    PowerWidget mPowerWidget;
 
     // amount to slide mContentParent down by when mContentFrame is missing
     float mContentFrameMissingTranslation;
@@ -106,6 +110,27 @@ public class NotificationPanel extends RelativeLayout implements StatusBarPanel,
         mClearButton.setOnClickListener(mClearButtonListener);
 
         mShowing = false;
+
+        mPowerWidget = (PowerWidget) findViewById(R.id.exp_power_stat);
+        mPowerWidget.setGlobalButtonOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        if(Settings.System.getIntForUser(v.getContext().getContentResolver(),
+                                Settings.System.EXPANDED_HIDE_ONCHANGE, 0,
+                                UserHandle.USER_CURRENT) == 1) {
+                            mBar.animateCollapsePanels();
+                        }
+                    }
+                });
+        mPowerWidget.setGlobalButtonOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                mBar.animateCollapsePanels();
+                return true;
+            }
+        });
+        mPowerWidget.setupWidget();
+        mPowerWidget.updateVisibility();
     }
 
     @Override
@@ -130,6 +155,7 @@ public class NotificationPanel extends RelativeLayout implements StatusBarPanel,
     }
 
     public void show(boolean show, boolean animate) {
+        mPowerWidget.updateVisibility();
         if (animate) {
             if (mShowing != show) {
                 mShowing = show;
@@ -252,12 +278,17 @@ public class NotificationPanel extends RelativeLayout implements StatusBarPanel,
     }
 
     public void swapPanels() {
+        String rows = Settings.System.getStringForUser(getContext().getContentResolver(),
+                Settings.System.COMBINED_BAR_SETTINGS, UserHandle.USER_CURRENT);
+        if (rows != null && rows.isEmpty()) return;
         final View toShow, toHide;
         if (mSettingsView == null) {
+            mPowerWidget.setVisibility(View.GONE);
             addSettingsView();
             toShow = mSettingsView;
             toHide = mNotificationScroller;
         } else {
+            mPowerWidget.updateVisibility();
             toShow = mNotificationScroller;
             toHide = mSettingsView;
         }
