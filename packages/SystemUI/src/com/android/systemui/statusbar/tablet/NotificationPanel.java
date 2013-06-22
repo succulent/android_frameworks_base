@@ -69,6 +69,7 @@ public class NotificationPanel extends RelativeLayout implements StatusBarPanel,
     static Interpolator sAccelerateInterpolator = new AccelerateInterpolator();
     static Interpolator sDecelerateInterpolator = new DecelerateInterpolator();
     PowerWidget mPowerWidget;
+    boolean mHideSettings;
 
     // amount to slide mContentParent down by when mContentFrame is missing
     float mContentFrameMissingTranslation;
@@ -278,9 +279,7 @@ public class NotificationPanel extends RelativeLayout implements StatusBarPanel,
     }
 
     public void swapPanels() {
-        String rows = Settings.System.getStringForUser(getContext().getContentResolver(),
-                Settings.System.COMBINED_BAR_SETTINGS, UserHandle.USER_CURRENT);
-        if (rows != null && rows.isEmpty()) return;
+        if (mHideSettings) return;
         final View toShow, toHide;
         if (mSettingsView == null) {
             mPowerWidget.setVisibility(View.GONE);
@@ -333,7 +332,8 @@ public class NotificationPanel extends RelativeLayout implements StatusBarPanel,
 
     public void updatePanelModeButtons() {
         final boolean settingsVisible = (mSettingsView != null);
-        mSettingsButton.setVisibility(!settingsVisible && mSettingsButton.isEnabled() ? View.VISIBLE : View.GONE);
+        mSettingsButton.setVisibility(!settingsVisible && mSettingsButton.isEnabled() &&
+                !mHideSettings ? View.VISIBLE : View.GONE);
         mNotificationButton.setVisibility(settingsVisible ? View.VISIBLE : View.GONE);
     }
 
@@ -477,9 +477,13 @@ public class NotificationPanel extends RelativeLayout implements StatusBarPanel,
 
     public void setSettingsEnabled(boolean settingsEnabled) {
         if (mSettingsButton != null) {
+            String rows = Settings.System.getStringForUser(getContext().getContentResolver(),
+                    Settings.System.COMBINED_BAR_SETTINGS, UserHandle.USER_CURRENT);
+            mHideSettings = rows != null && rows.isEmpty();
             mSettingsButton.setEnabled(settingsEnabled);
             if (mNotificationButton.getVisibility() != View.VISIBLE) {
-                mSettingsButton.setVisibility(settingsEnabled ? View.VISIBLE : View.GONE);
+                mSettingsButton.setVisibility(settingsEnabled && !mHideSettings
+                        ? View.VISIBLE : View.GONE);
             }
         }
     }
