@@ -1398,6 +1398,8 @@ public abstract class BaseStatusBar extends SystemUI implements
                     Settings.System.TABLET_NOTIFICATIONS), false, this, UserHandle.USER_ALL);
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.COMPAT_BUTTON), false, this, UserHandle.USER_ALL);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.TABLET_HEIGHT), false, this, UserHandle.USER_ALL);
         }
 
         @Override

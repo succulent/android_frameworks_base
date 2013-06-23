@@ -121,9 +121,6 @@ public class TabletStatusBar extends BaseStatusBar implements
     private static final int NOTIFICATION_PRIORITY_MULTIPLIER = 10; // see NotificationManagerService
     private static final int HIDE_ICONS_BELOW_SCORE = Notification.PRIORITY_LOW * NOTIFICATION_PRIORITY_MULTIPLIER;
 
-    // The height of the bar, as definied by the build.  It may be taller if we're plugged
-    // into hdmi.
-    int mNaturalBarHeight = -1;
     int mIconSize = -1;
     int mIconHPadding = -1;
     int mNavIconWidth = -1;
@@ -238,7 +235,7 @@ public class TabletStatusBar extends BaseStatusBar implements
 
         final WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT,
+                getStatusBarHeight(),
                 WindowManager.LayoutParams.TYPE_NAVIGATION_BAR,
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
                     | WindowManager.LayoutParams.FLAG_TOUCHABLE_WHEN_WAKING
@@ -250,6 +247,7 @@ public class TabletStatusBar extends BaseStatusBar implements
         lp.setTitle("SystemBar");
         lp.packageName = mContext.getPackageName();
         mWindowManager.addView(sb, lp);
+        onBarHeightChanged(getStatusBarHeight());
     }
 
     // last theme that was applied in order to detect theme change (as opposed
@@ -493,9 +491,6 @@ public class TabletStatusBar extends BaseStatusBar implements
 
     protected void loadDimens() {
         final Resources res = mContext.getResources();
-
-        mNaturalBarHeight = res.getDimensionPixelSize(
-                com.android.internal.R.dimen.navigation_bar_height);
 
         int newIconSize = res.getDimensionPixelSize(
             com.android.internal.R.dimen.system_bar_icon_size);
@@ -808,9 +803,10 @@ public class TabletStatusBar extends BaseStatusBar implements
     }
 
     public int getStatusBarHeight() {
-        return mStatusBarView != null ? mStatusBarView.getHeight()
-                : mContext.getResources().getDimensionPixelSize(
-                        com.android.internal.R.dimen.navigation_bar_height);
+        return mContext.getResources().getDimensionPixelSize(
+                        com.android.internal.R.dimen.navigation_bar_height) *
+                        Settings.System.getIntForUser(mContext.getContentResolver(),
+                        Settings.System.TABLET_HEIGHT, 100, UserHandle.USER_CURRENT) / 100;
     }
 
     protected int getStatusBarGravity() {
@@ -1049,11 +1045,17 @@ public class TabletStatusBar extends BaseStatusBar implements
             network_text.setVisibility((!show) ? View.VISIBLE : View.GONE);
         }
 
-        if (Settings.System.getIntForUser(resolver, Settings.System.TABLET_SCALED_ICONS, 1, UserHandle.USER_CURRENT) == 0) {
+        if (Settings.System.getIntForUser(resolver, Settings.System.TABLET_SCALED_ICONS, 1,
+                UserHandle.USER_CURRENT) == 0) {
             clock.setTextSize(16);
+        } else {
+            clock.setTextSize(28 * Settings.System.getIntForUser(
+                    mContext.getContentResolver(), Settings.System.TABLET_HEIGHT, 100,
+                    UserHandle.USER_CURRENT) / 100);
         }
 
-        int clockColor = Settings.System.getIntForUser(resolver, Settings.System.STATUS_BAR_CLOCK_COLOR,
+        int clockColor = Settings.System.getIntForUser(resolver,
+                Settings.System.STATUS_BAR_CLOCK_COLOR,
                 0xff33b5e5, UserHandle.USER_CURRENT);
 
         if (clockColor != 0xff33b5e5) {
@@ -1566,7 +1568,7 @@ public class TabletStatusBar extends BaseStatusBar implements
         loadNotificationPanel();
 
         final LinearLayout.LayoutParams params
-            = new LinearLayout.LayoutParams(mIconSize + 2*mIconHPadding, mNaturalBarHeight);
+            = new LinearLayout.LayoutParams(mIconSize + 2*mIconHPadding, getStatusBarHeight());
 
         // alternate behavior in DND mode
         if (mNotificationDNDMode) {

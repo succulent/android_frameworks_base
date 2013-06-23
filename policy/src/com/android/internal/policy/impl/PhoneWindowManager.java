@@ -703,6 +703,9 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.FULLSCREEN_MODE), false, this,
                     UserHandle.USER_ALL);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.TABLET_HEIGHT), false, this,
+                    UserHandle.USER_ALL);
             updateSettings();
         }
 
@@ -1285,15 +1288,24 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         mStatusBarHeight = mContext.getResources().getDimensionPixelSize(
                 com.android.internal.R.dimen.status_bar_height);
 
+        ContentResolver resolver = mContext.getContentResolver();
+        boolean tabletModeOverride = Settings.System.getIntForUser(resolver,
+                Settings.System.TABLET_MODE, mContext.getResources().getBoolean(
+                com.android.internal.R.bool.config_showTabletNavigationBar) ? 1 : 0,
+                UserHandle.USER_CURRENT) == 1;
+
+        int tabletHeight = tabletModeOverride ? Settings.System.getInt(resolver,
+                Settings.System.TABLET_HEIGHT, 100) : 100;
+
         // Height of the navigation bar when presented horizontally at bottom
         mNavigationBarHeightForRotation[mPortraitRotation] =
         mNavigationBarHeightForRotation[mUpsideDownRotation] =
                 mContext.getResources().getDimensionPixelSize(
-                        com.android.internal.R.dimen.navigation_bar_height);
+                        com.android.internal.R.dimen.navigation_bar_height) * tabletHeight / 100;
         mNavigationBarHeightForRotation[mLandscapeRotation] =
         mNavigationBarHeightForRotation[mSeascapeRotation] =
                 mContext.getResources().getDimensionPixelSize(
-                        com.android.internal.R.dimen.navigation_bar_height_landscape);
+                        com.android.internal.R.dimen.navigation_bar_height_landscape) * tabletHeight / 100;
 
         // Width of the navigation bar when presented vertically along one side
         mNavigationBarWidthForRotation[mPortraitRotation] =
@@ -1307,11 +1319,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         int shortSizeDp = shortSize * DisplayMetrics.DENSITY_DEFAULT / density;
         mShortSizeDp = shortSizeDp;
         mDensity = density;
-
-        ContentResolver resolver = mContext.getContentResolver();
-        boolean tabletModeOverride = Settings.System.getInt(resolver,
-                Settings.System.TABLET_MODE, mContext.getResources().getBoolean(
-                com.android.internal.R.bool.config_showTabletNavigationBar) ? 1 : 0) == 1;
 
         if (shortSizeDp < 600 && !tabletModeOverride) {
             // 0-599dp: "phone" UI with a separate status & navigation bar
@@ -1549,6 +1556,19 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 Settings.System.TABLET_MODE, mContext.getResources().getBoolean(
                 com.android.internal.R.bool.config_showTabletNavigationBar) ? 1 : 0,
 				UserHandle.USER_CURRENT) == 1;
+
+        int tabletHeight = tabletModeOverride ? Settings.System.getInt(resolver,
+                Settings.System.TABLET_HEIGHT, 100) : 100;
+
+        // Height of the navigation bar when presented horizontally at bottom
+        mNavigationBarHeightForRotation[mPortraitRotation] =
+        mNavigationBarHeightForRotation[mUpsideDownRotation] =
+                mContext.getResources().getDimensionPixelSize(
+                        com.android.internal.R.dimen.navigation_bar_height) * tabletHeight / 100;
+        mNavigationBarHeightForRotation[mLandscapeRotation] =
+        mNavigationBarHeightForRotation[mSeascapeRotation] =
+                mContext.getResources().getDimensionPixelSize(
+                        com.android.internal.R.dimen.navigation_bar_height_landscape) * tabletHeight / 100;
 
         if (mShortSizeDp < 600 && !tabletModeOverride) {
             // 0-599dp: "phone" UI with a separate status & navigation bar
