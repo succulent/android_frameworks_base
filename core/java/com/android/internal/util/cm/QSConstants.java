@@ -1,4 +1,4 @@
-package com.android.internal.util.cm;
+rgetpackage com.android.internal.util.cm;
 
 import java.util.ArrayList;
 
@@ -31,6 +31,7 @@ public class QSConstants {
         public static final String TILE_VOLUME = "toggleVolume";
         public static final String TILE_EXPANDEDDESKTOP = "toggleExpandedDesktop";
         public static final String TILE_APPDRAWER = "toggleAppDrawer";
+        public static final String TILE_CAMERA = "toggleCamera";
 
         public static final String TILE_DELIMITER = "|";
         public static ArrayList<String> TILES_DEFAULT = new ArrayList<String>();
