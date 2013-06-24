@@ -271,14 +271,14 @@ public class QuickSettingsController {
         // Load the dynamic tiles
         // These toggles must be the last ones added to the view, as they will show
         // only when they are needed
-        if (Settings.System.getIntForUser(resolver, Settings.System.QS_DYNAMIC_ALARM, 1,
-                    UserHandle.USER_CURRENT) == 1) {
+        if (Settings.System.getIntForUser(resolver,
+                    Settings.System.QS_DYNAMIC_ALARM, 1, UserHandle.USER_CURRENT) == 1) {
             QuickSettingsTile qs = new AlarmTile(mContext, this, mHandler);
             qs.setupQuickSettingsTile(inflater, mContainerView);
             mQuickSettingsTiles.add(qs);
         }
-        if (Settings.System.getIntForUser(resolver, Settings.System.QS_DYNAMIC_BUGREPORT, 1,
-                UserHandle.USER_CURRENT) == 1) {
+        if (Settings.System.getIntForUser(resolver,
+                    Settings.System.QS_DYNAMIC_BUGREPORT, 1, UserHandle.USER_CURRENT) == 1) {
             QuickSettingsTile qs = new BugReportTile(mContext, this, mHandler);
             qs.setupQuickSettingsTile(inflater, mContainerView);
             mQuickSettingsTiles.add(qs);
@@ -286,20 +286,20 @@ public class QuickSettingsController {
         if (!dockBatteryLoaded) {
             loadDockBatteryTile(resolver, inflater);
         }
-        if (Settings.System.getIntForUser(resolver, Settings.System.QS_DYNAMIC_WIFI, 1,
-                UserHandle.USER_CURRENT) == 1) {
+        if (Settings.System.getIntForUser(resolver,
+                    Settings.System.QS_DYNAMIC_WIFI, 1, UserHandle.USER_CURRENT) == 1) {
             QuickSettingsTile qs = new WiFiDisplayTile(mContext, this);
             qs.setupQuickSettingsTile(inflater, mContainerView);
             mQuickSettingsTiles.add(qs);
         }
         if (deviceSupportsImeSwitcher(mContext) && Settings.System.getIntForUser(resolver,
-                Settings.System.QS_DYNAMIC_IME, 1, UserHandle.USER_CURRENT) == 1) {
+                    Settings.System.QS_DYNAMIC_IME, 1, UserHandle.USER_CURRENT) == 1) {
             mIMETile = new InputMethodTile(mContext, this);
             mIMETile.setupQuickSettingsTile(inflater, mContainerView);
             mQuickSettingsTiles.add(mIMETile);
         }
         if (deviceSupportsUsbTether(mContext) && Settings.System.getIntForUser(resolver,
-                Settings.System.QS_DYNAMIC_USBTETHER, 1, UserHandle.USER_CURRENT) == 1) {
+                    Settings.System.QS_DYNAMIC_USBTETHER, 1, UserHandle.USER_CURRENT) == 1) {
             QuickSettingsTile qs = new UsbTetherTile(mContext, this);
             qs.setupQuickSettingsTile(inflater, mContainerView);
             mQuickSettingsTiles.add(qs);
@@ -310,8 +310,8 @@ public class QuickSettingsController {
         if (!deviceSupportsDockBattery(mContext)) {
             return;
         }
-        if (Settings.System.getIntForUser(resolver, Settings.System.QS_DYNAMIC_DOCK_BATTERY, 1,
-                UserHandle.USER_CURRENT) == 0) {
+        if (Settings.System.getIntForUser(resolver,
+                    Settings.System.QS_DYNAMIC_DOCK_BATTERY, 1, UserHandle.USER_CURRENT) == 0) {
             return;
         }
 

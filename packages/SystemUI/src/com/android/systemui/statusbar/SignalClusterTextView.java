@@ -74,7 +74,8 @@ public class SignalClusterTextView
         void observe() {
             ContentResolver resolver = mContext.getContentResolver();
             resolver.registerContentObserver(Settings.System.getUriFor(
-                    Settings.System.STATUS_BAR_SIGNAL_TEXT), false, this, UserHandle.USER_ALL);
+                    Settings.System.STATUS_BAR_SIGNAL_TEXT), false, this,
+                    UserHandle.USER_ALL);
         }
 
         void unobserve() {
@@ -172,7 +173,7 @@ public class SignalClusterTextView
         }
     };
 
-    private void updateSettings() {
+    public void updateSettings() {
         ContentResolver resolver = mContext.getContentResolver();
         mSignalClusterStyle = (Settings.System.getIntForUser(resolver,
                 Settings.System.STATUS_BAR_SIGNAL_TEXT, SIGNAL_CLUSTER_STYLE_NORMAL,

@@ -287,11 +287,11 @@ public class SignalClusterView
         }
     }
 
-    private void updateSettings() {
+    public void updateSettings() {
         ContentResolver resolver = mContext.getContentResolver();
-        mSignalClusterStyle = (Settings.System.getIntForUser(resolver,
+        mSignalClusterStyle = Settings.System.getIntForUser(resolver,
                 Settings.System.STATUS_BAR_SIGNAL_TEXT, SIGNAL_CLUSTER_STYLE_NORMAL,
-                UserHandle.USER_CURRENT));
+                UserHandle.USER_CURRENT);
         updateSignalClusterStyle();
     }
 }

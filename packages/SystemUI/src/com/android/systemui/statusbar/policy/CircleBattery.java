@@ -100,14 +100,7 @@ public class CircleBattery extends ImageView implements BatteryController.Batter
 
         @Override
         public void onChange(boolean selfChange) {
-            int batteryStyle = (Settings.System.getIntForUser(mContext.getContentResolver(),
-                    Settings.System.STATUS_BAR_BATTERY, 0, UserHandle.USER_CURRENT));
-
-            mActivated = (batteryStyle == BatteryController.BATTERY_STYLE_CIRCLE
-                    || batteryStyle == BatteryController.BATTERY_STYLE_CIRCLE_PERCENT);
-            mPercentage = (batteryStyle == BatteryController.BATTERY_STYLE_CIRCLE_PERCENT);
-
-            updateVisibility();
+            updateSettings();
         }
     }
 
@@ -189,6 +182,17 @@ public class CircleBattery extends ImageView implements BatteryController.Batter
             mCircleSize = 0;    // makes sure, mCircleSize is reread from icons on
                                 // next attach
         }
+    }
+
+    public void updateSettings() {
+        int batteryStyle = Settings.System.getIntForUser(mContext.getContentResolver(),
+                    Settings.System.STATUS_BAR_BATTERY, 0, UserHandle.USER_CURRENT);
+
+        mActivated = (batteryStyle == BatteryController.BATTERY_STYLE_CIRCLE
+                || batteryStyle == BatteryController.BATTERY_STYLE_CIRCLE_PERCENT);
+        mPercentage = (batteryStyle == BatteryController.BATTERY_STYLE_CIRCLE_PERCENT);
+
+        updateVisibility();
     }
 
     @Override
