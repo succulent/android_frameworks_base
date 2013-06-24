@@ -1,4 +1,4 @@
-rgetpackage com.android.internal.util.cm;
+package com.android.internal.util.cm;
 
 import java.util.ArrayList;
 

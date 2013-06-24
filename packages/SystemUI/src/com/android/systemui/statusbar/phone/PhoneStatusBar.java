@@ -1015,7 +1015,7 @@ public class PhoneStatusBar extends BaseStatusBar {
     }
 
     private void prepareNavigationBarView() {
-        mNavigationBarView.setListener(mRecentsClickListener,mRecentsPreloadOnTouchListener,
+        mNavigationBarView.setListeners(mRecentsClickListener,mRecentsPreloadOnTouchListener,
                 mHomeSearchActionListener, mNotificationsClickListener, mQSClickListener,
                 mDrawerClickListener, mVolumeClickListener);
         mNavigationBarView.reorient();
@@ -3062,7 +3062,7 @@ public class PhoneStatusBar extends BaseStatusBar {
     protected boolean shouldDisableNavbarGestures() {
         return !isDeviceProvisioned() || Settings.System.getIntForUser(mContext.getContentResolver(),
                 Settings.System.EXPANDED_DESKTOP_STATE, 0, UserHandle.USER_CURRENT) == 1
-                || mExpandedVisible || NavigationBarView.getEditMode()
+                || mExpandedVisible || (mNavigationBarView != null && mNavigationBarView.isInEditMode())
                 || (mDisabled & StatusBarManager.DISABLE_SEARCH) != 0;
     }
 
