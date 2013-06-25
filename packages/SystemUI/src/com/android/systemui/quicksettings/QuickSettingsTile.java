@@ -54,8 +54,8 @@ public class QuickSettingsTile implements OnClickListener {
     public void setupQuickSettingsTile(LayoutInflater inflater, QuickSettingsContainerView container) {
         mTile = (QuickSettingsTileView) inflater.inflate(R.layout.quick_settings_tile, container, false);
         mTile.setContent(mTileLayout, inflater);
-        int color = Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.SETTINGS_TILE_COLOR, 0xFF161616);
+        int color = Settings.System.getIntForUser(mContext.getContentResolver(),
+                Settings.System.SETTINGS_TILE_COLOR, 0xFF161616, UserHandle.USER_CURRENT);
         if (color != 0xFF161616) {
             StateListDrawable background = new StateListDrawable();
             background.addState(new int[] { android.R.attr.state_pressed }, new ColorDrawable(0xFF33b5e5));

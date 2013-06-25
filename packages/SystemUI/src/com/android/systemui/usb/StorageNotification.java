@@ -348,7 +348,8 @@ public class StorageNotification extends StorageEventListener {
                 pi = PendingIntent.getBroadcast(mContext, 0, new Intent(UMS_INTENT), 0);
             } else if (pi == null) {
                 Intent intent = new Intent();
-                pi = PendingIntent.getBroadcast(mContext, 0, intent, 0);
+                pi = PendingIntent.getBroadcastAsUser(mContext, 0, intent, 0,
+                        UserHandle.CURRENT);
             }
 
             mUsbStorageNotification.setLatestEventInfo(mContext, title, message, pi);
