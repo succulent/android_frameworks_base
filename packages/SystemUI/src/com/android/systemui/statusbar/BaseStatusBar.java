@@ -357,6 +357,14 @@ public abstract class BaseStatusBar extends SystemUI implements
                    ));
         }
 
+        mActivityManager = (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
+
+        if (PieManager.getInstance().isPresent()) {
+            mPieController = new PieController(mContext);
+            mPieController.attachStatusBar(this);
+            addNavigationBarCallback(mPieController);
+        }
+
         IntentFilter filter = new IntentFilter();
         filter.addAction(Intent.ACTION_USER_SWITCHED);
         mContext.registerReceiver(new BroadcastReceiver() {
@@ -367,6 +375,9 @@ public abstract class BaseStatusBar extends SystemUI implements
                     mCurrentUserId = intent.getIntExtra(Intent.EXTRA_USER_HANDLE, -1);
                     if (true) Slog.v(TAG, "userId " + mCurrentUserId + " is in the house");
                     userSwitched(mCurrentUserId);
+                    if (mPieController != null) {
+                        mPieController.userSwitched(mCurrentUserId);
+                    }
                 }
             }
         }, filter);
@@ -381,15 +392,6 @@ public abstract class BaseStatusBar extends SystemUI implements
                 mHandler.sendEmptyMessage(msg);
             }
         }, switchFilter);
-
-
-        mActivityManager = (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
-
-        if (PieManager.getInstance().isPresent()) {
-            mPieController = new PieController(mContext);
-            mPieController.attachStatusBar(this);
-            addNavigationBarCallback(mPieController);
-        }
 
         // Listen for HALO state
         mContext.getContentResolver().registerContentObserver(
