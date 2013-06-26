@@ -21,35 +21,43 @@ import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.os.UserHandle;
 import android.provider.Settings;
 import android.widget.CompoundButton;
 
+import com.android.internal.util.cm.TorchConstants;
 import com.android.systemui.R;
 
 public class FlashlightController implements CompoundButton.OnCheckedChangeListener {
     private static final String TAG = "StatusBar.FlashlightController";
 
+    private static final IntentFilter STATE_FILTER =
+            new IntentFilter(TorchConstants.ACTION_STATE_CHANGED);
+    private boolean mActive = false;
     private Context mContext;
     private CompoundButton mCheckBox;
 
-    private boolean mFlashLight;
-
     public FlashlightController(Context context, CompoundButton checkbox) {
         mContext = context;
-        mFlashLight = getFlashLight();
         mCheckBox = checkbox;
-        checkbox.setChecked(mFlashLight);
+        checkbox.setChecked(mActive);
         checkbox.setOnCheckedChangeListener(this);
     }
 
     public void onCheckedChanged(CompoundButton view, boolean checked) {
-        Intent i = new Intent("net.cactii.flash2.TOGGLE_FLASHLIGHT");
-        i.putExtra("bright", !checked);
+        boolean bright = Settings.System.getIntForUser(mContext.getContentResolver(),
+                Settings.System.EXPANDED_FLASH_MODE, 0, UserHandle.USER_CURRENT) == 1;
+        Intent i = new Intent(TorchConstants.ACTION_TOGGLE_STATE);
+        i.putExtra(TorchConstants.EXTRA_BRIGHT_MODE, bright);
         mContext.sendBroadcast(i);
     }
 
-    private boolean getFlashLight() {
-        ContentResolver cr = mContext.getContentResolver();
-        return Settings.System.getInt(cr, Settings.System.TORCH_STATE, 0) == 1;
+    protected IntentFilter getBroadcastIntentFilter() {
+        return STATE_FILTER;
+    }
+
+    protected void onReceive(Context context, Intent intent) {
+        mActive = intent.getIntExtra(TorchConstants.EXTRA_CURRENT_STATE, 0) != 0;
     }
 }
