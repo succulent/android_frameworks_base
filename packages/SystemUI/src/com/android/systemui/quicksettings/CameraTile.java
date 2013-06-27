@@ -4,8 +4,11 @@ import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.graphics.Rect;
 import android.hardware.Camera;
+import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Environment;
 import android.os.Handler;
@@ -41,7 +44,8 @@ import com.android.systemui.statusbar.phone.QuickSettingsContainerView;
 import com.android.systemui.statusbar.phone.QuickSettingsController;
 
 public class CameraTile extends QuickSettingsTile {
-    private static final String IMAGE_FORMAT = "'IMG'_yyyyMMdd_HHmmss";
+    private static final String DEFAULT_IMAGE_FILE_NAME_FORMAT = "'IMG'_yyyyMMdd_HHmmss";
+    private static final int CAMERA_ID = 0;
 
     private Handler mHandler;
     private TextView mTextView;
@@ -51,23 +55,33 @@ public class CameraTile extends QuickSettingsTile {
 
     private Camera mCamera;
     private CameraOrientationListener mCameraOrientationListener = null;
-    private int mCameraOrientation;
+    private int mOrientation;
+    private int mJpegRotation;
+    private int mDisplayRotation;
     private Camera.Size mCameraSize;
     private boolean mCameraStarted;
     private boolean mCameraBusy;
 
+    private Camera.CameraInfo mCameraInfo = new Camera.CameraInfo();
+    private Camera.Parameters mParams;
+
     private Storage mStorage = new Storage();
-    private SimpleDateFormat mImageNameFormatter = new SimpleDateFormat(IMAGE_FORMAT);
+    private SimpleDateFormat mImageNameFormatter;
 
     private Runnable mStartRunnable = new Runnable() {
         @Override
         public void run() {
-            if (mCamera != null) return;
+            if (mCamera != null) {
+                return;
+            }
+
+            Camera.getCameraInfo(CAMERA_ID, mCameraInfo);
 
             try {
-                mCamera = Camera.open(0);
+                mCamera = Camera.open(CAMERA_ID);
             } catch (Exception e) {
-                Toast.makeText(mContext, R.string.quick_settings_camera_error_connect, Toast.LENGTH_SHORT).show();
+                Toast.makeText(mContext, R.string.quick_settings_camera_error_connect,
+                        Toast.LENGTH_SHORT).show();
                 return;
             }
 
@@ -77,47 +91,46 @@ public class CameraTile extends QuickSettingsTile {
             }
             mCameraOrientationListener.enable();
 
-            Camera.Parameters params = mCamera.getParameters();
+            mParams = mCamera.getParameters();
 
             // Use smallest preview size that is bigger than the tile view
-            Camera.Size previewSize = params.getPreviewSize();
-            for (Camera.Size size : params.getSupportedPreviewSizes()) {
+            Camera.Size previewSize = mParams.getPreviewSize();
+            for (Camera.Size size : mParams.getSupportedPreviewSizes()) {
                 if ((size.width > mTile.getWidth() && size.height > mTile.getHeight()) &&
-                    (size.width < previewSize.width && size.height < previewSize.height)) {
+                        (size.width < previewSize.width && size.height < previewSize.height)) {
                     previewSize = size;
                 }
             }
-            params.setPreviewSize(previewSize.width, previewSize.height);
+            mParams.setPreviewSize(previewSize.width, previewSize.height);
 
             // Use largest picture size
-            Camera.Size pictureSize = params.getPictureSize();
-            for (Camera.Size size : params.getSupportedPictureSizes()) {
+            Camera.Size pictureSize = mParams.getPictureSize();
+            for (Camera.Size size : mParams.getSupportedPictureSizes()) {
                 if (size.width > pictureSize.width && size.height > pictureSize.height) {
                     pictureSize = size;
                 }
             }
             mCameraSize = pictureSize;
-            params.setPictureSize(pictureSize.width, pictureSize.height);
+            mParams.setPictureSize(pictureSize.width, pictureSize.height);
 
             // Try focus with continuous modes first, then basic autofocus
-            List<String> focusModes = params.getSupportedFocusModes();
+            List<String> focusModes = mParams.getSupportedFocusModes();
             if (focusModes.contains(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE)) {
-                params.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
+                mParams.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
             } else if (focusModes.contains(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO)) {
-                params.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO);
-            } else if (params.getSupportedFocusModes().contains(Camera.Parameters.FOCUS_MODE_AUTO)) {
-                params.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
+                mParams.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO);
+            } else if (mParams.getSupportedFocusModes().contains(Camera.Parameters.FOCUS_MODE_AUTO)) {
+                mParams.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
             }
 
-            mCameraOrientation = getCameraDisplayOrientation(0);
-            mCamera.setDisplayOrientation(mCameraOrientation);
-
-            mCamera.setParameters(params);
+            mCamera.setParameters(mParams);
+            updateOrientation();
 
             mHandler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
-                    if (mStatusbarService.mSettingsPanel.isFullyExpanded()) {
+                    final PanelView panel = getContainingPanel();
+                    if (panel != null && panel.isFullyExpanded()) {
                         mHandler.postDelayed(this, 100);
                     } else {
                         mHandler.post(mReleaseCameraRunnable);
@@ -135,15 +148,19 @@ public class CameraTile extends QuickSettingsTile {
     private Runnable mTakePictureRunnable = new Runnable() {
         @Override
         public void run() {
-            if (mCamera == null) return;
+            if (mCamera == null) {
+                return;
+            }
 
-            // Repeat until the preview has started and we can take picture
+            // Repeat until the preview has started and we can
+            // take picture
             if (!mCameraStarted) {
                 mHandler.postDelayed(this, 200);
                 return;
             }
 
-            // To avoid crashes don't post new picture requests if previous request has no returned
+            // To avoid crashes don't post new picture requests
+            // if previous request has not returned
             if (mCameraBusy) {
                 return;
             }
@@ -152,27 +169,45 @@ public class CameraTile extends QuickSettingsTile {
             // Display flash animation above the preview
             mFlashView.setVisibility(View.VISIBLE);
             mFlashView.animate().alpha(0f).withEndAction(new Runnable() {
-                    @Override
-                    public void run() {
-                        mFlashView.setVisibility(View.GONE);
-                        mFlashView.setAlpha(1f);
-                    }
+                @Override
+                public void run() {
+                    mFlashView.setVisibility(View.GONE);
+                    mFlashView.setAlpha(1f);
+                }
             });
+
+            // Update the JPEG rotation\
+            if (mCameraInfo.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
+                mJpegRotation = (mCameraInfo.orientation - mOrientation + 360) % 360;
+            } else {
+                mJpegRotation = (mCameraInfo.orientation + mOrientation) % 360;
+            }
+
+            mParams.setRotation(mJpegRotation);
+            mCamera.setParameters(mParams);
 
             // Request a picture
             try {
                 mCamera.takePicture(null, null, new Camera.PictureCallback() {
-                        @Override
-                        public void onPictureTaken(byte[] data, Camera camera) {
-                            mCameraBusy = false;
+                    @Override
+                    public void onPictureTaken(byte[] data, Camera camera) {
+                        mCameraBusy = false;
 
-                            long time = System.currentTimeMillis();
-                            mStorage.addImage(mContext.getContentResolver(), mImageNameFormatter.format(new Date(time)),
-                                    time, mCameraOrientation, data, mCameraSize.width, mCameraSize.height);
-                        }
+                        long time = System.currentTimeMillis();
+
+                        int orientation = (mOrientation + mDisplayRotation) % 360;
+
+                        mStorage.addImage(mContext.getContentResolver(),
+                                mImageNameFormatter.format(new Date(time)),
+                                time, orientation, data, mCameraSize.width,
+                                mCameraSize.height);
+
+                        mCamera.startPreview();
+                    }
                 });
             } catch (RuntimeException e) {
-                // This can happen if user is pressing the tile too fast, nothing we can do
+                // This can happen if user is pressing the
+                // tile too fast, nothing we can do
             }
         }
     };
@@ -180,7 +215,10 @@ public class CameraTile extends QuickSettingsTile {
     private Runnable mReleaseCameraRunnable = new Runnable() {
         @Override
         public void run() {
-            if (mCamera == null) return;
+            if (mCamera == null) {
+                return;
+            }
+
             mCamera.stopPreview();
             mCamera.release();
             mCamera = null;
@@ -205,31 +243,39 @@ public class CameraTile extends QuickSettingsTile {
 
     public CameraTile(Context context, QuickSettingsController qsc, Handler handler) {
         super(context, qsc, R.layout.quick_settings_tile_camera);
-
         mHandler = handler;
+
+        String imageFileNameFormat = DEFAULT_IMAGE_FILE_NAME_FORMAT;
+        try {
+            final Resources camRes = context.getPackageManager()
+                    .getResourcesForApplication("com.android.gallery3d");
+            int imageFileNameFormatResId = camRes.getIdentifier(
+                    "image_file_name_format", "string", "com.android.gallery3d");
+            imageFileNameFormat = camRes.getString(imageFileNameFormatResId);
+        } catch (PackageManager.NameNotFoundException ex) {
+            // Use default
+        } catch (Resources.NotFoundException ex) {
+            // Use default
+        }
+        mImageNameFormatter = new SimpleDateFormat(imageFileNameFormat);
+
     }
 
     @Override
     void onPostCreate() {
-        mOnClick = new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (mCamera == null) {
-                    mHandler.post(mStartRunnable);
-                } else {
-                    mHandler.post(mTakePictureRunnable);
-                }
-            }
-        };
         mOnLongClick = new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
-                if (mCamera != null) return false;
+                if (mCamera != null) {
+                    return false;
+                }
+
                 Intent intent = new Intent(MediaStore.INTENT_ACTION_STILL_IMAGE_CAMERA);
                 startSettingsActivity(intent);
                 return true;
             }
         };
+
         mTextView = (TextView) mTile.findViewById(R.id.camera_text);
         mSurfaceLayout = (FrameLayout) mTile.findViewById(R.id.camera_surface_holder);
         mFlashView = mTile.findViewById(R.id.camera_surface_flash_overlay);
@@ -237,41 +283,71 @@ public class CameraTile extends QuickSettingsTile {
         super.onPostCreate();
     }
 
-    private int getCameraDisplayOrientation(int cameraId) {
-        Camera.CameraInfo info = new Camera.CameraInfo();
-        Camera.getCameraInfo(cameraId, info);
-        int rotation = ((WindowManager) mContext.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay()
-                .getRotation();
-        int degrees = 0;
+    @Override
+    public void onClick(View v) {
+        if (mCamera == null) {
+            mHandler.post(mStartRunnable);
+        } else {
+            mHandler.post(mTakePictureRunnable);
+        }
+    }
+
+    private PanelView getContainingPanel() {
+        ViewParent parent = mContainer;
+        while (parent != null) {
+            if (parent instanceof PanelView) {
+                return (PanelView) parent;
+            }
+            parent = parent.getParent();
+        }
+        return null;
+    }
+
+    private void updateOrientation() {
+        final WindowManager wm = (WindowManager) mContext.getSystemService(Context.WINDOW_SERVICE);
+        int rotation = wm.getDefaultDisplay().getRotation();
+
         switch (rotation) {
-            case Surface.ROTATION_0: degrees = 0; break;
-            case Surface.ROTATION_90: degrees = 90; break;
-            case Surface.ROTATION_180: degrees = 180; break;
-            case Surface.ROTATION_270: degrees = 270; break;
+            case Surface.ROTATION_0:
+            default:
+                mDisplayRotation = 0;
+                break;
+            case Surface.ROTATION_90:
+                mDisplayRotation = 90;
+                break;
+            case Surface.ROTATION_180:
+                mDisplayRotation = 180;
+                break;
+            case Surface.ROTATION_270:
+                mDisplayRotation = 270;
+                break;
         }
 
-        int result;
-        if (info.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
-            result = (info.orientation + degrees) % 360;
-            result = (360 - result) % 360;  // compensate the mirror
+        int cameraOrientation;
+
+        if (mCameraInfo.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
+            cameraOrientation = (mCameraInfo.orientation + mDisplayRotation) % 360;
+            cameraOrientation = (360 - cameraOrientation) % 360;  // compensate the mirror
         } else {
-            result = (info.orientation - degrees + 360) % 360;
+            cameraOrientation = (mCameraInfo.orientation - mDisplayRotation + 360) % 360;
         }
-        return result;
+
+        mCamera.setDisplayOrientation(cameraOrientation);
     }
 
     private class CameraOrientationListener extends OrientationEventListener {
-
         public CameraOrientationListener(Context context) {
             super(context);
         }
 
         @Override
         public void onOrientationChanged(int orientation) {
-            if (mCamera != null) {
-                mCameraOrientation = getCameraDisplayOrientation(0);
-                mCamera.setDisplayOrientation(mCameraOrientation);
+            if (mCamera == null || orientation == ORIENTATION_UNKNOWN) {
+                return;
             }
+
+            mOrientation = (orientation + 45) / 90 * 90;
+            updateOrientation();
         }
     }
 
@@ -290,7 +366,8 @@ public class CameraTile extends QuickSettingsTile {
         }
 
         public void surfaceCreated(SurfaceHolder holder) {
-            // The Surface has been created, now tell the camera where to draw the preview.
+            // The Surface has been created, now tell the camera where
+            // to draw the preview.
             try {
                 mCamera.setPreviewDisplay(holder);
                 mCamera.startPreview();
@@ -310,16 +387,15 @@ public class CameraTile extends QuickSettingsTile {
         }
     }
 
-    public class Storage {
+    private class Storage {
         private static final String TAG = "CameraStorage";
-
         private String mRoot = Environment.getExternalStorageDirectory().toString();
-
         private Storage() {}
 
         public String writeFile(String title, byte[] data) {
             String path = generateFilepath(title);
             FileOutputStream out = null;
+
             try {
                 out = new FileOutputStream(path);
                 out.write(data);
@@ -329,31 +405,55 @@ public class CameraTile extends QuickSettingsTile {
                 try {
                     out.close();
                 } catch (Exception e) {
+                    // Do nothing here
                 }
             }
             return path;
         }
 
         // Save the image and add it to media store.
-        public Uri addImage(ContentResolver resolver, String title,
-                long date, int orientation, byte[] jpeg,
-                int width, int height) {
+        public Uri addImage(ContentResolver resolver, String title, long date,
+                int orientation, byte[] jpeg, int width, int height) {
             // Save the image.
             String path = writeFile(title, jpeg);
-            return addImage(resolver, title, date, orientation,
-                    jpeg.length, path, width, height);
+            return addImage(resolver, title, date, orientation, jpeg.length,
+                    path, width, height);
         }
 
         // Add the image to media store.
-        public Uri addImage(ContentResolver resolver, String title,
-                long date, int orientation, int jpegLength, String path, 
-                int width, int height) {
+        public Uri addImage(ContentResolver resolver, String title, long date,
+            int orientation, int jpegLength, String path, int width, int height) {
+
+            try {
+                ExifInterface exif = new ExifInterface(path);
+                switch (exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, -1)) {
+                    case ExifInterface.ORIENTATION_ROTATE_90:
+                        orientation = 90;
+                        break;
+                    case ExifInterface.ORIENTATION_ROTATE_180:
+                        orientation = 180;
+                        break;
+                    case ExifInterface.ORIENTATION_ROTATE_270:
+                        orientation = 270;
+                        break;
+                }
+            } catch (Exception e) {
+                Log.w(TAG, "Failed to read exif", e);
+            }
+
+            if ((mJpegRotation + orientation) % 180 != 0) {
+                int temp = width;
+                width = height;
+                height = width;
+            }
+
             // Insert into MediaStore.
             ContentValues values = new ContentValues(9);
             values.put(ImageColumns.TITLE, title);
             values.put(ImageColumns.DISPLAY_NAME, title + ".jpg");
             values.put(ImageColumns.DATE_TAKEN, date);
             values.put(ImageColumns.MIME_TYPE, "image/jpeg");
+
             // Clockwise rotation in degrees. 0, 90, 180, or 270.
             values.put(ImageColumns.ORIENTATION, orientation);
             values.put(ImageColumns.DATA, path);
@@ -362,6 +462,7 @@ public class CameraTile extends QuickSettingsTile {
             values.put(MediaColumns.HEIGHT, height);
 
             Uri uri = null;
+
             try {
                 uri = resolver.insert(Images.Media.EXTERNAL_CONTENT_URI, values);
             } catch (Throwable th)  {
