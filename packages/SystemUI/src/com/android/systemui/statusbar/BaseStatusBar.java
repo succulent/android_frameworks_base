@@ -684,7 +684,11 @@ public abstract class BaseStatusBar extends SystemUI implements
             } else {
                 Bitmap first = firstTask.getThumbnail();
                 final Resources res = mContext.getResources();
-
+                boolean tabletMode = Settings.System.getIntForUser(
+                        mContext.getContentResolver(),
+                        Settings.System.TABLET_MODE, res.getBoolean(
+                        com.android.internal.R.bool.config_showTabletNavigationBar) ? 1 : 0,
+                        UserHandle.USER_CURRENT) == 1;
                 boolean largeThumbs = Settings.System.getIntForUser(mContext.getContentResolver(),
                         Settings.System.LARGE_RECENT_THUMBS, 0, UserHandle.USER_CURRENT) == 1;
                 float thumbWidth = res.getDimensionPixelSize(largeThumbs ?
@@ -756,6 +760,7 @@ public abstract class BaseStatusBar extends SystemUI implements
                     float statusBarHeight = res
                             .getDimensionPixelSize(com.android.internal.R.dimen.status_bar_height);
                     float recentsItemTopPadding = statusBarHeight;
+                    statusBarHeight = (tabletMode || getExpandedDesktopMode() == 2) ? 0 : statusBarHeight;
 
                     float height = thumbTopMargin
                             + thumbHeight
@@ -771,7 +776,17 @@ public abstract class BaseStatusBar extends SystemUI implements
                             + recentsItemTopPadding + thumbBgPadding + statusBarHeight);
                 }
 
-                ActivityOptions opts = ActivityOptions.makeThumbnailScaleDownAnimation(
+                ActivityOptions opts = (!tabletMode && getExpandedDesktopMode() < 2) ?
+                        ActivityOptions.makeThumbnailScaleDownAnimation(
+                        getStatusBarView(),
+                        first, x, y,
+                        new ActivityOptions.OnAnimationStartedListener() {
+                            public void onAnimationStarted() {
+                                Intent intent = new Intent(RecentsActivity.WINDOW_ANIMATION_START_INTENT);
+                                intent.setPackage("com.android.systemui");
+                                mContext.sendBroadcastAsUser(intent, new UserHandle(UserHandle.USER_CURRENT));
+                            }
+                        }) : ActivityOptions.makeTabletThumbnailScaleDownAnimation(
                         getStatusBarView(),
                         first, x, y,
                         new ActivityOptions.OnAnimationStartedListener() {

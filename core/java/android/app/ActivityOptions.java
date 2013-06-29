@@ -302,6 +302,18 @@ public class ActivityOptions {
         return opts;
     }
 
+    public static ActivityOptions makeTabletThumbnailScaleDownAnimation(View source,
+            Bitmap thumbnail, int startX, int startY, OnAnimationStartedListener listener) {
+        ActivityOptions opts = new ActivityOptions();
+        opts.mPackageName = source.getContext().getPackageName();
+        opts.mAnimationType = ANIM_THUMBNAIL_SCALE_DOWN;
+        opts.mThumbnail = thumbnail;
+        opts.mStartX = startX;
+        opts.mStartY = startY;
+        opts.setListener(source.getHandler(), listener);
+        return opts;
+    }
+
     private ActivityOptions() {
     }
 
