@@ -353,6 +353,8 @@ public class CircleBattery extends ImageView implements BatteryController.Batter
                 mCircleSize++;
             }
         }
-        if (mTabletMode) mCircleSize = (int) (mCircleSize * 4f / 3f);
+        if (mTabletMode) mCircleSize = (int) (mCircleSize * (4f / 3f) * (float)
+                        Settings.System.getIntForUser(mContext.getContentResolver(),
+                        Settings.System.TABLET_HEIGHT, 100, UserHandle.USER_CURRENT) / 100f);
     }
 }

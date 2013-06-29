@@ -49,6 +49,7 @@ import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.Pair;
 import android.util.Slog;
+import android.util.TypedValue;
 import android.view.Display;
 import android.view.Gravity;
 import android.view.KeyEvent;
@@ -201,6 +202,8 @@ public class TabletStatusBar extends BaseStatusBar implements
 
     private StorageManager mStorageManager;
 
+    private float mHeightScale = 1f;
+
     private Runnable mShowSearchPanel = new Runnable() {
         public void run() {
             showSearchPanel();
@@ -233,6 +236,9 @@ public class TabletStatusBar extends BaseStatusBar implements
     }
 
     private void addStatusBarWindow() {
+        mHeightScale = (float) Settings.System.getIntForUser(mContext.getContentResolver(),
+                Settings.System.TABLET_HEIGHT, 100, UserHandle.USER_CURRENT) / 100f;
+
         final View sb = makeStatusBarView();
 
         final WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
@@ -519,12 +525,15 @@ public class TabletStatusBar extends BaseStatusBar implements
     protected void loadDimens() {
         final Resources res = mContext.getResources();
 
-        int newIconSize = res.getDimensionPixelSize(
-            com.android.internal.R.dimen.system_bar_icon_size);
-        int newIconHPadding = res.getDimensionPixelSize(
-            R.dimen.status_bar_icon_padding);
-        int newNavIconWidth = res.getDimensionPixelSize(R.dimen.navigation_key_width);
-        int newMenuNavIconWidth = res.getDimensionPixelSize(R.dimen.navigation_menu_key_width);
+
+        int newIconSize = (int) (res.getDimensionPixelSize(
+                com.android.internal.R.dimen.system_bar_icon_size) * mHeightScale);
+        int newIconHPadding = (int) (res.getDimensionPixelSize(R.dimen.status_bar_icon_padding) *
+                mHeightScale);
+        int newNavIconWidth = (int) (res.getDimensionPixelSize(R.dimen.navigation_key_width) *
+                mHeightScale);
+        int newMenuNavIconWidth = (int) (res.getDimensionPixelSize(
+                R.dimen.navigation_menu_key_width) * mHeightScale);
 
         if (mNavigationArea != null && newNavIconWidth != mNavIconWidth) {
             mNavIconWidth = newNavIconWidth;
@@ -630,6 +639,8 @@ public class TabletStatusBar extends BaseStatusBar implements
 
         mBatteryController = new BatteryController(mContext);
         mBatteryController.addIconView((ImageView)sb.findViewById(R.id.battery));
+        TextView batText = (TextView)sb.findViewById(R.id.battery_text);
+        batText.setTextSize(TypedValue.COMPLEX_UNIT_PX, batText.getTextSize() * mHeightScale);
         mBatteryController.addLabelView((TextView)sb.findViewById(R.id.battery_text));
         final CircleBattery circleBattery =
                 (CircleBattery) sb.findViewById(R.id.circle_battery);
@@ -756,6 +767,8 @@ public class TabletStatusBar extends BaseStatusBar implements
 
         sb.setOnTouchListener(mHideBarListener);
 
+        loadDimens();
+
         return sb;
     }
 
@@ -831,10 +844,9 @@ public class TabletStatusBar extends BaseStatusBar implements
     }
 
     public int getStatusBarHeight() {
-        return mContext.getResources().getDimensionPixelSize(
+        return (int) (mContext.getResources().getDimensionPixelSize(
                         com.android.internal.R.dimen.navigation_bar_height) *
-                        Settings.System.getIntForUser(mContext.getContentResolver(),
-                        Settings.System.TABLET_HEIGHT, 100, UserHandle.USER_CURRENT) / 100;
+                        mHeightScale);
     }
 
     protected int getStatusBarGravity() {
@@ -1077,9 +1089,7 @@ public class TabletStatusBar extends BaseStatusBar implements
                 UserHandle.USER_CURRENT) == 0) {
             clock.setTextSize(16);
         } else {
-            clock.setTextSize(28 * Settings.System.getIntForUser(
-                    mContext.getContentResolver(), Settings.System.TABLET_HEIGHT, 100,
-                    UserHandle.USER_CURRENT) / 100);
+            clock.setTextSize(28 * mHeightScale);
         }
 
         int clockColor = Settings.System.getIntForUser(resolver,
@@ -1339,7 +1349,7 @@ public class TabletStatusBar extends BaseStatusBar implements
                 Settings.System.TABLET_FORCE_MENU, 0, UserHandle.USER_CURRENT) == 1;
 
         if (!mNavigationDisabled && !forceMenu) {
-            mMenuButton.setVisibility(showMenu ? View.VISIBLE : View.GONE);
+            mMenuButton.setVisibility(showMenu ? View.VISIBLE : View.INVISIBLE);
         }
         propagateMenuVisibility(showMenu);
 

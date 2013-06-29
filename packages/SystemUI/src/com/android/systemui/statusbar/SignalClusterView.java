@@ -247,19 +247,27 @@ public class SignalClusterView
 
         if (mTabletMode) {
             if (mWifi != null && mWifiGroup.getVisibility() == View.VISIBLE) scaleImage(mWifi, true);
+            if (mWifiActivity != null && mWifiGroup.getVisibility() == View.VISIBLE) scaleImage(mWifiActivity, true);
             if (mMobile != null && mMobileGroup.getVisibility() == View.VISIBLE) scaleImage(mMobile, true);
+            if (mMobileActivity != null && mMobileGroup.getVisibility() == View.VISIBLE) scaleImage(mMobileActivity, true);
+            if (mMobileType != null && mMobileGroup.getVisibility() == View.VISIBLE) scaleImage(mMobileType, true);
             if (mAirplane != null && mAirplane.getVisibility() == View.VISIBLE) scaleImage(mAirplane, false);
         }
     }
 
     private void scaleImage(final ImageView view, final boolean frameLayout) {
-        final float scale = 4f / 3f;
+        final float scale = (4f / 3f) * (float)
+                        Settings.System.getIntForUser(mContext.getContentResolver(),
+                        Settings.System.TABLET_HEIGHT, 100, UserHandle.USER_CURRENT) / 100f;
         int finalHeight = 0;
         int finalWidth = 0;
         int res = 0;
         if (view == mWifi) res = mWifiStrengthId;
         if (view == mMobile) res = mMobileStrengthId;
         if (view == mAirplane) res = mAirplaneIconId;
+        if (view == mWifiActivity) res = mWifiActivityId;
+        if (view == mMobileActivity) res = mMobileActivityId;
+        if (view == mMobileType) res = mMobileTypeId;
         if (res != 0) {
             Drawable temp = getResources().getDrawable(res);
             if (temp != null) {

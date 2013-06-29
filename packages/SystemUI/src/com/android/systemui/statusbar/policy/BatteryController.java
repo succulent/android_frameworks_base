@@ -237,7 +237,9 @@ public class BatteryController extends BroadcastReceiver {
     }
 
     private void scaleImage(ImageView view) {
-        final float scale = 4f / 3f;
+        final float scale = (4f / 3f) * (float)
+                        Settings.System.getIntForUser(mContext.getContentResolver(),
+                        Settings.System.TABLET_HEIGHT, 100, UserHandle.USER_CURRENT) / 100f;
         int finalHeight = 0;
         int finalWidth = 0;
         int res = mIconStyle;
