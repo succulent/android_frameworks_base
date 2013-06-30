@@ -1219,14 +1219,8 @@ public class TabletStatusBar extends BaseStatusBar implements
 
     @Override
     protected void tick(IBinder key, StatusBarNotification n, boolean firstTime) {
-        mTabletTicker.setDisabled(mHaloActive);
         // Don't show the ticker when the windowshade is open.
         if (mNotificationPanel.isShowing()) {
-            return;
-        }
-        // If they asked for FLAG_ONLY_ALERT_ONCE, then only show this notification
-        // if it's a new notification.
-        if (!firstTime && (n.notification.flags & Notification.FLAG_ONLY_ALERT_ONCE) != 0) {
             return;
         }
 
@@ -1236,7 +1230,7 @@ public class TabletStatusBar extends BaseStatusBar implements
         // until status bar window is attached to the window manager,
         // because...  well, what's the point otherwise?  And trying to
         // run a ticker without being attached will crash!
-        if (hasTicker(n.notification) && mStatusBarView.getWindowToken() != null) {
+        if (n.notification.tickerText != null && mStatusBarView.getWindowToken() != null) {
             if (0 == (mDisabled & (StatusBarManager.DISABLE_NOTIFICATION_ICONS
                             | StatusBarManager.DISABLE_NOTIFICATION_TICKER))) {
                 mTabletTicker.add(key, n);
