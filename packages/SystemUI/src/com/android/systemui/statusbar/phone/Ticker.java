@@ -197,6 +197,9 @@ public abstract class Ticker {
 
     public void addEntry(StatusBarNotification n) {
         int initialCount = mSegments.size();
+        if (n.notification.tickerText == null) {
+            n.notification.tickerText = "";
+        }
 
         // If what's being displayed has the same text and icon, just drop it
         // (which will let the current one finish, this happens when apps do
