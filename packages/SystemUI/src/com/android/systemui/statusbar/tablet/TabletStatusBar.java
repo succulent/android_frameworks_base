@@ -47,10 +47,12 @@ import android.os.storage.StorageManager;
 import android.os.UserHandle;
 import android.provider.Settings;
 import android.text.TextUtils;
+import android.util.DisplayMetrics;
 import android.util.Pair;
 import android.util.Slog;
 import android.util.TypedValue;
 import android.view.Display;
+import android.view.DisplayInfo;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
@@ -296,6 +298,23 @@ public class TabletStatusBar extends BaseStatusBar implements
             right = mNotificationPanel.mTitleArea.getPaddingRight();
             mNotificationPanel.mTitleArea.setBackgroundResource(0);
             mNotificationPanel.mTitleArea.setPadding(left, top, right, bottom);
+        }
+
+        DisplayInfo outDisplayInfo = new DisplayInfo();
+        mWindowManager.getDefaultDisplay().getDisplayInfo(outDisplayInfo);
+        int shortSize = Math.min(outDisplayInfo.logicalHeight, outDisplayInfo.logicalWidth);
+        int shortSizeDp = shortSize * DisplayMetrics.DENSITY_DEFAULT / outDisplayInfo.logicalDensityDpi;
+        if (shortSizeDp < 600) {
+            int sPadding = 16 * DisplayMetrics.DENSITY_DEFAULT / outDisplayInfo.logicalDensityDpi;
+            mNotificationPanel.setPadding(mNotificationPanel.getPaddingLeft() + sPadding,
+                    mNotificationPanel.getPaddingTop(),
+                    mNotificationPanel.getPaddingRight() + sPadding,
+                    0);
+            mNotificationPanel.mContentFrame.setPadding(0, 0, 0, 0);
+            ViewGroup.MarginLayoutParams nlp = (ViewGroup.MarginLayoutParams)mNotificationPanel.mNotificationScroller.getLayoutParams();
+            nlp.setMargins(0, 0, 0, 0);
+            mNotificationPanel.mNotificationScroller.setLayoutParams(nlp);
+            mNotificationPanel.setSmall();
         }
 
         View panelFloat = mNotificationPanel.findViewById(R.id.system_bar_notification_panel_bottom_space);

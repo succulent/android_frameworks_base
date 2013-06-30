@@ -144,7 +144,13 @@ public class SearchPanelView extends FrameLayout implements
     private void setDrawables() {
         final ArrayList<TargetDrawable> targets = new ArrayList<TargetDrawable>();
 
-        if (isScreenLarge() || isScreenPortrait()) {
+        boolean tabletMode = Settings.System.getIntForUser(
+                getContext().getContentResolver(),
+                Settings.System.TABLET_MODE, getContext().getResources().getBoolean(
+                com.android.internal.R.bool.config_showTabletNavigationBar) ? 1 : 0,
+                UserHandle.USER_CURRENT) == 1;
+
+        if (isScreenLarge() || isScreenPortrait() || tabletMode) {
             mStartPosOffset =  1;
             mEndPosOffset = 4;
         } else {

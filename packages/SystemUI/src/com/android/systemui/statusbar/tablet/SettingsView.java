@@ -156,6 +156,7 @@ public class SettingsView extends LinearLayout implements View.OnClickListener,
             ll.setBackgroundResource(R.drawable.expanded_settings_background);
 
             ImageView icon = new ImageView(context);
+            icon.setScaleType(ImageView.ScaleType.CENTER);
             if (settingsRow[i].contains(BUTTON_WIFI)) {
                 icon.setImageResource(R.drawable.ic_sysbar_wifi_on);
                 ll.addView(icon, iconlp);
