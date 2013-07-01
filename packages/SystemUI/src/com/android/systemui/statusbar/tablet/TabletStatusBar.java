@@ -675,8 +675,8 @@ public class TabletStatusBar extends BaseStatusBar implements
         mClock = (Clock) sb.findViewById(R.id.clock);
 
         // The navigation buttons
-        mBackButton = (ImageView)sb.findViewById(R.id.back);
         mNavigationArea = (ViewGroup) sb.findViewById(R.id.navigationArea);
+        mBackButton = (ImageView)mNavigationArea.findViewById(R.id.back);
         mHomeButton = mNavigationArea.findViewById(R.id.home);
         mMenuButton = mNavigationArea.findViewById(R.id.menu);
         mRecentButton = mNavigationArea.findViewById(R.id.recent_apps);
@@ -1203,6 +1203,25 @@ public class TabletStatusBar extends BaseStatusBar implements
     }
 
     private void setNavigationDisabled(boolean disabled) {
+        mNavigationArea.removeAllViews();
+        String rows = Settings.System.getStringForUser(mContext.getContentResolver(),
+                Settings.System.TABLET_BUTTONS, UserHandle.USER_CURRENT);
+        if (rows == null) {
+            rows = mFlipStatusBar ? "menu|back|home|recent" : "back|home|recent|menu";
+        }
+        String[] settingsRow = rows.split("\\|");
+        for (int i = 0; i < settingsRow.length; i++) {
+            if (settingsRow[i].contains("back")) {
+                mNavigationArea.addView(mBackButton);
+            } else if (settingsRow[i].contains("home")) {
+                mNavigationArea.addView(mHomeButton);
+            } else if (settingsRow[i].contains("recent")) {
+                mNavigationArea.addView(mRecentButton);
+            } else if (settingsRow[i].contains("menu")) {
+                mNavigationArea.addView(mMenuButton);
+            }
+        }
+
         mBackButton.setVisibility(disabled ? View.INVISIBLE : View.VISIBLE);
         mHomeButton.setVisibility(disabled ? View.INVISIBLE : View.VISIBLE);
         mRecentButton.setVisibility(disabled ? View.INVISIBLE : View.VISIBLE);
@@ -1211,6 +1230,8 @@ public class TabletStatusBar extends BaseStatusBar implements
                 Settings.System.TABLET_FORCE_MENU, 0, UserHandle.USER_CURRENT) == 1) {
             mMenuButton.setVisibility(disabled ? View.INVISIBLE : View.VISIBLE);
         }
+
+        loadDimens();
     }
 
     private boolean hasTicker(Notification n) {

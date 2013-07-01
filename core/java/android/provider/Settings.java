@@ -3425,6 +3425,11 @@ public final class Settings {
         /**
          * @hide
          */
+        public static final String TABLET_BUTTONS = "tablet_buttons";
+
+        /**
+         * @hide
+         */
         public static final String NAVIGATION_HEIGHT = "navigation_height";
 
         /**
