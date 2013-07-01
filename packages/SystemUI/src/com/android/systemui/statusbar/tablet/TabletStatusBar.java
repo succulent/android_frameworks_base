@@ -1587,6 +1587,12 @@ public class TabletStatusBar extends BaseStatusBar implements
                             hilite(false);
                             mVT.recycle();
                             mVT = null;
+                        } else if (mVT.getYVelocity() > mNotificationFlingVelocity) {
+                            hilite(false);
+                            mVT.recycle();
+                            mVT = null;
+                            mHandler.removeCallbacks(mStatusBarTimeout);
+                            mHandler.post(mStatusBarTimeout);
                         }
                     }
                     return true;
@@ -1825,7 +1831,7 @@ public class TabletStatusBar extends BaseStatusBar implements
 
     @Override
     protected boolean shouldDisableNavbarGestures() {
-        return mNotificationPanel.getVisibility() == View.VISIBLE
+        return getExpandedDesktopMode() == 2 || mNotificationPanel.getVisibility() == View.VISIBLE
                 || (mDisabled & StatusBarManager.DISABLE_HOME) != 0;
     }
 }
