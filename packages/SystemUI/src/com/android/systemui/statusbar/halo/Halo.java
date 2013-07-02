@@ -236,7 +236,8 @@ public class Halo extends FrameLayout implements Ticker.TickerCallback, TabletTi
 
         // Init colors
         mPaintHoloBlue.setAntiAlias(true);
-        mPaintHoloBlue.setColor(0xff33b5e5);
+        mPaintHoloBlue.setColor(Settings.System.getIntForUser(context.getContentResolver(),
+                Settings.System.HALO_PING_COLOR, 0xff33b5e5, UserHandle.USER_CURRENT));
         mPaintWhite.setAntiAlias(true);
         mPaintWhite.setColor(0xfff0f0f0);
         mPaintHoloRed.setAntiAlias(true);

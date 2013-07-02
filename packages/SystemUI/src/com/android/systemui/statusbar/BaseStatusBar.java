@@ -1586,6 +1586,12 @@ public abstract class BaseStatusBar extends SystemUI implements
                     Settings.System.NAVIGATION_HEIGHT), false, this, UserHandle.USER_ALL);
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.TABLET_BUTTONS), false, this, UserHandle.USER_ALL);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.HALO_BUTTON_COLOR), false, this, UserHandle.USER_ALL);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.HALO_TEXT_BUBBLE_COLOR), false, this, UserHandle.USER_ALL);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.HALO_PING_COLOR), false, this, UserHandle.USER_ALL);
         }
 
         @Override

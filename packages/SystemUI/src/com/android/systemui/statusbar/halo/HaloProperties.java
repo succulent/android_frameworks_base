@@ -18,6 +18,10 @@ package com.android.systemui.statusbar.halo;
 
 import android.content.Context;
 import android.graphics.drawable.Drawable;
+import android.graphics.Color;
+import android.graphics.PorterDuff;
+import android.os.UserHandle;
+import android.provider.Settings;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.FrameLayout;
@@ -86,6 +90,43 @@ public class HaloProperties extends FrameLayout {
         mHaloNumber.setAlpha(0f);
 
         mHaloOverlayAnimator = new CustomObjectAnimator(this);
+
+
+        int color = Settings.System.getIntForUser(context.getContentResolver(),
+                Settings.System.HALO_BUTTON_COLOR, 0x00000000, UserHandle.USER_CURRENT);
+
+        if (color != 0x00000000) {
+            ImageView haloBackground = (ImageView) mHaloBubble.findViewById(R.id.halo_bg);
+            haloBackground.setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
+            haloBackground.setAlpha(Color.alpha(color));
+        }
+
+        color = Settings.System.getIntForUser(context.getContentResolver(),
+                Settings.System.HALO_TEXT_BUBBLE_COLOR, 0x00000000, UserHandle.USER_CURRENT);
+
+        if (color != 0x00000000) {
+            Drawable background = mHaloTextViewR.getBackground();
+            int top = mHaloTextViewR.getPaddingTop();
+            int bottom = mHaloTextViewR.getPaddingBottom();
+            int left = mHaloTextViewR.getPaddingLeft();
+            int right = mHaloTextViewR.getPaddingRight();
+            background.setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
+            background.setAlpha(Color.alpha(color));
+            mHaloTextViewR.setBackgroundDrawable(background);
+            mHaloTextViewR.setPadding(left, top, right, bottom);
+
+            background = mHaloTextViewL.getBackground();
+            top = mHaloTextViewL.getPaddingTop();
+            bottom = mHaloTextViewL.getPaddingBottom();
+            left = mHaloTextViewL.getPaddingLeft();
+            right = mHaloTextViewL.getPaddingRight();
+            background.setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
+            background.setAlpha(Color.alpha(color));
+            mHaloTextViewL.setBackgroundDrawable(background);
+            mHaloTextViewL.setPadding(left, top, right, bottom);
+        }
+
+
     }        
 
     public void setHaloX(int value) {
