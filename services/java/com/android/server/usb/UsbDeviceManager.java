@@ -686,6 +686,16 @@ public class UsbDeviceManager {
         }
 
         private void updateUsbNotification() {
+            if (Settings.System.getIntForUser(mContentResolver,
+                    Settings.System.HIDE_USB_NOTIFICATION, 0, UserHandle.USER_CURRENT_OR_SELF) == 1) {
+                mUseUsbNotification = false;
+                if (mUsbNotificationId != 0) {
+                    mNotificationManager.cancelAsUser(null, mUsbNotificationId,
+                            UserHandle.ALL);
+                    mUsbNotificationId = 0;
+                }
+                return;
+            }
             if (mNotificationManager == null || !mUseUsbNotification) return;
             int id = 0;
             Resources r = mContext.getResources();
