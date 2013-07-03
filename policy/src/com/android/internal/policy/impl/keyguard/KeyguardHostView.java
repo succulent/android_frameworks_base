@@ -1164,9 +1164,7 @@ public class KeyguardHostView extends KeyguardViewBase {
         // We currently disable cameras in safe mode because we support loading 3rd party
         // cameras we can't trust.  TODO: plumb safe mode into camera creation code and only
         // inflate system-provided camera?
-        if (!mSafeModeEnabled && !cameraDisabledByDpm()
-                && Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.KG_CAMERA_WIDGET, 0) == 1) {
+        if (!mSafeModeEnabled && !cameraDisabledByDpm()) {
             View cameraWidget =
                     CameraWidgetFrame.create(mContext, mCameraWidgetCallbacks, mActivityLauncher);
             if (cameraWidget != null) {

@@ -3185,11 +3185,6 @@ public final class Settings {
         /**
          * @hide
          */
-        public static final String KG_CAMERA_WIDGET = "kg_camera_widget";
-
-        /**
-         * @hide
-         */
         public static final String TABLET_MODE = "tablet_mode";
 
         /**
