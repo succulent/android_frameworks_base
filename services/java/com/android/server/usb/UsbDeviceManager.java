@@ -686,9 +686,9 @@ public class UsbDeviceManager {
         }
 
         private void updateUsbNotification() {
-            if (Settings.System.getIntForUser(mContentResolver,
-                    Settings.System.HIDE_USB_NOTIFICATION, 0, UserHandle.USER_CURRENT_OR_SELF) == 1) {
-                mUseUsbNotification = false;
+            boolean hideUsb = Settings.System.getIntForUser(mContentResolver,
+                    Settings.System.HIDE_USB_NOTIFICATION, 0, UserHandle.USER_CURRENT_OR_SELF) == 1;
+            if (hideUsb) {
                 if (mUsbNotificationId != 0) {
                     mNotificationManager.cancelAsUser(null, mUsbNotificationId,
                             UserHandle.ALL);
@@ -696,7 +696,7 @@ public class UsbDeviceManager {
                 }
                 return;
             }
-            if (mNotificationManager == null || !mUseUsbNotification) return;
+            if (mNotificationManager == null || !mUseUsbNotification || hideUsb) return;
             int id = 0;
             Resources r = mContext.getResources();
             if (mConnected) {
