@@ -279,6 +279,9 @@ public class Halo extends FrameLayout implements Ticker.TickerCallback, TabletTi
         mPaintHoloRed.setAntiAlias(true);
         mPaintHoloRed.setColor(0xffcc0000);
 
+        mGone = Settings.System.getIntForUser(mContext.getContentResolver(),
+                Settings.System.HALO_GONE, 0, UserHandle.USER_CURRENT) == 1;
+
         // Create effect layer
         mEffect = new HaloEffect(mContext);
         mEffect.setLayerType (View.LAYER_TYPE_HARDWARE, null);
@@ -314,6 +317,10 @@ public class Halo extends FrameLayout implements Ticker.TickerCallback, TabletTi
 
         mKillX = mScreenWidth / 2;
         mKillY = mIconHalfSize;
+
+        if (mGone) {
+            mEffect.setVisibility(mNotificationData.size() > 0 ? View.VISIBLE : View.GONE);
+        }
 
         if (!mFirstStart) {
             if (msavePositionY < 0) mEffect.setHaloY(0);
@@ -533,7 +540,7 @@ public class Halo extends FrameLayout implements Ticker.TickerCallback, TabletTi
                 preferences.edit().putInt(KEY_HALO_POSITION_X, mTickerLeft ? 0 : mScreenWidth -
                         mIconSize).putInt(KEY_HALO_POSITION_Y, isLandscapeMod() ? mEffect.mHaloY :
                         (int)mTmpHaloY).apply();
-    
+
                 if (mGesture == Gesture.TASK) {
                     // Launch tasks
                     if (mTaskIntent != null) {
