@@ -18,14 +18,21 @@ package com.android.systemui.statusbar.policy;
 
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
+import android.database.ContentObserver;
 import android.graphics.drawable.Drawable;
 import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.PorterDuff;
 import android.graphics.RectF;
 import android.hardware.input.InputManager;
+import android.os.Handler;
 import android.os.SystemClock;
+import android.os.UserHandle;
+import android.provider.Settings;
 import android.util.AttributeSet;
 import android.view.HapticFeedbackConstants;
 import android.view.InputDevice;
@@ -59,6 +66,57 @@ public class KeyButtonView extends ImageView {
     AnimatorSet mPressedAnim;
     boolean mInEditMode;
 
+    Drawable mOriginalGlowBG;
+    int mGlowBGColor;
+    int mButtonColor;
+    float mOriginalAlpha = BUTTON_QUIESCENT_ALPHA;
+    int mGlowTime = 500;
+    Handler mHandler = new Handler();
+
+    class SettingsObserver extends ContentObserver {
+        SettingsObserver(Handler handler) {
+            super(handler);
+        }
+
+        void observe() {
+            ContentResolver resolver = mContext.getContentResolver();
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.NAVIGATION_BUTTON_COLOR), false, this, UserHandle.USER_ALL);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.NAVIGATION_BUTTON_GLOW_TIME), false, this, UserHandle.USER_ALL);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.NAVIGATION_BUTTON_GLOW_COLOR), false, this, UserHandle.USER_ALL);
+            update();
+        }
+
+        @Override
+        public void onChange(boolean selfChange) {
+            update();
+        }
+
+        public void update() {
+            ContentResolver resolver = mContext.getContentResolver();
+            mGlowTime = Settings.System.getIntForUser(resolver,
+                    Settings.System.NAVIGATION_BUTTON_GLOW_TIME, mGlowTime, UserHandle.USER_CURRENT);
+            setGlowBG(mGlowTime > 0);
+
+            mGlowBGColor = Settings.System.getIntForUser(resolver,
+                    Settings.System.NAVIGATION_BUTTON_GLOW_COLOR, 0, UserHandle.USER_CURRENT);
+
+            mButtonColor = Settings.System.getIntForUser(resolver,
+                    Settings.System.NAVIGATION_BUTTON_COLOR, 0, UserHandle.USER_CURRENT);
+            if (mButtonColor != 0) {
+                setColorFilter(mButtonColor, PorterDuff.Mode.SRC_ATOP);
+                setDrawingAlpha((float) Color.alpha(mButtonColor) / 255f);
+            } else {
+                clearColorFilter();
+                setDrawingAlpha(BUTTON_QUIESCENT_ALPHA);
+            }
+
+            mOriginalAlpha = mDrawingAlpha;
+        }
+    }
+
     Runnable mCheckLongPress = new Runnable() {
         public void run() {
             if (isPressed()) {
@@ -88,17 +146,21 @@ public class KeyButtonView extends ImageView {
         
         mSupportsLongPress = a.getBoolean(R.styleable.KeyButtonView_keyRepeat, true);
 
-        mGlowBG = a.getDrawable(R.styleable.KeyButtonView_glowBackground);
-        if (mGlowBG != null) {
+        mOriginalGlowBG = a.getDrawable(R.styleable.KeyButtonView_glowBackground);
+        if (mOriginalGlowBG != null) {
+            mGlowBG = mOriginalGlowBG;
             setDrawingAlpha(BUTTON_QUIESCENT_ALPHA);
             mGlowWidth = mGlowBG.getIntrinsicWidth();
             mGlowHeight = mGlowBG.getIntrinsicHeight();
         }
-        
+
         a.recycle();
 
         setClickable(true);
         mTouchSlop = ViewConfiguration.get(context).getScaledTouchSlop();
+
+        SettingsObserver observer = new SettingsObserver(mHandler);
+        observer.observe();
     }
 
     @Override
@@ -114,12 +176,17 @@ public class KeyButtonView extends ImageView {
             canvas.scale(mGlowScale, mGlowScale, w*0.5f, h*0.5f);
             mGlowBG.setBounds(-margin, 0, drawW-margin, drawH);
             mGlowBG.setAlpha((int)(mDrawingAlpha * mGlowAlpha * 255));
+            mGlowBG.setColorFilter(mGlowBGColor, PorterDuff.Mode.SRC_ATOP);
             mGlowBG.draw(canvas);
             canvas.restore();
             mRect.right = w;
             mRect.bottom = h;
         }
         super.onDraw(canvas);
+    }
+
+    public void setGlowBG(boolean glow) {
+        mGlowBG = glow ? mOriginalGlowBG : null;
     }
 
     public float getDrawingAlpha() {
@@ -193,14 +260,14 @@ public class KeyButtonView extends ImageView {
                         ObjectAnimator.ofFloat(this, "glowAlpha", 1f),
                         ObjectAnimator.ofFloat(this, "glowScale", GLOW_MAX_SCALE_FACTOR)
                     );
-                    as.setDuration(50);
+                    as.setDuration(mGlowTime / 10);
                 } else {
                     as.playTogether(
                         ObjectAnimator.ofFloat(this, "glowAlpha", 0f),
                         ObjectAnimator.ofFloat(this, "glowScale", 1f),
-                        ObjectAnimator.ofFloat(this, "drawingAlpha", BUTTON_QUIESCENT_ALPHA)
+                        ObjectAnimator.ofFloat(this, "drawingAlpha", mOriginalAlpha)
                     );
-                    as.setDuration(500);
+                    as.setDuration(mGlowTime);
                 }
                 as.start();
             }

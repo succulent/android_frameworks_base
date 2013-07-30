@@ -23,6 +23,7 @@ import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.util.Slog;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.CompoundButton;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
@@ -136,6 +137,10 @@ public class ToggleSlider extends RelativeLayout
         mToggle.setChecked(checked);
     }
 
+    public void setLabel(int label) {
+        mLabel.setText(label);
+    }
+
     public boolean isChecked() {
         return mToggle.isChecked();
     }
@@ -146,6 +151,12 @@ public class ToggleSlider extends RelativeLayout
 
     public void setValue(int value) {
         mSlider.setProgress(value);
+    }
+
+    public void hideToggle() {
+        ViewGroup.LayoutParams lp = mToggle.getLayoutParams();
+        lp.width = 0;
+        mToggle.setLayoutParams(lp);
     }
 }
 

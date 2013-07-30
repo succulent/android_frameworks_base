@@ -448,6 +448,9 @@ public class LegacyUsbDeviceManager extends UsbDeviceManager {
                 updateAdbNotification();
             }
             SystemProperties.set("persist.service.adb.enable", enable ? "1":"0");
+            if (mDebuggingManager != null) {
+                mDebuggingManager.setAdbEnabled(mAdbEnabled);
+            }
         }
 
         private void setEnabledFunctions(String functions, boolean makeDefault) {
@@ -679,6 +682,11 @@ public class LegacyUsbDeviceManager extends UsbDeviceManager {
                 pw.println("IOException: " + e);
             }
         }
+    }
+
+    public void setCurrentFunctions(String functions, boolean makeDefault) {
+        if (DEBUG) Slog.d(TAG, "setCurrentFunctions(" + functions + ") default: " + makeDefault);
+        mHandler.sendMessage(MSG_SET_CURRENT_FUNCTION, functions, makeDefault);
     }
 
     public void allowUsbDebugging(boolean alwaysAllow, String publicKey) {

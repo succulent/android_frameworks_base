@@ -19,6 +19,7 @@ package com.android.systemui.statusbar;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.database.ContentObserver;
+import android.graphics.drawable.Drawable;
 import android.os.Handler;
 import android.os.UserHandle;
 import android.provider.Settings;
@@ -27,6 +28,7 @@ import android.util.Slog;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.accessibility.AccessibilityEvent;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 
@@ -56,6 +58,8 @@ public class SignalClusterView
     private int mAirplaneIconId = 0;
     private String mWifiDescription, mMobileDescription, mMobileTypeDescription;
 
+    private boolean mTabletMode;
+
     ViewGroup mWifiGroup, mMobileGroup;
     ImageView mWifi, mMobile, mWifiActivity, mMobileActivity, mMobileType, mAirplane;
     View mSpacer;
@@ -70,7 +74,7 @@ public class SignalClusterView
         void observe() {
             ContentResolver resolver = mContext.getContentResolver();
             resolver.registerContentObserver(Settings.System.getUriFor(
-                    Settings.System.STATUS_BAR_SIGNAL_TEXT), false, this);
+                    Settings.System.STATUS_BAR_SIGNAL_TEXT), false, this, UserHandle.USER_ALL);
         }
 
         void unobserve() {
@@ -95,6 +99,13 @@ public class SignalClusterView
         super(context, attrs, defStyle);
 
         mHandler = new Handler();
+
+        mTabletMode = Settings.System.getIntForUser(context.getContentResolver(),
+                Settings.System.TABLET_MODE, context.getResources().getBoolean(
+                com.android.internal.R.bool.config_showTabletNavigationBar) ? 1 : 0,
+                UserHandle.USER_CURRENT) == 1 &&
+                Settings.System.getIntForUser(context.getContentResolver(),
+                Settings.System.TABLET_SCALED_ICONS, 1, UserHandle.USER_CURRENT) == 1;
 
         mObserver = new SettingsObserver(mHandler);
     }
@@ -263,6 +274,48 @@ public class SignalClusterView
                 !mWifiVisible ? View.VISIBLE : View.GONE);
 
         updateSettings();
+
+        if (mTabletMode) {
+            if (mWifi != null && mWifiGroup.getVisibility() == View.VISIBLE) scaleImage(mWifi, true);
+            if (mWifiActivity != null && mWifiGroup.getVisibility() == View.VISIBLE) scaleImage(mWifiActivity, true);
+            if (mMobile != null && mMobileGroup.getVisibility() == View.VISIBLE) scaleImage(mMobile, true);
+            if (mMobileActivity != null && mMobileGroup.getVisibility() == View.VISIBLE) scaleImage(mMobileActivity, true);
+            if (mMobileType != null && mMobileGroup.getVisibility() == View.VISIBLE) scaleImage(mMobileType, true);
+            if (mAirplane != null && mAirplane.getVisibility() == View.VISIBLE) scaleImage(mAirplane, false);
+        }
+    }
+
+    private void scaleImage(final ImageView view, final boolean frameLayout) {
+        final float scale = (4f / 3f) * (float)
+                        Settings.System.getIntForUser(mContext.getContentResolver(),
+                        Settings.System.TABLET_HEIGHT, 100, UserHandle.USER_CURRENT) / 100f;
+        int finalHeight = 0;
+        int finalWidth = 0;
+        int res = 0;
+        if (view == mWifi) res = mWifiStrengthId;
+        if (view == mMobile) res = mMobileStrengthId;
+        if (view == mAirplane) res = mAirplaneIconId;
+        if (view == mWifiActivity) res = mWifiActivityId;
+        if (view == mMobileActivity) res = mMobileActivityId;
+        if (view == mMobileType) res = mMobileTypeId;
+        if (res != 0) {
+            Drawable temp = getResources().getDrawable(res);
+            if (temp != null) {
+                finalHeight = temp.getIntrinsicHeight();
+                finalWidth = temp.getIntrinsicWidth();
+            }
+        }
+        if (frameLayout) {
+            FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) view.getLayoutParams();
+            params.width = (int) (finalWidth * scale);
+            params.height = (int) (finalHeight * scale);
+            view.setLayoutParams(params);
+        } else {
+            LinearLayout.LayoutParams linParams = (LinearLayout.LayoutParams) view.getLayoutParams();
+            linParams.width = (int) (finalWidth * scale);
+            linParams.height = (int) (finalHeight * scale);
+            view.setLayoutParams(linParams);
+        }
     }
 
     private void updateSignalClusterStyle() {

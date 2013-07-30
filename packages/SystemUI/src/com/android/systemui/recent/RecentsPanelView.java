@@ -89,6 +89,7 @@ public class RecentsPanelView extends FrameLayout implements OnItemClickListener
     private ArrayList<TaskDescription> mRecentTaskDescriptions;
     private TaskDescriptionAdapter mListAdapter;
     private int mThumbnailWidth;
+    private int mThumbnailHeight;
     private boolean mFitThumbnailToXY;
     private int mRecentItemLayoutId;
     private boolean mHighEndGfx;
@@ -149,6 +150,11 @@ public class RecentsPanelView extends FrameLayout implements OnItemClickListener
             holder.thumbnailView = convertView.findViewById(R.id.app_thumbnail);
             holder.thumbnailViewImage =
                     (ImageView) convertView.findViewById(R.id.app_thumbnail_image);
+            ViewGroup.LayoutParams lp =
+                    (ViewGroup.LayoutParams) holder.thumbnailViewImage.getLayoutParams();
+            lp.height = mThumbnailHeight;
+            lp.width = mThumbnailWidth;
+            holder.thumbnailViewImage.setLayoutParams(lp);
             // If we set the default thumbnail now, we avoid an onLayout when we update
             // the thumbnail later (if they both have the same dimensions)
             updateThumbnail(holder, mRecentTasksLoader.getDefaultThumbnail(), false, false);
@@ -443,7 +449,15 @@ public class RecentsPanelView extends FrameLayout implements OnItemClickListener
 
     public void updateValuesFromResources() {
         final Resources res = mContext.getResources();
-        mThumbnailWidth = Math.round(res.getDimension(R.dimen.status_bar_recents_thumbnail_width));
+        boolean largeThumbs = Settings.System.getIntForUser(mContext.getContentResolver(),
+                Settings.System.LARGE_RECENT_THUMBS, 0, UserHandle.USER_CURRENT) == 1;
+        mThumbnailWidth = Math.round(res.getDimension(largeThumbs ?
+                R.dimen.status_bar_recents_thumbnail_width_large :
+                R.dimen.status_bar_recents_thumbnail_width));
+        int height = res.getDisplayMetrics().heightPixels;
+        int width = res.getDisplayMetrics().widthPixels;
+        mThumbnailHeight = (height > width ? width : height) * mThumbnailWidth /
+                (height > width ? height : width);
         mFitThumbnailToXY = res.getBoolean(R.bool.config_recents_thumbnail_image_fits_to_xy);
     }
 
@@ -526,7 +540,7 @@ public class RecentsPanelView extends FrameLayout implements OnItemClickListener
             if (h.thumbnailViewImageBitmap == null ||
                 h.thumbnailViewImageBitmap.getWidth() != thumbnail.getWidth() ||
                 h.thumbnailViewImageBitmap.getHeight() != thumbnail.getHeight()) {
-                if (mFitThumbnailToXY) {
+                if (true) {
                     h.thumbnailViewImage.setScaleType(ScaleType.FIT_XY);
                 } else {
                     Matrix scaleMatrix = new Matrix();
@@ -600,6 +614,25 @@ public class RecentsPanelView extends FrameLayout implements OnItemClickListener
             }
             mItemToAnimateInWhenWindowAnimationIsFinished = null;
             mAnimateIconOfFirstTask = false;
+        }
+    }
+
+    public void setColor() {
+        int color = Settings.System.getIntForUser(mContext.getContentResolver(),
+                Settings.System.RECENTS_PANEL_COLOR, 0xe0000000, UserHandle.USER_CURRENT);
+
+        if (mRecentsScrim != null) {
+            mHighEndGfx = ActivityManager.isHighEndGfx();
+            if (color == 0xe0000000) {
+                if (!mHighEndGfx) {
+                    mRecentsScrim.setBackground(null);
+                } else if (mRecentsScrim.getBackground() instanceof BitmapDrawable) {
+                    // In order to save space, we make the background texture repeat in the Y direction
+                    ((BitmapDrawable) mRecentsScrim.getBackground()).setTileModeY(TileMode.REPEAT);
+                }
+            } else {
+                mRecentsScrim.setBackgroundColor(color);
+            }
         }
     }
 

@@ -33,6 +33,8 @@ import android.graphics.PixelFormat;
 import android.graphics.Point;
 import android.graphics.drawable.Drawable;
 import android.hardware.input.InputManager;
+import android.media.AudioManager;
+import android.os.AsyncTask;
 import android.os.BatteryManager;
 import android.os.Handler;
 import android.os.Looper;
@@ -480,7 +482,8 @@ public class PieController implements BaseStatusBar.NavigationBarCallback, PieVi
                 WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
                 | WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
                 | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
-                | WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON,
+                | WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
+                | WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
                 PixelFormat.TRANSLUCENT);
         lp.privateFlags = WindowManager.LayoutParams.PRIVATE_FLAG_FORCE_SHOW_NAV_BAR;
         // This title is for debugging only. See: dumpsys window
@@ -623,6 +626,24 @@ public class PieController implements BaseStatusBar.NavigationBarCallback, PieVi
                 }
             } else if (bi == SEARCHLIGHT) {
                 launchAssistAction(true);
+            } else if (bi == NavigationButtons.NOTIFICATIONS) {
+                mStatusBar.animateExpandNotificationsPanel();
+            } else if (bi == NavigationButtons.QUICKSETTINGS) {
+                mStatusBar.animateExpandSettingsPanel();
+            } else if (bi == NavigationButtons.DRAWER) {
+                Intent intent = new Intent("android.intent.action.MAIN");
+                intent.addCategory("android.intent.category.HOME");
+                intent.addCategory("com.cyanogenmod.trebuchet.APP_DRAWER");
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                mContext.startActivityAsUser(intent, new UserHandle(UserHandle.USER_CURRENT));
+            } else if (bi == NavigationButtons.VOLUME) {
+                final AudioManager am = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
+                final int stream = am.isMusicActive() ? AudioManager.STREAM_MUSIC :
+                        AudioManager.STREAM_NOTIFICATION;
+                final int volume = am.getStreamVolume(stream);
+                am.setStreamVolume(stream, volume, AudioManager.FLAG_SHOW_UI);
+            } else if (bi == NavigationButtons.EXPANDED) {
+                AsyncTask.execute(mStatusBar.mStatusBarResetAndShow);
             }
         }
     }

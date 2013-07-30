@@ -77,9 +77,9 @@ public class Clock extends TextView implements OnClickListener, OnLongClickListe
         void observe() {
             ContentResolver resolver = mContext.getContentResolver();
             resolver.registerContentObserver(Settings.System.getUriFor(
-                    Settings.System.STATUS_BAR_AM_PM), false, this);
+                    Settings.System.STATUS_BAR_AM_PM), false, this, UserHandle.USER_ALL);
             resolver.registerContentObserver(Settings.System.getUriFor(
-                    Settings.System.STATUS_BAR_CLOCK), false, this);
+                    Settings.System.STATUS_BAR_CLOCK), false, this, UserHandle.USER_ALL);
         }
 
         void unobserve() {
@@ -289,7 +289,7 @@ public class Clock extends TextView implements OnClickListener, OnLongClickListe
 
         // start activity
         what.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        mContext.startActivity(what);
+        mContext.startActivityAsUser(what, new UserHandle(UserHandle.USER_CURRENT));
     }
 
     @Override

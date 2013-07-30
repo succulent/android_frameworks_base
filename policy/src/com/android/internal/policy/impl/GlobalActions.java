@@ -28,6 +28,7 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.Profile;
 import android.app.ProfileManager;
+import android.app.StatusBarManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.ContentResolver;
@@ -37,6 +38,7 @@ import android.content.IntentFilter;
 import android.content.pm.UserInfo;
 import android.database.ContentObserver;
 import android.graphics.drawable.Drawable;
+import android.hardware.input.InputManager;
 import android.media.AudioManager;
 import android.net.ConnectivityManager;
 import android.os.Bundle;
@@ -58,6 +60,7 @@ import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.InputDevice;
+import android.view.KeyCharacterMap;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -113,6 +116,7 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
     private Action mSilentModeAction;
     private ToggleAction mAirplaneModeOn;
     private ToggleAction mExpandDesktopModeOn;
+    private NavBarAction mNavBarHideToggle;
 
     private MyAdapter mAdapter;
 
@@ -124,6 +128,7 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
     private boolean mHasVibrator;
     private Profile mChosenProfile;
     private final boolean mShowSilentToggle;
+    private StatusBarManager mStatusBarManager;
 
     /**
      * @param context everything needs a context :(
@@ -134,6 +139,8 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
         mAudioManager = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
         mDreamManager = IDreamManager.Stub.asInterface(
                 ServiceManager.getService(DreamService.DREAM_SERVICE));
+        mStatusBarManager = (StatusBarManager)
+                mContext.getSystemService(Context.STATUS_BAR_SERVICE);
 
         // receive broadcasts
         IntentFilter filter = new IntentFilter();
@@ -245,6 +252,8 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
             }
         };
         onExpandDesktopModeChanged();
+
+        mNavBarHideToggle = new NavBarAction(mHandler, mStatusBarManager);
 
         mAirplaneModeOn = new ToggleAction(
                 R.drawable.ic_lock_airplane_mode,
@@ -468,6 +477,15 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
                 Settings.System.POWER_MENU_SOUND_ENABLED, 1, UserHandle.USER_CURRENT) == 1;
         if (showSoundMode) {
             mItems.add(mSilentModeAction);
+        }
+
+        // Next NavBar Hide
+        if ((Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.EXPANDED_DESKTOP_STATE, 0) == 1) &&
+                (Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.NAVIGATION_CONTROLS, (mContext.getResources().getBoolean(
+                    com.android.internal.R.bool.config_showNavigationBar) ? 1 : 0)) == 1)) {
+            mItems.add(mNavBarHideToggle);
         }
 
         mAdapter = new MyAdapter();
@@ -1050,6 +1068,10 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
             } else {
                 mAudioManager.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
             }
+            final int stream = mAudioManager.isMusicActive() ? AudioManager.STREAM_MUSIC :
+                    AudioManager.STREAM_NOTIFICATION;
+            final int volume = mAudioManager.getStreamVolume(stream);
+            mAudioManager.setStreamVolume(stream, volume, AudioManager.FLAG_SHOW_UI);
         }
 
         public boolean showDuringKeyguard() {
@@ -1127,8 +1149,123 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
 
             int index = (Integer) v.getTag();
             mAudioManager.setRingerMode(indexToRingerMode(index));
+            final int stream = mAudioManager.isMusicActive() ? AudioManager.STREAM_MUSIC :
+                    AudioManager.STREAM_NOTIFICATION;
+            final int volume = mAudioManager.getStreamVolume(stream);
+            mAudioManager.setStreamVolume(stream, volume, AudioManager.FLAG_SHOW_UI);
             mHandler.sendEmptyMessageDelayed(MESSAGE_DISMISS, DIALOG_DISMISS_DELAY);
         }
+    }
+
+    private static class NavBarAction implements Action, View.OnClickListener {
+
+        private final int[] ITEM_IDS = { R.id.navbarback, R.id.navbarhome, R.id.navbarrecent, R.id.navbarmenu };
+
+        public Context mContext;
+        public boolean mNavbarVisible;
+        private final Handler mHandler;
+        private int mInjectKeycode;
+        long mDownTime;
+        StatusBarManager mStatusBarManager;
+
+        NavBarAction(Handler handler, StatusBarManager sbm) {
+            mHandler = handler;
+            mStatusBarManager = sbm;
+        }
+
+
+        public View create(Context context, View convertView, ViewGroup parent,
+                LayoutInflater inflater) {
+            mContext = context;
+
+            View v = inflater.inflate(R.layout.global_actions_navbar_mode, parent, false);
+
+            for (int i = 0; i < 4; i++) {
+                View itemView = v.findViewById(ITEM_IDS[i]);
+                // Set up click handler
+                itemView.setTag(i);
+                itemView.setOnClickListener(this);
+            }
+            return v;
+        }
+
+        public void onPress() {
+        }
+
+        public boolean onLongPress() {
+            return false;
+        }
+
+        public boolean showDuringKeyguard() {
+            return false;
+        }
+
+        public boolean showBeforeProvisioning() {
+            return false;
+        }
+
+        public boolean isEnabled() {
+            return true;
+        }
+
+        void willCreate() {
+        }
+
+        public void onClick(View v) {
+            if (!(v.getTag() instanceof Integer)) return;
+
+            int index = (Integer) v.getTag();
+
+            switch (index) {
+
+            case 0:
+                injectKeyDelayed(KeyEvent.KEYCODE_BACK,SystemClock.uptimeMillis());
+                break;
+
+            case 1:
+                injectKeyDelayed(KeyEvent.KEYCODE_HOME,SystemClock.uptimeMillis());
+                break;
+
+            case 2:
+                mStatusBarManager.toggleRecentApps();
+                break;
+
+            case 3:
+                injectKeyDelayed(KeyEvent.KEYCODE_MENU,SystemClock.uptimeMillis());
+                break;
+            }
+        }
+        public void injectKeyDelayed(int keycode,long downtime){
+            mInjectKeycode = keycode;
+            mDownTime = downtime;
+            mHandler.sendEmptyMessage(MESSAGE_DISMISS);
+            mHandler.removeCallbacks(onInjectKey_Down);
+            mHandler.removeCallbacks(onInjectKey_Up);
+            mHandler.postDelayed(onInjectKey_Down,25);// wait a few ms to let Dialog dismiss
+            mHandler.postDelayed(onInjectKey_Up,50); // introduce small delay to handle key press
+        }
+
+        final Runnable onInjectKey_Down = new Runnable() {
+            public void run() {
+                final KeyEvent ev = new KeyEvent(mDownTime, SystemClock.uptimeMillis(), KeyEvent.ACTION_DOWN, mInjectKeycode, 0,
+                        0, KeyCharacterMap.VIRTUAL_KEYBOARD, 0,
+                        KeyEvent.FLAG_FROM_SYSTEM | KeyEvent.FLAG_VIRTUAL_HARD_KEY,
+                        InputDevice.SOURCE_KEYBOARD);
+                InputManager.getInstance().injectInputEvent(ev,
+                        InputManager.INJECT_INPUT_EVENT_MODE_WAIT_FOR_RESULT);
+            }
+        };
+
+        final Runnable onInjectKey_Up = new Runnable() {
+            public void run() {
+                final KeyEvent ev = new KeyEvent(mDownTime, SystemClock.uptimeMillis(), KeyEvent.ACTION_UP, mInjectKeycode, 0,
+                        0, KeyCharacterMap.VIRTUAL_KEYBOARD, 0,
+                        KeyEvent.FLAG_FROM_SYSTEM | KeyEvent.FLAG_VIRTUAL_HARD_KEY,
+                        InputDevice.SOURCE_KEYBOARD);
+                InputManager.getInstance().injectInputEvent(ev,
+                        InputManager.INJECT_INPUT_EVENT_MODE_WAIT_FOR_RESULT);
+            }
+        };
     }
 
     private BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {

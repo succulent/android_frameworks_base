@@ -75,6 +75,11 @@ public class NavigationBarView extends LinearLayout implements BaseStatusBar.Nav
     private OnClickListener mRecentsClickListener;
     private OnTouchListener mRecentsPreloadListener;
     private OnTouchListener mHomeSearchActionListener;
+    private OnClickListener mNotificationsClickListener;
+    private OnClickListener mQSClickListener;
+    private OnClickListener mDrawerClickListener;
+    private OnClickListener mVolumeClickListener;
+    private OnClickListener mExpandedClickListener;
 
     protected IStatusBarService mBarService;
     final Display mDisplay;
@@ -153,12 +158,20 @@ public class NavigationBarView extends LinearLayout implements BaseStatusBar.Nav
     public boolean isInEditMode() {
         return mInEditMode;
     }
-
-    /* package */ void setListeners(OnClickListener recentsClickListener,
-            OnTouchListener recentsPreloadListener, OnTouchListener homeSearchActionListener) {
-        mRecentsClickListener = recentsClickListener;
-        mRecentsPreloadListener = recentsPreloadListener;
-        mHomeSearchActionListener = homeSearchActionListener;
+    
+    /* package */ void setListeners(OnClickListener RecentsClickListener,
+            OnTouchListener RecentsPreloadListener, OnTouchListener HomeSearchActionListener,
+            OnClickListener NotificationsClickListener, OnClickListener QSClickListener,
+            OnClickListener DrawerClickListener, OnClickListener VolumeClickListener,
+            OnClickListener ExpandedClickListener) {
+        mRecentsClickListener = RecentsClickListener;
+        mRecentsPreloadListener = RecentsPreloadListener;
+        mHomeSearchActionListener = HomeSearchActionListener;
+        mNotificationsClickListener = NotificationsClickListener;
+        mQSClickListener = QSClickListener;
+        mDrawerClickListener = DrawerClickListener;
+        mVolumeClickListener = VolumeClickListener;
+        mExpandedClickListener = ExpandedClickListener;
     }
 
     private void removeButtonListeners() {
@@ -182,6 +195,36 @@ public class NavigationBarView extends LinearLayout implements BaseStatusBar.Nav
         View homeView = mCurrentView.findViewWithTag(NavigationButtons.HOME);
         if (homeView != null) {
             homeView.setOnTouchListener(mHomeSearchActionListener);
+        }
+        View notificationsView = mCurrentView.findViewWithTag(NavigationButtons.NOTIFICATIONS);
+        if (notificationsView != null) {
+            notificationsView.setOnClickListener(mNotificationsClickListener);
+            notificationsView.setScaleX(0.6f);
+            notificationsView.setScaleY(0.6f);
+        }
+        View qsView = mCurrentView.findViewWithTag(NavigationButtons.QUICKSETTINGS);
+        if (qsView != null) {
+            qsView.setOnClickListener(mQSClickListener);
+            qsView.setScaleX(0.6f);
+            qsView.setScaleY(0.6f);
+        }
+        View drawerView = mCurrentView.findViewWithTag(NavigationButtons.DRAWER);
+        if (drawerView != null) {
+            drawerView.setOnClickListener(mDrawerClickListener);
+            drawerView.setScaleX(0.4f);
+            drawerView.setScaleY(0.4f);
+        }
+        View volumeView = mCurrentView.findViewWithTag(NavigationButtons.VOLUME);
+        if (volumeView != null) {
+            volumeView.setOnClickListener(mVolumeClickListener);
+            volumeView.setScaleX(0.6f);
+            volumeView.setScaleY(0.6f);
+        }
+        View expandedView = mCurrentView.findViewWithTag(NavigationButtons.EXPANDED);
+        if (expandedView != null) {
+            expandedView.setOnClickListener(mExpandedClickListener);
+            expandedView.setScaleX(0.4f);
+            expandedView.setScaleY(0.4f);
         }
     }
 
@@ -341,6 +384,7 @@ public class NavigationBarView extends LinearLayout implements BaseStatusBar.Nav
         final boolean disableBack = ((disabledFlags & View.STATUS_BAR_DISABLE_BACK) != 0)
                 && ((mNavigationIconHints & StatusBarManager.NAVIGATION_HINT_BACK_ALT) == 0);
         final boolean disableSearch = ((disabledFlags & View.STATUS_BAR_DISABLE_SEARCH) != 0);
+        final boolean disableAll = disableHome && disableRecent && disableBack;
 
         if (SLIPPERY_WHEN_DISABLED) {
             setSlippery(disableHome && disableRecent && disableBack && disableSearch);
@@ -363,6 +407,11 @@ public class NavigationBarView extends LinearLayout implements BaseStatusBar.Nav
         setButtonWithTagVisibility(NavigationButtons.ALWAYS_MENU, disableRecent ? View.INVISIBLE : View.VISIBLE);
         setButtonWithTagVisibility(NavigationButtons.MENU_BIG, disableRecent ? View.INVISIBLE : View.VISIBLE);
         setButtonWithTagVisibility(NavigationButtons.SEARCH, disableRecent ? View.INVISIBLE : View.VISIBLE);
+        setButtonWithTagVisibility(NavigationButtons.NOTIFICATIONS, disableAll ? View.INVISIBLE : View.VISIBLE);
+        setButtonWithTagVisibility(NavigationButtons.QUICKSETTINGS, disableAll ? View.INVISIBLE : View.VISIBLE);
+        setButtonWithTagVisibility(NavigationButtons.DRAWER, disableAll ? View.INVISIBLE : View.VISIBLE);
+        setButtonWithTagVisibility(NavigationButtons.VOLUME, disableAll ? View.INVISIBLE : View.VISIBLE);
+        setButtonWithTagVisibility(NavigationButtons.EXPANDED, disableAll ? View.INVISIBLE : View.VISIBLE);
         getSearchLight().setVisibility((disableHome && !disableSearch) ? View.VISIBLE : View.GONE);
     }
 

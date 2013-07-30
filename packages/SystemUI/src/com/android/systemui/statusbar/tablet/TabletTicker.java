@@ -24,11 +24,14 @@ import android.app.PendingIntent;
 import android.service.notification.StatusBarNotification;
 import android.content.Context;
 import android.content.res.Resources;
+import android.graphics.Bitmap;
 import android.graphics.PixelFormat;
 import android.graphics.drawable.Drawable;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
+import android.os.UserHandle;
+import android.provider.Settings;
 import android.util.Slog;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -37,6 +40,7 @@ import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.FrameLayout;
 import android.widget.TextView;
 
 import com.android.internal.statusbar.StatusBarIcon;
@@ -215,6 +219,7 @@ public class TabletTicker
         final int width = res.getDimensionPixelSize(R.dimen.notification_ticker_width);
         int windowFlags = WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
                     | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+                    | WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED
                     | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS;
         if (CLICKABLE_TICKER) {
             windowFlags |= WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL;
@@ -224,7 +229,9 @@ public class TabletTicker
         WindowManager.LayoutParams lp = new WindowManager.LayoutParams(width, mLargeIconHeight,
                 WindowManager.LayoutParams.TYPE_NAVIGATION_BAR_PANEL, windowFlags,
                 PixelFormat.TRANSLUCENT);
-        lp.gravity = Gravity.BOTTOM | Gravity.END;
+        boolean flipStatusBar = Settings.System.getIntForUser(mContext.getContentResolver(),
+                Settings.System.TABLET_FLIPPED, 0, UserHandle.USER_CURRENT) == 1;
+        lp.gravity = Gravity.BOTTOM | (flipStatusBar ? Gravity.LEFT : Gravity.RIGHT);
 //        lp.windowAnimations = com.android.internal.R.style.Animation_Toast;
 
         mLayoutTransition = new LayoutTransition();

@@ -471,25 +471,25 @@ public class PowerWidget extends FrameLayout {
             // watch for display widget
             resolver.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.EXPANDED_VIEW_WIDGET),
-                            false, this);
+                            false, this, UserHandle.USER_ALL);
 
             // watch for scrollbar hiding
             resolver.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.EXPANDED_HIDE_SCROLLBAR),
-                            false, this);
+                            false, this, UserHandle.USER_ALL);
 
             // watch for haptic feedback
             resolver.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.EXPANDED_HAPTIC_FEEDBACK),
-                            false, this);
+                            false, this, UserHandle.USER_ALL);
             resolver.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.HAPTIC_FEEDBACK_ENABLED),
-                            false, this);
+                            false, this, UserHandle.USER_ALL);
 
             // watch for changes in buttons
             resolver.registerContentObserver(
                     Settings.System.getUriFor(Settings.System.WIDGET_BUTTONS),
-                            false, this);
+                            false, this, UserHandle.USER_ALL);
 
             // watch for power-button specific stuff that has been loaded
             for(Uri uri : getAllObservedUris()) {

@@ -17,6 +17,8 @@
 package com.android.systemui.statusbar;
 
 import android.graphics.RectF;
+import android.os.UserHandle;
+import android.provider.Settings;
 import android.view.MotionEvent;
 import android.view.View;
 
@@ -34,9 +36,17 @@ public class DelegateViewHelper {
     RectF mInitialTouch = new RectF();
     private boolean mStarted;
     private boolean mSwapXY = false;
+    private boolean mFlippedTabletStatusBar;
 
     public DelegateViewHelper(View sourceView) {
         setSourceView(sourceView);
+        mFlippedTabletStatusBar = (Settings.System.getIntForUser(
+                sourceView.getContext().getContentResolver(),
+                Settings.System.TABLET_FLIPPED, 0, UserHandle.USER_CURRENT) == 1) &&
+                (Settings.System.getIntForUser(sourceView.getContext().getContentResolver(),
+                Settings.System.TABLET_MODE, sourceView.getContext().getResources().getBoolean(
+                com.android.internal.R.bool.config_showTabletNavigationBar) ? 1 : 0,
+                UserHandle.USER_CURRENT) == 1);
     }
 
     public void setDelegateView(View view) {
@@ -63,7 +73,8 @@ public class DelegateViewHelper {
                 mPanelShowing = mDelegateView.getVisibility() == View.VISIBLE;
                 mDownPoint[0] = event.getX();
                 mDownPoint[1] = event.getY();
-                mStarted = mInitialTouch.contains(mDownPoint[0] + sourceX, mDownPoint[1] + sourceY);
+                mStarted = mInitialTouch.contains(mDownPoint[0] + (mFlippedTabletStatusBar ? 0 :
+                        sourceX), mDownPoint[1] + sourceY);
                 break;
         }
 
@@ -91,9 +102,9 @@ public class DelegateViewHelper {
 
         float deltaX = sourceX - delegateX;
         float deltaY = sourceY - delegateY;
-        event.offsetLocation(deltaX, deltaY);
+        event.offsetLocation(mFlippedTabletStatusBar ? 0 : deltaX, deltaY);
         mDelegateView.dispatchTouchEvent(event);
-        event.offsetLocation(-deltaX, -deltaY);
+        event.offsetLocation(mFlippedTabletStatusBar ? 0 : -deltaX, -deltaY);
         return mPanelShowing;
     }
 

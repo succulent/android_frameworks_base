@@ -24,18 +24,22 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.database.ContentObserver;
+import android.graphics.drawable.Drawable;
 import android.os.BatteryManager;
 import android.os.Handler;
 import android.os.UserHandle;
 import android.provider.Settings;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.android.systemui.R;
 
 public class BatteryController extends BroadcastReceiver {
     private static final String TAG = "StatusBar.BatteryController";
+
+    private static final int mViewId = ImageView.generateViewId();
 
     private Context mContext;
     private ArrayList<ImageView> mIconViews = new ArrayList<ImageView>();
@@ -62,6 +66,8 @@ public class BatteryController extends BroadcastReceiver {
     private int mBatteryStatus = BatteryManager.BATTERY_STATUS_UNKNOWN;
     private int mBatteryLevel = 0;
     private int mBatteryStyle;
+    private boolean mTabletMode;
+    private int mIconStyle;
 
     Handler mHandler;
 
@@ -75,7 +81,7 @@ public class BatteryController extends BroadcastReceiver {
         void observe() {
             ContentResolver resolver = mContext.getContentResolver();
             resolver.registerContentObserver(Settings.System.getUriFor(
-                    Settings.System.STATUS_BAR_BATTERY), false, this);
+                    Settings.System.STATUS_BAR_BATTERY), false, this, UserHandle.USER_ALL);
         }
 
         @Override public void onChange(boolean selfChange) {
@@ -108,9 +114,22 @@ public class BatteryController extends BroadcastReceiver {
         IntentFilter filter = new IntentFilter();
         filter.addAction(Intent.ACTION_BATTERY_CHANGED);
         mContext.registerReceiver(this, filter);
+
+        mTabletMode = Settings.System.getIntForUser(mContext.getContentResolver(),
+                Settings.System.TABLET_MODE, mContext.getResources().getBoolean(
+                com.android.internal.R.bool.config_showTabletNavigationBar) ? 1 : 0,
+                UserHandle.USER_CURRENT) == 1 &&
+                Settings.System.getIntForUser(context.getContentResolver(),
+                Settings.System.TABLET_SCALED_ICONS, 1, UserHandle.USER_CURRENT) == 1;
+    }
+
+    public void addPanelIconView(ImageView v) {
+        mIconViews.add(v);
     }
 
     public void addIconView(ImageView v) {
+        if (mTabletMode) v.setId(mViewId);
+
         mIconViews.add(v);
     }
 
@@ -201,6 +220,9 @@ public class BatteryController extends BroadcastReceiver {
                 v.setImageLevel(level);
                 v.setContentDescription(mContext.getString(R.string.accessibility_battery_level,
                         level));
+                if (mTabletMode && v.getVisibility() == View.VISIBLE && v.getId() == mViewId) {
+                    scaleImage(v);
+                }
             }
             N = mLabelViews.size();
             for (int i=0; i<N; i++) {
@@ -214,10 +236,30 @@ public class BatteryController extends BroadcastReceiver {
         }
     }
 
+    private void scaleImage(ImageView view) {
+        final float scale = (4f / 3f) * (float)
+                        Settings.System.getIntForUser(mContext.getContentResolver(),
+                        Settings.System.TABLET_HEIGHT, 100, UserHandle.USER_CURRENT) / 100f;
+        int finalHeight = 0;
+        int finalWidth = 0;
+        int res = mIconStyle;
+        if (res != 0) {
+            Drawable temp = view.getResources().getDrawable(res);
+            if (temp != null) {
+                finalHeight = temp.getIntrinsicHeight();
+                finalWidth = temp.getIntrinsicWidth();
+            }
+        }
+        LinearLayout.LayoutParams linParams = (LinearLayout.LayoutParams) view.getLayoutParams();
+        linParams.width = (int) (finalWidth * scale + 4 * view.getResources().getDisplayMetrics().density);
+        linParams.height = (int) (finalHeight * scale);
+        view.setLayoutParams(linParams);
+    }
+
     protected void updateBattery() {
         int mIcon = View.GONE;
         int mText = View.GONE;
-        int mIconStyle = getIconStyleNormal();
+        mIconStyle = getIconStyleNormal();
 
         if (isBatteryPresent()) {
             if ( isBatteryStatusUnknown() &&
@@ -253,8 +295,7 @@ public class BatteryController extends BroadcastReceiver {
     public void updateSettings() {
         ContentResolver resolver = mContext.getContentResolver();
         mBatteryStyle = (Settings.System.getIntForUser(resolver,
-                Settings.System.STATUS_BAR_BATTERY, BATTERY_STYLE_NORMAL,
-                UserHandle.USER_CURRENT));
+                Settings.System.STATUS_BAR_BATTERY, BATTERY_STYLE_NORMAL, UserHandle.USER_CURRENT));
         updateBattery();
     }
 }

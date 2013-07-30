@@ -42,6 +42,7 @@ import android.content.res.CustomTheme;
 import android.content.res.Resources;
 import android.database.ContentObserver;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.ColorFilter;
 import android.graphics.PixelFormat;
 import android.graphics.Point;
@@ -49,6 +50,7 @@ import android.graphics.PorterDuff;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.inputmethodservice.InputMethodService;
+import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.IBinder;
@@ -217,7 +219,7 @@ public class PhoneStatusBar extends BaseStatusBar {
     // settings
     QuickSettingsController mQS;
     boolean mHasSettingsPanel, mHasFlipSettings;
-    SettingsPanelView mSettingsPanel;
+    public SettingsPanelView mSettingsPanel;
     View mFlipSettingsView;
     QuickSettingsContainerView mSettingsContainer;
     int mSettingsPanelGravity;
@@ -244,6 +246,9 @@ public class PhoneStatusBar extends BaseStatusBar {
     private Clock mClock;
 
     private boolean mShowCarrierInPanel = false;
+
+    // clock
+    private boolean mShowClock;
 
     // drag bar
     CloseDragHandle mCloseView;
@@ -303,6 +308,8 @@ public class PhoneStatusBar extends BaseStatusBar {
     // for disabling the status bar
     int mDisabled = 0;
 
+    private boolean mRestoreExpandedDesktop = false;
+
     // tracking calls to View.setSystemUiVisibility()
     int mSystemUiVisibility = View.SYSTEM_UI_FLAG_VISIBLE;
 
@@ -342,9 +349,9 @@ public class PhoneStatusBar extends BaseStatusBar {
         void observe() {
             ContentResolver resolver = mContext.getContentResolver();
             resolver.registerContentObserver(Settings.System.getUriFor(
-                    Settings.System.STATUS_BAR_BRIGHTNESS_CONTROL), false, this);
+                    Settings.System.STATUS_BAR_BRIGHTNESS_CONTROL), false, this, UserHandle.USER_ALL);
             resolver.registerContentObserver(Settings.System.getUriFor(
-                    Settings.System.SCREEN_BRIGHTNESS_MODE), false, this);
+                    Settings.System.SCREEN_BRIGHTNESS_MODE), false, this, UserHandle.USER_ALL);
             update();
         }
 
@@ -469,6 +476,21 @@ public class PhoneStatusBar extends BaseStatusBar {
                     }
                 });
 
+        int color = Settings.System.getIntForUser(context.getContentResolver(),
+                Settings.System.NOTIFICATION_PANEL_COLOR, 0xFF000000, UserHandle.USER_CURRENT);
+
+        if (color != 0xFF000000) {
+            Drawable background = mNotificationPanel.getBackground();
+            int top = mNotificationPanel.getPaddingTop();
+            int bottom = mNotificationPanel.getPaddingBottom();
+            int left = mNotificationPanel.getPaddingLeft();
+            int right = mNotificationPanel.getPaddingRight();
+            background.setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
+            background.setAlpha(Color.alpha(color));
+            mNotificationPanel.setBackgroundDrawable(background);
+            mNotificationPanel.setPadding(left, top, right, bottom);
+        }
+
         if (ENABLE_INTRUDERS) {
             mIntruderAlertView = (IntruderAlertView) View.inflate(context, R.layout.intruder_alert, null);
             mIntruderAlertView.setVisibility(View.GONE);
@@ -485,8 +507,21 @@ public class PhoneStatusBar extends BaseStatusBar {
             boolean showNav = mWindowManagerService.hasNavigationBar();
             if (DEBUG) Slog.v(TAG, "hasNavigationBar=" + showNav);
             if (mNavigationBarView == null && showNav && !mRecreating) {
+                int navAlign = Settings.System.getIntForUser(mContext.getContentResolver(),
+                        Settings.System.NAVIGATION_ALIGNMENT, 0, UserHandle.USER_CURRENT);
+                switch (navAlign) {
+                    case 0:
+                        navAlign = R.layout.navigation_bar;
+                        break;
+                    case 1:
+                        navAlign = R.layout.navigation_bar_right;
+                        break;
+                    case 2:
+                        navAlign = R.layout.navigation_bar_left;
+                        break;
+                }
                 mNavigationBarView =
-                    (NavigationBarView) View.inflate(context, R.layout.navigation_bar, null);
+                    (NavigationBarView) View.inflate(context, navAlign, null);
 
                 mNavigationBarView.setDisabledFlags(mDisabled);
                 mNavigationBarView.setBar(this);
@@ -739,6 +774,18 @@ public class PhoneStatusBar extends BaseStatusBar {
             }
         }
 
+        if (color != 0xFF000000 && mSettingsPanel != null) {
+            Drawable settingsBackground = mSettingsPanel.getBackground();
+			int padtop = mSettingsPanel.getPaddingTop();
+			int padbottom = mSettingsPanel.getPaddingBottom();
+			int padleft = mSettingsPanel.getPaddingLeft();
+			int padright = mSettingsPanel.getPaddingRight();
+            settingsBackground.setColorFilter(color, PorterDuff.Mode.SRC_ATOP);
+            settingsBackground.setAlpha(Color.alpha(color));
+            mSettingsPanel.setBackgroundDrawable(settingsBackground);
+			mSettingsPanel.setPadding(padleft, padtop, padright, padbottom);
+		}
+
         mClingShown = ! (DEBUG_CLINGS
             || !Prefs.read(mContext).getBoolean(Prefs.SHOWN_QUICK_SETTINGS_HELP, false));
 
@@ -767,6 +814,14 @@ public class PhoneStatusBar extends BaseStatusBar {
         mPowerWidget.updateVisibility();
 
         mVelocityTracker = VelocityTracker.obtain();
+
+        showClock(true);
+
+        int barColor = Settings.System.getIntForUser(mContext.getContentResolver(), Settings.System.STATUS_BAR_COLOR,
+                0xff000000, UserHandle.USER_CURRENT);
+        if (barColor != 0xff000000) mStatusBarView.setBackgroundColor(barColor);
+
+        mStatusBarView.setOnTouchListener(mHideBarListener);
 
         return mStatusBarView;
     }
@@ -879,6 +934,52 @@ public class PhoneStatusBar extends BaseStatusBar {
         }
     };
 
+    private final View.OnClickListener mNotificationsClickListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            animateExpandNotificationsPanel();
+        }
+    };
+
+    private final View.OnClickListener mQSClickListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            animateExpandSettingsPanel();
+        }
+    };
+
+    private final View.OnClickListener mDrawerClickListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            Intent intent = new Intent("android.intent.action.MAIN");
+            intent.addCategory("android.intent.category.HOME");
+            intent.addCategory("com.cyanogenmod.trebuchet.APP_DRAWER");
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivityDismissingKeyguard(intent, false);
+        }
+    };
+
+    private final View.OnClickListener mVolumeClickListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            final AudioManager am = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
+            final int stream = am.isMusicActive() ? AudioManager.STREAM_MUSIC :
+                    AudioManager.STREAM_NOTIFICATION;
+            final int volume = am.getStreamVolume(stream);
+            am.setStreamVolume(stream, volume, AudioManager.FLAG_SHOW_UI);
+        }
+    };
+
+    private final View.OnClickListener mExpandedClickListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            boolean expanded = Settings.System.getIntForUser(mContext.getContentResolver(),
+                    Settings.System.EXPANDED_DESKTOP_STATE, 0, UserHandle.USER_CURRENT) == 1;
+            Settings.System.putIntForUser(mContext.getContentResolver(),
+                    Settings.System.EXPANDED_DESKTOP_STATE, expanded ? 0 : 1, UserHandle.USER_CURRENT);
+        }
+    };
+
     private int mShowSearchHoldoff = 0;
     private final Runnable mShowSearchPanel = new Runnable() {
         @Override
@@ -920,10 +1021,14 @@ public class PhoneStatusBar extends BaseStatusBar {
     }
 
     private void prepareNavigationBarView() {
+        mNavigationBarView.setListeners(mRecentsClickListener,mRecentsPreloadOnTouchListener,
+                mHomeSearchActionListener, mNotificationsClickListener, mQSClickListener,
+                mDrawerClickListener, mVolumeClickListener, mExpandedClickListener);
         mNavigationBarView.reorient();
-        mNavigationBarView.setListeners(mRecentsClickListener,
-                mRecentsPreloadOnTouchListener, mHomeSearchActionListener);
         updateSearchPanel();
+        int navColor = Settings.System.getIntForUser(mContext.getContentResolver(), Settings.System.NAVIGATION_BAR_COLOR,
+                0xff000000, UserHandle.USER_CURRENT);
+        if (navColor != 0xff000000) mNavigationBarView.setBackgroundColor(navColor);
     }
 
     // For small-screen devices (read: phones) that lack hardware navigation buttons
@@ -965,7 +1070,7 @@ public class PhoneStatusBar extends BaseStatusBar {
                     | WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
                     | WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH
                     | WindowManager.LayoutParams.FLAG_SPLIT_TOUCH,
-                PixelFormat.OPAQUE);
+                PixelFormat.TRANSLUCENT);
         // this will allow the navbar to run in an overlay on devices that support this
         if (ActivityManager.isHighEndGfx()) {
             lp.flags |= WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED;
@@ -1362,8 +1467,20 @@ public class PhoneStatusBar extends BaseStatusBar {
     }
 
     public void showClock(boolean show) {
-        if (mClock != null) {
-            mClock.setHidden(!show);
+        if (mStatusBarView == null) return;
+        ContentResolver resolver = mContext.getContentResolver();
+        TextView clock = (TextView) mStatusBarView.findViewById(R.id.clock);
+        mShowClock = (Settings.System.getIntForUser(resolver,
+                Settings.System.STATUS_BAR_CLOCK, 1, UserHandle.USER_CURRENT) == 1);
+        if (clock != null) {
+            clock.setVisibility(show ? (mShowClock ? View.VISIBLE : View.GONE) : View.GONE);
+        }
+
+        int clockColor = Settings.System.getIntForUser(resolver, Settings.System.STATUS_BAR_CLOCK_COLOR,
+                0xff33b5e5, UserHandle.USER_CURRENT);
+
+        if (clockColor != 0xff33b5e5) {
+            clock.setTextColor(clockColor);
         }
     }
 
@@ -1559,9 +1676,18 @@ public class PhoneStatusBar extends BaseStatusBar {
         }
 
         visibilityChanged(true);
+        barExpanded(true);
     }
 
     public void animateCollapsePanels() {
+        if (mRestoreExpandedDesktop) {
+            mRestoreExpandedDesktop = false;
+            if (Settings.System.getIntForUser(mContext.getContentResolver(),
+                     Settings.System.FULLSCREEN_TIMEOUT, 0, UserHandle.USER_CURRENT) == 0) {
+                Settings.System.putIntForUser(mContext.getContentResolver(),
+                        Settings.System.EXPANDED_DESKTOP_STATE, 1, UserHandle.USER_CURRENT);
+            }
+        }
         animateCollapsePanels(CommandQueue.FLAG_EXCLUDE_NONE);
     }
 
@@ -1640,10 +1766,14 @@ public class PhoneStatusBar extends BaseStatusBar {
         if ((mDisabled & StatusBarManager.DISABLE_EXPAND) != 0) {
             return ;
         }
-        // don't allow expanding via e.g. service call while status bar is hidden
-        // due to expanded desktop
-        if (getExpandedDesktopMode() == 2) {
-            return;
+
+        if (Settings.System.getIntForUser(mContext.getContentResolver(),
+                    Settings.System.EXPANDED_DESKTOP_STYLE, 0, UserHandle.USER_CURRENT) == 2 &&
+                    Settings.System.getIntForUser(mContext.getContentResolver(),
+                    Settings.System.EXPANDED_DESKTOP_STATE, 0, UserHandle.USER_CURRENT) == 1) {
+            mRestoreExpandedDesktop = true;
+            Settings.System.putIntForUser(mContext.getContentResolver(),
+                    Settings.System.EXPANDED_DESKTOP_STATE, 0, UserHandle.USER_CURRENT);
         }
 
         mNotificationPanel.expand();
@@ -1712,10 +1842,14 @@ public class PhoneStatusBar extends BaseStatusBar {
         if ((mDisabled & StatusBarManager.DISABLE_EXPAND) != 0) {
             return;
         }
-        // don't allow expanding via e.g. service call while status bar is hidden
-        // due to expanded desktop
-        if (getExpandedDesktopMode() == 2) {
-            return;
+
+        if (Settings.System.getIntForUser(mContext.getContentResolver(),
+                    Settings.System.EXPANDED_DESKTOP_STYLE, 0, UserHandle.USER_CURRENT) == 2 &&
+                    Settings.System.getIntForUser(mContext.getContentResolver(),
+                    Settings.System.EXPANDED_DESKTOP_STATE, 0, UserHandle.USER_CURRENT) == 1) {
+            mRestoreExpandedDesktop = true;
+            Settings.System.putIntForUser(mContext.getContentResolver(),
+                    Settings.System.EXPANDED_DESKTOP_STATE, 0, UserHandle.USER_CURRENT);
         }
 
         // Settings are not available in setup
@@ -1901,6 +2035,7 @@ public class PhoneStatusBar extends BaseStatusBar {
         if (mNavigationBarView != null)
             mNavigationBarView.setSlippery(false);
         visibilityChanged(false);
+        barExpanded(false);
 
         // Shrink the window to the size of the status bar only
         WindowManager.LayoutParams lp = (WindowManager.LayoutParams) mStatusBarContainer.getLayoutParams();
@@ -2176,6 +2311,11 @@ public class PhoneStatusBar extends BaseStatusBar {
 
                 if (mNavigationBarView != null) {
                     mNavigationBarView.setLowProfile(lightsOut);
+                    if (Settings.System.getIntForUser(mContext.getContentResolver(),
+                            Settings.System.HIDE_SB_LIGHTS_OUT, 0, UserHandle.USER_CURRENT) == 1) {
+                        Settings.System.putIntForUser(mContext.getContentResolver(),
+                                Settings.System.EXPANDED_DESKTOP_STATE, lightsOut ? 1 : 0, UserHandle.USER_CURRENT);
+                    }
                 }
 
                 setStatusBarLowProfile(lightsOut);
@@ -2355,6 +2495,14 @@ public class PhoneStatusBar extends BaseStatusBar {
             mTickerView.setVisibility(View.VISIBLE);
             mTickerView.startAnimation(loadAnim(com.android.internal.R.anim.push_up_in, null));
             mStatusBarContents.startAnimation(loadAnim(com.android.internal.R.anim.push_up_out, null));
+            if (Settings.System.getIntForUser(mContext.getContentResolver(),
+                    Settings.System.EXPANDED_DESKTOP_STYLE, 0, UserHandle.USER_CURRENT) == 2 &&
+                    Settings.System.getIntForUser(mContext.getContentResolver(),
+                    Settings.System.EXPANDED_DESKTOP_STATE, 0, UserHandle.USER_CURRENT) == 1) {
+                mRestoreExpandedDesktop = true;
+                Settings.System.putIntForUser(mContext.getContentResolver(),
+                        Settings.System.EXPANDED_DESKTOP_STATE, 0, UserHandle.USER_CURRENT);
+            }
         }
 
         @Override
@@ -2364,6 +2512,14 @@ public class PhoneStatusBar extends BaseStatusBar {
             mStatusBarContents.startAnimation(loadAnim(com.android.internal.R.anim.push_down_in, null));
             mTickerView.startAnimation(loadAnim(com.android.internal.R.anim.push_down_out,
                         mTickingDoneListener));
+            if (mRestoreExpandedDesktop) {
+                mRestoreExpandedDesktop = false;
+                if (Settings.System.getIntForUser(mContext.getContentResolver(),
+                         Settings.System.FULLSCREEN_TIMEOUT, 0, UserHandle.USER_CURRENT) == 0) {
+                    Settings.System.putIntForUser(mContext.getContentResolver(),
+                            Settings.System.EXPANDED_DESKTOP_STATE, 1, UserHandle.USER_CURRENT);
+                }
+            }
         }
 
         @Override
@@ -2372,6 +2528,14 @@ public class PhoneStatusBar extends BaseStatusBar {
             mTickerView.setVisibility(View.GONE);
             mStatusBarContents.startAnimation(loadAnim(com.android.internal.R.anim.fade_in, null));
             // we do not animate the ticker away at this point, just get rid of it (b/6992707)
+            if (mRestoreExpandedDesktop) {
+                mRestoreExpandedDesktop = false;
+                if (Settings.System.getIntForUser(mContext.getContentResolver(),
+                         Settings.System.FULLSCREEN_TIMEOUT, 0, UserHandle.USER_CURRENT) == 0) {
+                    Settings.System.putIntForUser(mContext.getContentResolver(),
+                            Settings.System.EXPANDED_DESKTOP_STATE, 1, UserHandle.USER_CURRENT);
+                }
+            }
         }
     }
 
@@ -2754,6 +2918,9 @@ public class PhoneStatusBar extends BaseStatusBar {
         if (mNavigationBarView != null) {
             mNavigationBarView.updateSettings();
         }
+        if (mNavigationBarView != null) updateSearchPanel();
+        mHandler.removeCallbacks(mStatusBarReset);
+        mHandler.postDelayed(mStatusBarReset, 1000);
         super.userSwitched(newUserId);
     }
 
@@ -2975,9 +3142,8 @@ public class PhoneStatusBar extends BaseStatusBar {
 
     @Override
     protected boolean shouldDisableNavbarGestures() {
-        return !isDeviceProvisioned()
-                || mExpandedVisible
-                || (mNavigationBarView != null && mNavigationBarView.isInEditMode())
+        return !isDeviceProvisioned() || getExpandedDesktopMode() > 0
+                || mExpandedVisible || (mNavigationBarView != null && mNavigationBarView.isInEditMode())
                 || (mDisabled & StatusBarManager.DISABLE_SEARCH) != 0;
     }
 

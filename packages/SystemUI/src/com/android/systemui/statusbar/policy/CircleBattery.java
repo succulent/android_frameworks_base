@@ -70,6 +70,8 @@ public class CircleBattery extends ImageView implements BatteryController.Batter
     private Paint   mPaintSystem;
     private Paint   mPaintRed;
 
+    private boolean mTabletMode;
+
     // runnable to invalidate view via mHandler.postDelayed() call
     private final Runnable mInvalidate = new Runnable() {
         public void run() {
@@ -88,7 +90,7 @@ public class CircleBattery extends ImageView implements BatteryController.Batter
         public void observe() {
             ContentResolver resolver = mContext.getContentResolver();
             resolver.registerContentObserver(Settings.System.getUriFor(
-                    Settings.System.STATUS_BAR_BATTERY), false, this);
+                    Settings.System.STATUS_BAR_BATTERY), false, this, UserHandle.USER_ALL);
             onChange(true);
         }
 
@@ -118,6 +120,13 @@ public class CircleBattery extends ImageView implements BatteryController.Batter
 
         mContext = context;
         mHandler = new Handler();
+
+        mTabletMode = Settings.System.getIntForUser(mContext.getContentResolver(),
+                Settings.System.TABLET_MODE, mContext.getResources().getBoolean(
+                com.android.internal.R.bool.config_showTabletNavigationBar) ? 1 : 0,
+                UserHandle.USER_CURRENT) == 1 &&
+                Settings.System.getIntForUser(context.getContentResolver(),
+                Settings.System.TABLET_SCALED_ICONS, 1, UserHandle.USER_CURRENT) == 1;
 
         mObserver = new SettingsObserver(mHandler);
 
@@ -344,5 +353,8 @@ public class CircleBattery extends ImageView implements BatteryController.Batter
                 mCircleSize++;
             }
         }
+        if (mTabletMode) mCircleSize = (int) (mCircleSize * (4f / 3f) * (float)
+                        Settings.System.getIntForUser(mContext.getContentResolver(),
+                        Settings.System.TABLET_HEIGHT, 100, UserHandle.USER_CURRENT) / 100f);
     }
 }

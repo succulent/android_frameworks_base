@@ -27,6 +27,7 @@ import android.appwidget.AppWidgetProviderInfo;
 import android.content.Context;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.provider.Settings;
 import android.text.format.DateFormat;
 import android.util.AttributeSet;
 import android.util.Slog;
@@ -98,6 +99,8 @@ public class KeyguardWidgetPager extends PagedView implements PagedView.PageSwit
     private final HandlerThread mBackgroundWorkerThread;
     private final Handler mBackgroundWorkerHandler;
 
+    private boolean mHideFrames;
+
     public KeyguardWidgetPager(Context context, AttributeSet attrs) {
         this(context, attrs, 0);
     }
@@ -117,6 +120,9 @@ public class KeyguardWidgetPager extends PagedView implements PagedView.PageSwit
         mBackgroundWorkerThread = new HandlerThread("KeyguardWidgetPager Worker");
         mBackgroundWorkerThread.start();
         mBackgroundWorkerHandler = new Handler(mBackgroundWorkerThread.getLooper());
+
+        mHideFrames = Settings.System.getInt(context.getContentResolver(),
+                Settings.System.KG_HIDE_OUTLINE, 0) == 1;
     }
 
     @Override
@@ -509,7 +515,7 @@ public class KeyguardWidgetPager extends PagedView implements PagedView.PageSwit
     }
 
     public float getOutlineAlphaForPage(int screenCenter, int index, boolean showSidePages) {
-        if (showSidePages) {
+        if (showSidePages && !mHideFrames) {
             return getAlphaForPage(screenCenter, index, showSidePages)
                     * KeyguardWidgetFrame.OUTLINE_ALPHA_MULTIPLIER;
         } else {
@@ -618,7 +624,7 @@ public class KeyguardWidgetPager extends PagedView implements PagedView.PageSwit
         for (int i = 0; i < count; i++) {
             KeyguardWidgetFrame child = getWidgetPageAt(i);
             if (i != mCurrentPage) {
-                child.setBackgroundAlpha(sidePageAlpha);
+                child.setBackgroundAlpha(mHideFrames ? 0 : sidePageAlpha);
                 child.setContentAlpha(0f);
             } else {
                 child.setBackgroundAlpha(0f);
@@ -629,7 +635,7 @@ public class KeyguardWidgetPager extends PagedView implements PagedView.PageSwit
 
     public void showInitialPageHints() {
         mShowingInitialHints = true;
-        updateChildrenContentAlpha(KeyguardWidgetFrame.OUTLINE_ALPHA_MULTIPLIER);
+        updateChildrenContentAlpha(mHideFrames ? 0 : KeyguardWidgetFrame.OUTLINE_ALPHA_MULTIPLIER);
     }
 
     @Override

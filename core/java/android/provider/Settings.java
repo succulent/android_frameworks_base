@@ -3210,6 +3210,336 @@ public final class Settings {
         public static final String VOLUME_KEYS_CONTROL_RING_STREAM = "volume_keys_control_ring_stream";
 
         /**
+         * @hide
+         */
+        public static final String NAVIGATION_CONTROLS = "navigation_controls";
+
+        /**
+         * @hide
+         */
+        public static final String UMS_NOTIFICATION_CONNECT = "ums_notification_connect";
+
+        /**
+         * @hide
+         */
+        public static final String KG_ALL_WIDGETS = "kg_all_widgets";
+
+        /**
+         * @hide
+         */
+        public static final String KG_HIDE_OUTLINE = "kg_hide_outline";
+
+        /**
+         * @hide
+         */
+        public static final String TABLET_MODE = "tablet_mode";
+
+        /**
+         * @hide
+         */
+        public static final String TABLET_FLIPPED = "tablet_flipped";
+
+        /**
+         * @hide
+         */
+        public static final String TABLET_SCALED_ICONS = "tablet_scaled_icons";
+
+        /**
+         * @hide
+         */
+        public static final String DUAL_PANE_PREFS = "dual_pane_prefs";
+
+        /**
+         * @hide
+         */
+        public static final String GESTURE_ONE = "gesture_one";
+
+        /**
+         * @hide
+         */
+        public static final String GESTURE_TWO = "gesture_two";
+
+        /**
+         * @hide
+         */
+        public static final String GESTURE_THREE = "gesture_three";
+
+        /**
+         * @hide
+         */
+        public static final String GESTURE_FOUR = "gesture_four";
+
+        /**
+         * @hide
+         */
+        public static final String GESTURE_TYPE_ONE = "gesture_type_one";
+
+        /**
+         * @hide
+         */
+        public static final String GESTURE_TYPE_TWO = "gesture_type_two";
+
+        /**
+         * @hide
+         */
+        public static final String GESTURE_TYPE_THREE = "gesture_type_three";
+
+        /**
+         * @hide
+         */
+        public static final String GESTURE_TYPE_FOUR = "gesture_type_four";
+
+        /**
+         * @hide
+         */
+        public static final String GESTURE_APP_ONE = "gesture_app_one";
+
+        /**
+         * @hide
+         */
+        public static final String GESTURE_APP_TWO = "gesture_app_two";
+
+        /**
+         * @hide
+         */
+        public static final String GESTURE_APP_THREE = "gesture_app_three";
+
+        /**
+         * @hide
+         */
+        public static final String GESTURE_APP_FOUR = "gesture_app_four";
+
+        /**
+         * @hide
+         */
+        public static final String TOUCH_ZONE_ONE = "touch_zone_one";
+
+        /**
+         * @hide
+         */
+        public static final String TOUCH_ZONE_TWO = "touch_zone_two";
+
+        /**
+         * @hide
+         */
+        public static final String TOUCH_ZONE_THREE = "touch_zone_three";
+
+        /**
+         * @hide
+         */
+        public static final String TOUCH_ZONE_FOUR = "touch_zone_four";
+
+        /**
+         * @hide
+         */
+        public static final String GESTURE_SWIPE_CAPTURE = "gesture_swipe_capture";
+
+        /**
+         * @hide
+         */
+        public static final String GESTURE_SWIPE_DISTANCE = "gesture_swipe_distance";
+
+        /**
+         * @hide
+         */
+        public static final String SHOW_GESTURES = "show_gestures";
+
+        /**
+         * @hide
+         */
+        public static final String GESTURE_BLACKLIST = "gesture_blacklist";
+
+        /**
+         * @hide
+         */
+        public static final String TABLET_FORCE_MENU = "tablet_force_menu";
+
+        /**
+         * @hide
+         */
+        public static final String HIDE_SB_LIGHTS_OUT = "hide_sb_lights_out";
+
+        /**
+         * @hide
+         */
+        public static final String LARGE_RECENT_THUMBS = "large_recent_thumbs";
+
+        /**
+         * @hide
+         */
+        public static final String NAVIGATION_ALIGNMENT = "navigation_alignment";
+
+        /**
+         * @hide
+         */
+        public static final String NAVIGATION_BUTTON_COLOR = "navigation_button_color";
+
+        /**
+         * @hide
+         */
+        public static final String NAVIGATION_BUTTON_GLOW_TIME = "navigation_button_glow_time";
+
+        /**
+         * @hide
+         */
+        public static final String NAVIGATION_BUTTON_GLOW_COLOR = "navigation_button_glow_color";
+
+        /**
+         * @hide
+         */
+        public static final String COMBINED_BAR_SETTINGS = "combined_bar_settings";
+
+        /**
+         * @hide
+         */
+        public static final String STATUS_BAR_CLOCK_COLOR = "status_bar_clock_color";
+
+        /**
+         * @hide
+         */
+        public static final String STATUS_BAR_COLOR = "status_bar_color";
+
+        /**
+         * @hide
+         */
+        public static final String NAVIGATION_BAR_COLOR = "navigation_bar_color";
+
+        /**
+         * @hide
+         */
+        public static final String RECENTS_PANEL_COLOR = "recents_panel_color";
+
+        /**
+         * @hide
+         */
+        public static final String NOTIFICATION_PANEL_COLOR = "notification_panel_color";
+
+        /**
+         * @hide
+         */
+        public static final String SETTINGS_TILE_COLOR = "settings_tile_color";
+
+        /**
+         * @hide
+         */
+        public static final String FULLSCREEN_MODE = "fullscreen_mode";
+
+        /**
+         * @hide
+         */
+        public static final String FULLSCREEN_TIMEOUT = "fullscreen_timeout";
+
+        /**
+         * @hide
+         */
+        public static final String PIE_COLOR = "pie_color";
+
+        /**
+         * @hide
+         */
+        public static final String PIE_OUTLINE_COLOR = "pie_outline_color";
+
+        /**
+         * @hide
+         */
+        public static final String PIE_SELECTED_COLOR = "pie_selected_color";
+
+        /**
+         * @hide
+         */
+        public static final String HDMI_MIRROR_RESOLUTION_X = "hdmi_mirror_resolution_x";
+
+        /**
+         * @hide
+         */
+        public static final String HDMI_MIRROR_RESOLUTION_Y = "hdmi_mirror_resolution_y";
+
+        /**
+         * @hide
+         */
+        public static final String APP_SWITCH_TRANSITION = "app_switch_transition";
+
+        /**
+         * @hide
+         */
+        public static final String DRAWER_TRANSITION = "drawer_transition";
+
+        /**
+         * @hide
+         */
+        public static final String COMPAT_BUTTON = "compat_button";
+
+        /**
+         * @hide
+         */
+        public static final String TABLET_NOTIFICATIONS = "tablet_notifications";
+
+        /**
+         * @hide
+         */
+        public static final String TABLET_HEIGHT = "tablet_height";
+
+        /**
+         * @hide
+         */
+        public static final String TABLET_BUTTONS = "tablet_buttons";
+
+        /**
+         * @hide
+         */
+        public static final String NAVIGATION_HEIGHT = "navigation_height";
+
+        /**
+         * HALO, should default to 0 (no, do not show)
+         * @hide
+         */
+        public static final String HALO_ACTIVE = "halo_active";
+
+        /**
+         * HALO reversed?, should default to 1 (yes, reverse)
+         * @hide
+         */
+        public static final String HALO_REVERSED = "halo_reversed";
+
+        /**
+         * HALO hide?, should default to 0 (no, do not hide)
+         * @hide
+         */
+        public static final String HALO_HIDE = "halo_hide";
+
+        /**
+         * HALO pause activities?, defaults to 0 (no, do not pause) on devices which isLargeRAM() == true
+         * otherwise it defaults to 1 (yes, do pause)
+         * @hide
+         */
+        public static final String HALO_PAUSE = "halo_pause";
+
+        /**
+         * @hide
+         */
+        public static final String HALO_BUTTON_COLOR = "halo_button_color";
+
+        /**
+         * @hide
+         */
+        public static final String HALO_TEXT_BUBBLE_COLOR = "halo_text_bubble_color";
+
+        /**
+         * @hide
+         */
+        public static final String HALO_PING_COLOR = "halo_ping_color";
+
+        /**
+         * @hide
+         */
+        public static final String HIDE_USB_NOTIFICATION = "hide_usb_notification";
+
+        /**
+         * @hide
+         */
+        public static final String HALO_GONE = "halo_gone";
+
+        /**
          * Settings to backup. This is here so that it's in the same place as the settings
          * keys and easy to update.
          *

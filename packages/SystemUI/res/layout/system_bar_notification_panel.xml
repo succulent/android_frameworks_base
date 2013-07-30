@@ -21,7 +21,8 @@
     android:id="@+id/content_parent"
     android:layout_height="match_parent"
     android:layout_width="match_parent"
-    android:gravity="end"
+    android:gravity="right"
+    android:paddingTop="8dp"
     >
 
     <!-- lift the panel up off the status bar while leaving a touchable are -->
@@ -29,7 +30,7 @@
         android:id="@+id/system_bar_notification_panel_bottom_space"
         android:layout_height="56dp"
         android:layout_width="478dp"
-        android:layout_alignParentEnd="true"
+        android:layout_alignParentRight="true"
         android:layout_alignParentBottom="true"
         />
 
@@ -39,7 +40,7 @@
         android:layout_height="wrap_content"
         android:layout_width="478dp"
         android:orientation="vertical"
-        android:layout_alignParentEnd="true"
+        android:layout_alignParentRight="true"
         android:layout_above="@id/system_bar_notification_panel_bottom_space"
         android:paddingBottom="8dp"
         >
@@ -47,10 +48,17 @@
         <include layout="@layout/system_bar_notification_panel_title"
             android:layout_width="match_parent"
             android:layout_height="130dp"
-            android:layout_above="@id/content_frame"
-            android:layout_alignParentEnd="true"
+            android:layout_alignParentRight="true"
             android:layout_weight="0"
             />
+
+        <com.android.systemui.statusbar.powerwidget.PowerWidget
+            android:id="@+id/exp_power_stat"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/notification_panel_widget_height"
+            android:layout_marginTop="2dip"
+            android:visibility="gone"
+        />
 
         <ScrollView
 
@@ -59,6 +67,7 @@
             android:layout_width="match_parent"
             android:overScrollMode="ifContentScrolls"
             android:layout_weight="1"
+            android:layout_marginBottom="8dp"
             >
             <com.android.systemui.statusbar.policy.NotificationRowLayout
                 android:id="@+id/content"

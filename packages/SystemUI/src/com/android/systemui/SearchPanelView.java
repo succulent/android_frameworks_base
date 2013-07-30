@@ -148,7 +148,24 @@ public class SearchPanelView extends FrameLayout implements
     private void setDrawables() {
         final ArrayList<TargetDrawable> targets = new ArrayList<TargetDrawable>();
 
-        if (isScreenLarge() || isScreenPortrait()) {
+        boolean tabletMode = Settings.System.getIntForUser(
+                getContext().getContentResolver(),
+                Settings.System.TABLET_MODE, getContext().getResources().getBoolean(
+                com.android.internal.R.bool.config_showTabletNavigationBar) ? 1 : 0,
+                UserHandle.USER_CURRENT) == 1;
+        boolean tabletFlipped = Settings.System.getIntForUser(
+                getContext().getContentResolver(),
+                Settings.System.TABLET_FLIPPED, 0, UserHandle.USER_CURRENT) == 1;
+
+        if (tabletMode) {
+            if (tabletFlipped) {
+                mStartPosOffset =  2;
+                mEndPosOffset = 3;
+            } else {
+                mStartPosOffset =  0;
+                mEndPosOffset = 5;
+            }
+        } else if (isScreenLarge() || isScreenPortrait()) {
             mStartPosOffset =  1;
             mEndPosOffset = 4;
         } else {
@@ -208,10 +225,12 @@ public class SearchPanelView extends FrameLayout implements
         }
     }
 
-    private boolean hasValidTargets() {
+    public boolean hasValidTargets() {
         for (String target : mTargetActivities) {
-            if (!TextUtils.isEmpty(target) && !target.equals(NavigationRingConstants.ACTION_NONE)) {
-                return true;
+            if (!TextUtils.isEmpty(target)) {
+                if (target != null && !target.equals(NavigationRingConstants.ACTION_NONE)) {
+                    return true;
+                }
             }
         }
         return false;
@@ -355,7 +374,7 @@ public class SearchPanelView extends FrameLayout implements
             for (int i = 0; i < NavigationRingHelpers.MAX_ACTIONS; i++) {
                 resolver.registerContentObserver(
                         Settings.System.getUriFor(Settings.System.NAVIGATION_RING_TARGETS[i]),
-                        false, this);
+                        false, this, UserHandle.USER_ALL);
             }
         }
 

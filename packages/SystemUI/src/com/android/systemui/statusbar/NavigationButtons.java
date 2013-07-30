@@ -113,6 +113,11 @@ public class NavigationButtons {
     private static final String CONDITIONAL_MENU_STRING = "menu0";
     private static final String ALWAYS_MENU_STRING = "menu1";
     private static final String MENU_BIG_STRING = "menu2";
+    private static final String NOTIFICATIONS_STRING = "notifications";
+    private static final String QS_STRING = "quicksettings";
+    private static final String DRAWER_STRING = "drawer";
+    private static final String VOLUME_STRING = "volume";
+    private static final String EXPANDED_STRING = "expanded";
 
     private static final String DEFAULT_SETTING_STRING = "empty|back|home|recent|empty|menu0";
 
@@ -149,7 +154,26 @@ public class NavigationButtons {
             R.string.navbar_empty_button,
             R.string.accessibility_clear_all, 0, R.drawable.ic_sysbar_add,
             R.drawable.ic_sysbar_add_land, R.drawable.ic_sysbar_add_side, EMPTY_STRING);
-
+    public static final ButtonInfo NOTIFICATIONS =  new ButtonInfo(
+            R.string.status_bar_please_disturb_button,
+            R.string.status_bar_latest_events_title, 0, R.drawable.ic_notification_open,
+            R.drawable.ic_notification_open, R.drawable.ic_notification_open, NOTIFICATIONS_STRING);
+    public static final ButtonInfo QUICKSETTINGS =  new ButtonInfo(
+            R.string.button_quick_settings,
+            R.string.button_quick_settings, 0, R.drawable.ic_notify_settings_normal,
+            R.drawable.ic_notify_settings_normal, R.drawable.ic_notify_settings_normal, QS_STRING);
+    public static final ButtonInfo DRAWER =  new ButtonInfo(
+            R.string.button_app_drawer,
+            R.string.button_app_drawer, 0, R.drawable.ic_notify_quicksettings_normal,
+            R.drawable.ic_notify_quicksettings_normal, R.drawable.ic_notify_quicksettings_normal, DRAWER_STRING);
+    public static final ButtonInfo VOLUME =  new ButtonInfo(
+            R.string.quick_settings_volume,
+            R.string.quick_settings_volume, 0, R.drawable.stat_ring_on,
+            R.drawable.stat_ring_on, R.drawable.stat_ring_on, VOLUME_STRING);
+    public static final ButtonInfo EXPANDED =  new ButtonInfo(
+            R.string.quick_settings_expanded_desktop,
+            R.string.quick_settings_expanded_desktop, 0, R.drawable.ic_qs_expanded_desktop_off,
+            R.drawable.ic_qs_expanded_desktop_off, R.drawable.ic_qs_expanded_desktop_off, EXPANDED_STRING);
 
     /**
      * Map which holds references to supported/available buttons. This is a unmodifiable map.
@@ -165,6 +189,11 @@ public class NavigationButtons {
         temp.put(BACK_STRING, BACK);
         temp.put(SEARCH_STRING, SEARCH);
         temp.put(RECENT_STRING, RECENT);
+        temp.put(NOTIFICATIONS_STRING, NOTIFICATIONS);
+        temp.put(QS_STRING, QUICKSETTINGS);
+        temp.put(DRAWER_STRING, DRAWER);
+        temp.put(EXPANDED_STRING, EXPANDED);
+        temp.put(VOLUME_STRING, VOLUME);
         temp.put(EMPTY_STRING, EMPTY);
         BUTTON_MAP = Collections.unmodifiableMap(temp);
     }

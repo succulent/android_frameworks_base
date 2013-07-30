@@ -41,16 +41,28 @@ import android.app.PendingIntent;
 import android.app.TaskStackBuilder;
 import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.database.ContentObserver;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.ColorFilter;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.TransitionDrawable;
 import android.graphics.Paint;
+import android.graphics.PixelFormat;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuff.Mode;
+import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Build;
@@ -67,6 +79,7 @@ import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.Slog;
 import android.view.Display;
+import android.view.Gravity;
 import android.view.IWindowManager;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
@@ -84,6 +97,7 @@ import android.widget.RemoteViews;
 import android.widget.TextView;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
 public abstract class BaseStatusBar extends SystemUI implements
@@ -100,6 +114,8 @@ public abstract class BaseStatusBar extends SystemUI implements
     protected static final int MSG_CLOSE_SEARCH_PANEL = 1025;
     protected static final int MSG_SHOW_INTRUDER = 1026;
     protected static final int MSG_HIDE_INTRUDER = 1027;
+    protected static final int MSG_HIDE_STATUSBAR = 1028;
+    protected static final int MSG_SWITCH_APPS = 1029;
 
     protected static final boolean ENABLE_INTRUDERS = false;
 
@@ -121,6 +137,7 @@ public abstract class BaseStatusBar extends SystemUI implements
 
     // used to notify status bar for suppressing notification LED
     protected boolean mPanelSlightlyVisible;
+    protected boolean mPanelVisible;
 
     // Search panel
     protected SearchPanelView mSearchPanelView;
@@ -179,6 +196,14 @@ public abstract class BaseStatusBar extends SystemUI implements
 
     private boolean mDeviceProvisioned = false;
 
+    private boolean mShowNotificationCounts;
+
+    private ActivityManager mActivityManager;
+
+    public IStatusBarService getService() {
+        return mBarService;
+    }
+
     public IStatusBarService getStatusBarService() {
         return mBarService;
     }
@@ -232,6 +257,11 @@ public abstract class BaseStatusBar extends SystemUI implements
     };
 
     public void start() {
+        mCurrentUserId = ActivityManager.getCurrentUser();
+
+        SettingsObserver observer = new SettingsObserver(mHandler);
+        observer.observe(mContext);
+
         mWindowManager = (WindowManager)mContext.getSystemService(Context.WINDOW_SERVICE);
         mWindowManagerService = WindowManagerGlobal.getWindowManagerService();
         mDisplay = mWindowManager.getDefaultDisplay();
@@ -243,6 +273,9 @@ public abstract class BaseStatusBar extends SystemUI implements
 
         mBarService = IStatusBarService.Stub.asInterface(
                 ServiceManager.getService(Context.STATUS_BAR_SERVICE));
+
+        mShowNotificationCounts = Settings.System.getIntForUser(mContext.getContentResolver(),
+                Settings.System.STATUS_BAR_NOTIF_COUNT, 0, UserHandle.USER_CURRENT) == 1;
 
         mStatusBarContainer = new FrameLayout(mContext);
 
@@ -306,13 +339,13 @@ public abstract class BaseStatusBar extends SystemUI implements
                    ));
         }
 
+        mActivityManager = (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
+
         if (PieManager.getInstance().isPresent()) {
             mPieController = new PieController(mContext);
             mPieController.attachStatusBar(this);
             addNavigationBarCallback(mPieController);
         }
-
-        mCurrentUserId = ActivityManager.getCurrentUser();
 
         IntentFilter filter = new IntentFilter();
         filter.addAction(Intent.ACTION_USER_SWITCHED);
@@ -330,6 +363,17 @@ public abstract class BaseStatusBar extends SystemUI implements
                 }
             }
         }, filter);
+
+        IntentFilter switchFilter = new IntentFilter();
+        switchFilter.addAction("com.android.systemui.APP_SWITCH");
+        mContext.registerReceiver(new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                int msg = MSG_SWITCH_APPS;
+                mHandler.removeMessages(msg);
+                mHandler.sendEmptyMessage(msg);
+            }
+        }, switchFilter);
 
         mLocale = mContext.getResources().getConfiguration().locale;
     }
@@ -501,11 +545,34 @@ public abstract class BaseStatusBar extends SystemUI implements
             visible = mSearchPanelView.isShowing();
             mWindowManager.removeView(mSearchPanelView);
         }
-
+        boolean tabletModeOverride = Settings.System.getIntForUser(
+                mContext.getContentResolver(),
+                Settings.System.TABLET_MODE, mContext.getResources().getBoolean(
+                com.android.internal.R.bool.config_showTabletNavigationBar) ? 1 : 0, UserHandle.USER_CURRENT) == 1;
+        boolean tabletFlipped = Settings.System.getIntForUser(
+                mContext.getContentResolver(),
+                Settings.System.TABLET_FLIPPED, 0, UserHandle.USER_CURRENT) == 1;
+        int navAlignment = Settings.System.getIntForUser(
+                mContext.getContentResolver(),
+                Settings.System.NAVIGATION_ALIGNMENT, 0, UserHandle.USER_CURRENT);
+        switch (navAlignment) {
+            case 0:
+                navAlignment = R.layout.status_bar_search_panel;
+                break;
+            case 1:
+                navAlignment = R.layout.status_bar_search_panel_right;
+                break;
+            case 2:
+                navAlignment = R.layout.status_bar_search_panel_left;
+                break;
+        }
         // Provide SearchPanel with a temporary parent to allow layout params to work.
         LinearLayout tmpRoot = new LinearLayout(mContext);
         mSearchPanelView = (SearchPanelView) LayoutInflater.from(mContext).inflate(
-                 R.layout.status_bar_search_panel, tmpRoot, false);
+                tabletModeOverride ? (tabletFlipped ?
+                R.layout.status_bar_search_panel_tablet_flipped :
+                R.layout.status_bar_search_panel_tablet) :
+                navAlignment, tmpRoot, false);
         mSearchPanelView.setOnTouchListener(
                  new TouchOutsideListener(MSG_CLOSE_SEARCH_PANEL, mSearchPanelView));
         mSearchPanelView.setVisibility(View.GONE);
@@ -561,11 +628,20 @@ public abstract class BaseStatusBar extends SystemUI implements
             } else {
                 Bitmap first = firstTask.getThumbnail();
                 final Resources res = mContext.getResources();
+                boolean tabletMode = Settings.System.getIntForUser(
+                        mContext.getContentResolver(),
+                        Settings.System.TABLET_MODE, res.getBoolean(
+                        com.android.internal.R.bool.config_showTabletNavigationBar) ? 1 : 0,
+                        UserHandle.USER_CURRENT) == 1;
+                boolean largeThumbs = Settings.System.getIntForUser(mContext.getContentResolver(),
+                        Settings.System.LARGE_RECENT_THUMBS, 0, UserHandle.USER_CURRENT) == 1;
+                float thumbWidth = res.getDimensionPixelSize(largeThumbs ?
+                        R.dimen.status_bar_recents_thumbnail_width_large :
+                        R.dimen.status_bar_recents_thumbnail_width);
+                int h = res.getDisplayMetrics().heightPixels;
+                int w = res.getDisplayMetrics().widthPixels;
+                float thumbHeight = (h > w ? w : h) * thumbWidth / (h > w ? h : w);
 
-                float thumbWidth = res
-                        .getDimensionPixelSize(R.dimen.status_bar_recents_thumbnail_width);
-                float thumbHeight = res
-                        .getDimensionPixelSize(R.dimen.status_bar_recents_thumbnail_height);
                 if (first == null) {
                     throw new RuntimeException("Recents thumbnail is null");
                 }
@@ -605,10 +681,9 @@ public abstract class BaseStatusBar extends SystemUI implements
                     x = (int) ((dm.widthPixels - width) / 2f + appLabelLeftMargin + appLabelWidth
                             + thumbBgPadding + thumbLeftMargin);
                     y = (int) (dm.heightPixels
-                            - res.getDimensionPixelSize(R.dimen.status_bar_recents_thumbnail_height) - thumbBgPadding);
+                            - thumbHeight - thumbBgPadding);
                     if (mLayoutDirection == View.LAYOUT_DIRECTION_RTL) {
-                        x = dm.widthPixels - x - res
-                                .getDimensionPixelSize(R.dimen.status_bar_recents_thumbnail_width);
+                        x = (int) (dm.widthPixels - x - thumbWidth);
                     }
 
                 } else { // if (config.orientation == Configuration.ORIENTATION_LANDSCAPE) {
@@ -633,6 +708,7 @@ public abstract class BaseStatusBar extends SystemUI implements
                     float statusBarHeight = res
                             .getDimensionPixelSize(com.android.internal.R.dimen.status_bar_height);
                     float recentsItemTopPadding = statusBarHeight;
+                    statusBarHeight = (tabletMode || getExpandedDesktopMode() == 2) ? 0 : statusBarHeight;
 
                     float height = thumbTopMargin
                             + thumbHeight
@@ -642,14 +718,23 @@ public abstract class BaseStatusBar extends SystemUI implements
                             .getDimensionPixelSize(R.dimen.status_bar_recents_item_padding);
                     float recentsScrollViewRightPadding = res
                             .getDimensionPixelSize(R.dimen.status_bar_recents_right_glow_margin);
-                    x = (int) (dm.widthPixels - res
-                            .getDimensionPixelSize(R.dimen.status_bar_recents_thumbnail_width)
+                    x = (int) (dm.widthPixels - thumbWidth
                             - thumbBgPadding - recentsItemRightPadding - recentsScrollViewRightPadding);
                     y = (int) ((dm.heightPixels - statusBarHeight - height) / 2f + thumbTopMargin
                             + recentsItemTopPadding + thumbBgPadding + statusBarHeight);
                 }
 
-                ActivityOptions opts = ActivityOptions.makeThumbnailScaleDownAnimation(
+                ActivityOptions opts = (!tabletMode && getExpandedDesktopMode() < 2) ?
+                        ActivityOptions.makeThumbnailScaleDownAnimation(
+                        getStatusBarView(),
+                        first, x, y,
+                        new ActivityOptions.OnAnimationStartedListener() {
+                            public void onAnimationStarted() {
+                                Intent intent = new Intent(RecentsActivity.WINDOW_ANIMATION_START_INTENT);
+                                intent.setPackage("com.android.systemui");
+                                mContext.sendBroadcastAsUser(intent, new UserHandle(UserHandle.USER_CURRENT));
+                            }
+                        }) : ActivityOptions.makeTabletThumbnailScaleDownAnimation(
                         getStatusBarView(),
                         first, x, y,
                         new ActivityOptions.OnAnimationStartedListener() {
@@ -741,6 +826,59 @@ public abstract class BaseStatusBar extends SystemUI implements
                      mSearchPanelView.show(false, true);
                  }
                  break;
+             case MSG_HIDE_STATUSBAR:
+                 int fullscreenTimeout = Settings.System.getIntForUser(mContext.getContentResolver(),
+                         Settings.System.FULLSCREEN_TIMEOUT, 0, UserHandle.USER_CURRENT);
+
+                 if (fullscreenTimeout > 0) {
+                     mHandler.removeCallbacks(mStatusBarTimeout);
+                     if (!mPanelVisible) {
+                         mHandler.postDelayed(mStatusBarTimeout, fullscreenTimeout * 1000);
+                     } else {
+                         mHandler.removeMessages(MSG_HIDE_STATUSBAR);
+                         mHandler.sendEmptyMessageDelayed(MSG_HIDE_STATUSBAR, 1000);
+                     }
+                 }
+                 break;
+            case MSG_SWITCH_APPS:
+                final List<ActivityManager.RecentTaskInfo> recentTasks = mActivityManager.getRecentTasksForUser(
+                        99, ActivityManager.RECENT_IGNORE_UNAVAILABLE, UserHandle.CURRENT.getIdentifier());
+                if (recentTasks.size() > 1) {
+                    ActivityManager.RecentTaskInfo recentInfo = recentTasks.get(recentTasks.size() - 1);
+                    Intent switchIntent = new Intent(recentInfo.baseIntent);
+                    if (recentInfo.origActivity != null) {
+                        switchIntent.setComponent(recentInfo.origActivity);
+                    }
+                    // Don't load ourselves
+                    if (switchIntent.getComponent().getPackageName().equals(mContext.getPackageName())) {
+                        return;
+                    }
+
+                    int in = 0;
+                    int out = 0;
+                    switch (Settings.System.getIntForUser(mContext.getContentResolver(),
+                            Settings.System.APP_SWITCH_TRANSITION, 0, UserHandle.USER_CURRENT)) {
+                        case 1:
+                            in = com.android.internal.R.anim.slide_in_left;
+                            out = com.android.internal.R.anim.slide_out_right;
+                            break;
+                        case 2:
+                            in = com.android.internal.R.anim.slide_in_right;
+                            out = com.android.internal.R.anim.slide_out_left;
+                            break;
+                    }
+                    if (in != 0) {
+                        ActivityOptions opts = ActivityOptions.makeCustomAnimation(mContext,
+                                in, out);
+                        mContext.startActivityAsUser(switchIntent, opts.toBundle(), new UserHandle(
+                                UserHandle.USER_CURRENT));
+                    } else {
+                        mContext.startActivityAsUser(switchIntent, new UserHandle(
+                                UserHandle.USER_CURRENT));
+                    }
+
+
+                }
             }
         }
     }
@@ -936,6 +1074,12 @@ public abstract class BaseStatusBar extends SystemUI implements
                 // Won't fail unless the world has ended.
             }
         }
+    }
+
+    public void barExpanded(boolean visible) {
+        mPanelVisible = visible;
+        mHandler.removeMessages(MSG_HIDE_STATUSBAR);
+        mHandler.sendEmptyMessage(MSG_HIDE_STATUSBAR);
     }
 
     /**
@@ -1266,4 +1410,112 @@ public abstract class BaseStatusBar extends SystemUI implements
             mPieController.updatePieTriggerMask(newMask);
         }
     }
+
+    private class SettingsObserver extends ContentObserver {
+        private Handler mHandler;
+
+        SettingsObserver(Handler handler) {
+            super(handler);
+            mHandler = handler;
+        }
+
+        void observe(Context context) {
+            ContentResolver resolver = context.getContentResolver();
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.TABLET_MODE), false, this, UserHandle.USER_ALL);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.TABLET_FLIPPED), false, this, UserHandle.USER_ALL);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.TABLET_SCALED_ICONS), false, this, UserHandle.USER_ALL);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.TABLET_FORCE_MENU), false, this, UserHandle.USER_ALL);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.LARGE_RECENT_THUMBS), false, this, UserHandle.USER_ALL);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.NAVIGATION_ALIGNMENT), false, this, UserHandle.USER_ALL);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.STATUS_BAR_CLOCK_COLOR), false, this, UserHandle.USER_ALL);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.STATUS_BAR_COLOR), false, this, UserHandle.USER_ALL);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.NAVIGATION_BAR_COLOR), false, this, UserHandle.USER_ALL);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.NOTIFICATION_PANEL_COLOR), false, this, UserHandle.USER_ALL);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.SETTINGS_TILE_COLOR), false, this, UserHandle.USER_ALL);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.EXPANDED_DESKTOP_STATE), false, this, UserHandle.USER_ALL);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.PIE_COLOR), false, this, UserHandle.USER_ALL);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.PIE_SELECTED_COLOR), false, this, UserHandle.USER_ALL);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.PIE_OUTLINE_COLOR), false, this, UserHandle.USER_ALL);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.NAVIGATION_CONTROLS), false, this, UserHandle.USER_ALL);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.TABLET_NOTIFICATIONS), false, this, UserHandle.USER_ALL);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.COMPAT_BUTTON), false, this, UserHandle.USER_ALL);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.TABLET_HEIGHT), false, this, UserHandle.USER_ALL);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.NAVIGATION_HEIGHT), false, this, UserHandle.USER_ALL);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.TABLET_BUTTONS), false, this, UserHandle.USER_ALL);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.HALO_BUTTON_COLOR), false, this, UserHandle.USER_ALL);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.HALO_TEXT_BUBBLE_COLOR), false, this, UserHandle.USER_ALL);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.HALO_PING_COLOR), false, this, UserHandle.USER_ALL);
+        }
+
+        @Override
+        public void onChange(boolean selfChange, Uri uri) {
+            if (uri.equals(Settings.System.getUriFor(Settings.System.EXPANDED_DESKTOP_STATE))) {
+                mHandler.removeMessages(MSG_HIDE_STATUSBAR);
+                mHandler.sendEmptyMessage(MSG_HIDE_STATUSBAR);
+            } else {
+                android.os.Process.killProcess(android.os.Process.myPid());
+            }
+        }
+    };
+
+    public final Runnable mStatusBarTimeout = new Runnable() {
+        public void run() {
+            Settings.System.putIntForUser(mContext.getContentResolver(),
+                    Settings.System.EXPANDED_DESKTOP_STATE, 1, UserHandle.USER_CURRENT);
+        }
+    };
+
+    public final Runnable mStatusBarResetAndShow = new Runnable() {
+        public void run() {
+            boolean expanded = Settings.System.getIntForUser(mContext.getContentResolver(),
+                    Settings.System.EXPANDED_DESKTOP_STATE, 0, UserHandle.USER_CURRENT) == 1;
+            Settings.System.putIntForUser(mContext.getContentResolver(),
+                    Settings.System.EXPANDED_DESKTOP_STATE, expanded ? 0 : 1, UserHandle.USER_CURRENT);
+            if (expanded && Settings.System.getIntForUser(mContext.getContentResolver(),
+                    Settings.System.TABLET_MODE, mContext.getResources().getBoolean(
+                    com.android.internal.R.bool.config_showTabletNavigationBar) ? 1 : 0,
+                    UserHandle.USER_CURRENT) == 1) {
+                android.os.Process.killProcess(android.os.Process.myPid());
+            }
+        }
+    };
+
+    public View.OnTouchListener mHideBarListener = new View.OnTouchListener() {
+        @Override
+        public boolean onTouch(View v, MotionEvent event) {
+            mHandler.removeMessages(MSG_HIDE_STATUSBAR);
+            mHandler.sendEmptyMessage(MSG_HIDE_STATUSBAR);
+            return false;
+        }
+    };
+
+    public final Runnable mStatusBarReset = new Runnable() {
+        public void run() {
+            android.os.Process.killProcess(android.os.Process.myPid());
+        }
+    };
 }

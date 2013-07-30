@@ -21,6 +21,7 @@ import com.android.internal.view.RotationPolicy;
 import android.content.Context;
 import android.os.UserHandle;
 import android.widget.CompoundButton;
+import com.android.systemui.settings.ToggleSlider;
 
 public final class AutoRotateController implements CompoundButton.OnCheckedChangeListener {
     private final Context mContext;
@@ -50,6 +51,18 @@ public final class AutoRotateController implements CompoundButton.OnCheckedChang
         updateState();
     }
 
+    public AutoRotateController(Context context, CompoundButton checkbox) {
+        mContext = context;
+        mCheckbox = checkbox;
+        mCallbacks = null;
+
+        mCheckbox.setOnCheckedChangeListener(this);
+
+        RotationPolicy.registerRotationPolicyListener(context, mRotationPolicyListener,
+                UserHandle.USER_ALL);
+        updateState();
+    }
+
     public void onCheckedChanged(CompoundButton view, boolean checked) {
         if (checked != mAutoRotation) {
             mAutoRotation = checked;
@@ -67,7 +80,7 @@ public final class AutoRotateController implements CompoundButton.OnCheckedChang
         mCheckbox.setChecked(mAutoRotation);
 
         boolean visible = RotationPolicy.isRotationLockToggleVisible(mContext);
-        mCallbacks.setRotationLockControlVisibility(visible);
+        if (mCallbacks != null) mCallbacks.setRotationLockControlVisibility(visible);
         mCheckbox.setEnabled(visible);
     }
 

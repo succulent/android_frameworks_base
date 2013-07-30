@@ -4,10 +4,13 @@ import android.app.ActivityManagerNative;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.StateListDrawable;
 import android.net.Uri;
 import android.os.RemoteException;
 import android.os.UserHandle;
 import android.provider.Settings;
+import android.util.StateSet;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -52,6 +55,14 @@ public class QuickSettingsTile implements OnClickListener {
     public void setupQuickSettingsTile(LayoutInflater inflater, QuickSettingsContainerView container) {
         mTile = (QuickSettingsTileView) inflater.inflate(R.layout.quick_settings_tile, container, false);
         mTile.setContent(mTileLayout, inflater);
+        int color = Settings.System.getIntForUser(mContext.getContentResolver(),
+                Settings.System.SETTINGS_TILE_COLOR, 0xFF161616, UserHandle.USER_CURRENT);
+        if (color != 0xFF161616) {
+            StateListDrawable background = new StateListDrawable();
+            background.addState(new int[] { android.R.attr.state_pressed }, new ColorDrawable(0xFF33b5e5));
+            background.addState(StateSet.WILD_CARD, new ColorDrawable(color));
+            mTile.setBackgroundDrawable(background);
+        }
         mContainer = container;
         mContainer.addView(mTile);
         onPostCreate();
