@@ -25,7 +25,9 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Canvas;
 import android.net.Uri;
+import android.os.UserHandle;
 import android.provider.CalendarContract;
+import android.text.format.DateFormat;
 import android.util.AttributeSet;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -89,7 +91,7 @@ public class DateView extends TextView implements OnClickListener, OnLongClickLi
         setUpdates();
     }
 
-    @Override
+    /*@Override
     protected void onDraw(Canvas canvas) {
         if (mParent == null) {
             mParent = (RelativeLayout) getParent();
@@ -98,7 +100,7 @@ public class DateView extends TextView implements OnClickListener, OnLongClickLi
         }
 
         super.onDraw(canvas);
-    }
+    }*/
 
     @Override
     protected void onWindowVisibilityChanged(int visibility) {
@@ -176,7 +178,7 @@ public class DateView extends TextView implements OnClickListener, OnLongClickLi
 
         // start activity
         what.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        mContext.startActivity(what);
+        mContext.startActivityAsUser(what, new UserHandle(UserHandle.USER_CURRENT));
     }
 
     @Override
