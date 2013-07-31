@@ -125,6 +125,10 @@ public abstract class BaseStatusBar extends SystemUI implements
     public static final int EXPANDED_LEAVE_ALONE = -10000;
     public static final int EXPANDED_FULL_OPEN = -10001;
 
+    private static final boolean CLOSE_PANEL_WHEN_EMPTIED = true;
+    private static final int COLLAPSE_AFTER_DISMISS_DELAY = 200;
+    private static final int COLLAPSE_AFTER_REMOVE_DELAY = 400;
+
     protected CommandQueue mCommandQueue;
     protected IStatusBarService mBarService;
     protected H mHandler = createHandler();
@@ -147,6 +151,13 @@ public abstract class BaseStatusBar extends SystemUI implements
     protected int mCurrentUserId = 0;
 
     protected FrameLayout mStatusBarContainer;
+
+    private Runnable mPanelCollapseRunnable = new Runnable() {
+        @Override
+        public void run() {
+            animateCollapsePanels(CommandQueue.FLAG_EXCLUDE_NONE);
+        }
+    };
 
     /**
      * An interface for navigation key bars to allow status bars to signal which keys are
@@ -195,6 +206,7 @@ public abstract class BaseStatusBar extends SystemUI implements
     protected Display mDisplay;
 
     private boolean mDeviceProvisioned = false;
+    private int mAutoCollapseBehaviour;
 
     private boolean mShowNotificationCounts;
 
@@ -212,7 +224,7 @@ public abstract class BaseStatusBar extends SystemUI implements
         return mDeviceProvisioned;
     }
 
-    private ContentObserver mProvisioningObserver = new ContentObserver(new Handler()) {
+    private ContentObserver mProvisioningObserver = new ContentObserver(mHandler) {
         @Override
         public void onChange(boolean selfChange) {
             final boolean provisioned = 0 != Settings.Global.getInt(
@@ -270,6 +282,10 @@ public abstract class BaseStatusBar extends SystemUI implements
         mContext.getContentResolver().registerContentObserver(
                 Settings.Global.getUriFor(Settings.Global.DEVICE_PROVISIONED), true,
                 mProvisioningObserver);
+
+	     mAutoCollapseBehaviour = Settings.System.getIntForUser(mContext.getContentResolver(),
+	            Settings.System.STATUS_BAR_COLLAPSE_ON_DISMISS,
+	            Settings.System.STATUS_BAR_COLLAPSE_IF_NO_CLEARABLE, UserHandle.USER_CURRENT);
 
         mBarService = IStatusBarService.Stub.asInterface(
                 ServiceManager.getService(Context.STATUS_BAR_SERVICE));
@@ -1108,18 +1124,33 @@ public abstract class BaseStatusBar extends SystemUI implements
         if (rowParent != null) rowParent.removeView(entry.row);
         updateExpansionStates();
         updateNotificationIcons();
-
-        if (entry.userCleared() && !mNotificationData.hasClearableItems()) {
-            // wait a bit to make the user aware of what's happening
-            mHandler.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    animateCollapsePanels(CommandQueue.FLAG_EXCLUDE_NONE);
-                }
-            }, 225);
-        }
+        maybeCollapseAfterNotificationRemoval(entry.userDismissed());
 
         return entry.notification;
+    }
+
+    protected void maybeCollapseAfterNotificationRemoval(boolean userDismissed) {
+        if (mAutoCollapseBehaviour == Settings.System.STATUS_BAR_COLLAPSE_NEVER) {
+            return;
+        }
+        if (!isNotificationPanelFullyVisible()) {
+            return;
+        }
+
+        boolean collapseDueToEmpty =
+                mAutoCollapseBehaviour == Settings.System.STATUS_BAR_COLLAPSE_IF_EMPTIED
+                && mNotificationData.size() == 0;
+        boolean collapseDueToNoClearable =
+                mAutoCollapseBehaviour == Settings.System.STATUS_BAR_COLLAPSE_IF_NO_CLEARABLE
+                && !mNotificationData.hasClearableItems();
+
+        if (userDismissed && (collapseDueToEmpty || collapseDueToNoClearable)) {
+            mHandler.removeCallbacks(mPanelCollapseRunnable);
+            mHandler.postDelayed(mPanelCollapseRunnable, COLLAPSE_AFTER_DISMISS_DELAY);
+        } else if (mNotificationData.size() == 0) {
+            mHandler.removeCallbacks(mPanelCollapseRunnable);
+            mHandler.postDelayed(mPanelCollapseRunnable, COLLAPSE_AFTER_REMOVE_DELAY);
+        }
     }
 
     protected StatusBarIconView addNotificationViews(IBinder key,
@@ -1158,6 +1189,7 @@ public abstract class BaseStatusBar extends SystemUI implements
         }
         updateExpansionStates();
         updateNotificationIcons();
+        mHandler.removeCallbacks(mPanelCollapseRunnable);
 
         return iconView;
     }
@@ -1205,6 +1237,7 @@ public abstract class BaseStatusBar extends SystemUI implements
     protected abstract void tick(IBinder key, StatusBarNotification n, boolean firstTime);
     protected abstract void updateExpandedViewPos(int expandedPosition);
     protected abstract int getExpandedViewMaxHeight();
+    protected abstract boolean isNotificationPanelFullyVisible();
     protected abstract boolean shouldDisableNavbarGestures();
 
     protected boolean isTopNotification(ViewGroup parent, NotificationData.Entry entry) {
@@ -1469,6 +1502,8 @@ public abstract class BaseStatusBar extends SystemUI implements
                     Settings.System.HALO_TEXT_BUBBLE_COLOR), false, this, UserHandle.USER_ALL);
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.HALO_PING_COLOR), false, this, UserHandle.USER_ALL);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.STATUS_BAR_COLLAPSE_ON_DISMISS), false, this, UserHandle.USER_ALL);
         }
 
         @Override
@@ -1476,7 +1511,13 @@ public abstract class BaseStatusBar extends SystemUI implements
             if (uri.equals(Settings.System.getUriFor(Settings.System.EXPANDED_DESKTOP_STATE))) {
                 mHandler.removeMessages(MSG_HIDE_STATUSBAR);
                 mHandler.sendEmptyMessage(MSG_HIDE_STATUSBAR);
+            } else if (uri.equals(Settings.System.getUriFor(Settings.System.STATUS_BAR_COLLAPSE_ON_DISMISS))) {
+	            ContentResolver resolver = mContext.getContentResolver();
+	            mAutoCollapseBehaviour = Settings.System.getIntForUser(resolver,
+	                    Settings.System.STATUS_BAR_COLLAPSE_ON_DISMISS,
+	                    Settings.System.STATUS_BAR_COLLAPSE_IF_NO_CLEARABLE, UserHandle.USER_CURRENT);
             } else {
+                android.os.Process.killProcess(android.os.Process.myPid());
                 android.os.Process.killProcess(android.os.Process.myPid());
             }
         }
