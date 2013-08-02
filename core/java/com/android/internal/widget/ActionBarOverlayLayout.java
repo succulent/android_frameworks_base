@@ -90,6 +90,11 @@ public class ActionBarOverlayLayout extends ViewGroup {
     }
 
     public void setShowingForActionMode(boolean showing) {
+        if (Settings.System.getInt(getContext().getContentResolver(),
+                Settings.System.FULLSCREEN_MODE, 0) == 1) {
+            return;
+        }
+
         if (showing) {
             // Here's a fun hack: if the status bar is currently being hidden,
             // and the application has asked for stable content insets, then
@@ -117,7 +122,9 @@ public class ActionBarOverlayLayout extends ViewGroup {
         mLastSystemUiVisibility = visible;
         final boolean barVisible = (visible&SYSTEM_UI_FLAG_FULLSCREEN) == 0;
         final boolean wasVisible = mActionBar != null ? mActionBar.isSystemShowing() : true;
-        final boolean stable = (visible&SYSTEM_UI_FLAG_LAYOUT_STABLE) != 0;
+        boolean fullscreen = Settings.System.getInt(getContext().getContentResolver(),
+                Settings.System.FULLSCREEN_MODE, 0) == 1;
+        final boolean stable = (visible&SYSTEM_UI_FLAG_LAYOUT_STABLE) != 0 && !fullscreen;
         if (mActionBar != null) {
             // We want the bar to be visible if it is not being hidden,
             // or the app has not turned on a stable UI mode (meaning they
@@ -167,17 +174,18 @@ public class ActionBarOverlayLayout extends ViewGroup {
 
     @Override
     protected boolean fitSystemWindows(Rect insets) {
+        if (Settings.System.getInt(getContext().getContentResolver(),
+                Settings.System.FULLSCREEN_MODE, 0) == 1) {
+            return false;
+        }
+
         pullChildren();
 
         final int vis = getWindowSystemUiVisibility();
         final boolean stable = (vis & SYSTEM_UI_FLAG_LAYOUT_STABLE) != 0;
 
-        final boolean fullscreenMode = Settings.System.getInt(getContext().getContentResolver(),
-                Settings.System.FULLSCREEN_MODE, 0) == 1;
-
         // The top and bottom action bars are always within the content area.
-        boolean changed = fullscreenMode ? false :
-                applyInsets(mActionBarTop, insets, true, true, false, true);
+        boolean changed = applyInsets(mActionBarTop, insets, true, true, false, true);
         if (mActionBarBottom != null) {
             changed |= applyInsets(mActionBarBottom, insets, true, false, true, true);
         }
@@ -250,8 +258,11 @@ public class ActionBarOverlayLayout extends ViewGroup {
             childState = combineMeasuredStates(childState, mActionBarBottom.getMeasuredState());
         }
 
+        boolean fullscreen = Settings.System.getInt(getContext().getContentResolver(),
+                Settings.System.FULLSCREEN_MODE, 0) == 1;
+
         final int vis = getWindowSystemUiVisibility();
-        final boolean stable = (vis & SYSTEM_UI_FLAG_LAYOUT_STABLE) != 0;
+        final boolean stable = (vis & SYSTEM_UI_FLAG_LAYOUT_STABLE) != 0 && !fullscreen;
 
         if (stable) {
             // This is the standard space needed for the action bar.  For stable measurement,

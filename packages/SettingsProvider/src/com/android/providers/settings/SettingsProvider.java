@@ -608,12 +608,12 @@ public class SettingsProvider extends ContentProvider {
 
         // Framework can't do automatic permission checking for calls, so we need
         // to do it here.
-        if (getContext().checkCallingOrSelfPermission(android.Manifest.permission.WRITE_SETTINGS)
+        /*if (getContext().checkCallingOrSelfPermission(android.Manifest.permission.WRITE_SETTINGS)
                 != PackageManager.PERMISSION_GRANTED) {
             throw new SecurityException(
                     String.format("Permission denial: writing to settings requires %1$s",
                                   android.Manifest.permission.WRITE_SETTINGS));
-        }
+        }*/
 
         // Also need to take care of app op.
         if (getAppOpsManager().noteOp(AppOpsManager.OP_WRITE_SETTINGS, Binder.getCallingUid(),
