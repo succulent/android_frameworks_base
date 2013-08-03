@@ -516,7 +516,11 @@ public class PhoneStatusBar extends BaseStatusBar {
         updateShowSearchHoldoff();
 
         try {
-            boolean showNav = mWindowManagerService.hasNavigationBar();
+            boolean hasNavigationBar = mContext.getResources().getBoolean(
+                    com.android.internal.R.bool.config_showNavigationBar);
+            boolean showNav = Settings.System.getIntForUser(mContext.getContentResolver(),
+                    Settings.System.NAVIGATION_CONTROLS, hasNavigationBar ? 1 : 0,
+                    UserHandle.USER_CURRENT) == 1;
             if (DEBUG) Slog.v(TAG, "hasNavigationBar=" + showNav);
             if (mNavigationBarView == null && showNav && !mRecreating) {
                 int navAlign = Settings.System.getIntForUser(mContext.getContentResolver(),
@@ -539,7 +543,7 @@ public class PhoneStatusBar extends BaseStatusBar {
                 mNavigationBarView.setBar(this);
                 addNavigationBarCallback(mNavigationBarView);
             }
-        } catch (RemoteException ex) {
+        } catch (Exception ex) {
             // no window manager? good luck with that
         }
 
