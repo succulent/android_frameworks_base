@@ -277,7 +277,7 @@ public class SignalClusterView
             mEther.setImageResource(mEtherIconId);
             mEther.setContentDescription(mEtherDescription);
         } else {
-            mEther.setVisibility(View.GONE);
+            if (mEther != null) mEther.setVisibility(View.GONE);
         }
 
         if (mMobileVisible && mWifiVisible && mIsAirplaneMode) {
