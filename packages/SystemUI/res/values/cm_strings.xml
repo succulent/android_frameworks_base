@@ -104,4 +104,18 @@
     <string name="button_quick_settings">Show quick settings</string>
     <string name="button_app_drawer">Show trebuchet app drawer</string>
     <string name="quick_settings_appdrawer">App drawer</string>
+
+    <!-- Content description of the halo button in the notification panel for accessibility (not shown on the screen). [CHAR LIMIT=NONE] -->
+    <string name="accessibility_halo">Create notification halo.</string>
+
+    <string name="halo_dismiss">Dismiss notification</string>
+    <string name="halo_hide">Hide</string>
+    <string name="halo_clear_all">Dismiss all notifications</string>
+    <string name="halo_silence">Hide &amp; silence until woken</string>
+    <string name="halo_tutorial1">This is HALO</string>
+    <string name="halo_tutorial2">Move me: 2x-tap &amp; drag</string>
+    <string name="halo_tutorial3">Browse tasks: Horizontal drag</string>
+
+    <!-- Title shown in recents popup for showing app in floating mode -->
+    <string name="status_bar_recent_floating_item_title">Floating mode</string>
 </resources>

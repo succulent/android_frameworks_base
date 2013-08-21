@@ -52,6 +52,7 @@ public class RecentsActivity extends Activity {
     private IntentFilter mIntentFilter;
     private boolean mShowing;
     private boolean mForeground;
+    protected boolean mBackPressed;
 
     private class SettingsObserver extends ContentObserver {
 
@@ -165,7 +166,12 @@ public class RecentsActivity extends Activity {
 
     @Override
     public void onBackPressed() {
-        dismissAndGoBack();
+        mBackPressed = true;
+        try {
+            dismissAndGoBack();
+        } finally {
+            mBackPressed = false;
+        }
     }
 
     public void dismissAndGoHome() {

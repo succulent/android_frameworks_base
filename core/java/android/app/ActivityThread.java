@@ -32,6 +32,7 @@ import android.content.ContentProvider;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.IContentProvider;
+import android.content.Intent;
 import android.content.IIntentReceiver;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
@@ -2175,6 +2176,17 @@ public final class ActivityThread {
 
     public final Activity getActivity(IBinder token) {
         return mActivities.get(token).activity;
+    }
+
+    protected void performFinishFloating() {
+        synchronized (mPackages) {
+            for (ActivityClientRecord ar : mActivities.values()) {
+                Activity a = ar.activity;
+                if (a != null && !a.mFinished && a.getWindow() != null && a.getWindow().mIsFloatingWindow) {
+                    a.finish();
+                }
+            }
+        }
     }
 
     public final void sendActivityResult(
