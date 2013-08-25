@@ -13,48 +13,47 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
-    <string name="profileNameDefault">預設</string>
-    <string name="profileNameWork">工作</string>
-    <string name="profileNameHome">住家</string>
-    <string name="profileNameSilent">安靜</string>
-    <string name="profileNameNight">夜晚</string>
-    <string name="profileGroupPhone">電話</string>
-    <string name="profileGroupCalendar">日曆</string>
+    <string name="profileNameDefault">Predeterminat</string>
+    <string name="profileNameWork">Feina</string>
+    <string name="profileNameHome">Casa</string>
+    <string name="profileNameSilent">Silenci</string>
+    <string name="profileNameNight">Nit</string>
+    <string name="profileGroupPhone">Telèfon</string>
+    <string name="profileGroupCalendar">Calendari</string>
     <string name="profileGroupGmail">Gmail</string>
-    <string name="profileGroupEmail">電子郵件</string>
-    <string name="profileGroupSMS">簡訊</string>
-    <string name="wildcardProfile">其他</string>
-    <string name="reboot_system" product="tablet">重新啟動平板</string>
-    <string name="reboot_system" product="default">重新啟動手機</string>
-    <string name="global_action_screenshot">螢幕截圖</string>
-    <string name="global_actions_toggle_expanded_desktop_mode">擴展桌面</string>
-    <string name="global_actions_expanded_desktop_mode_on_status">啟用</string>
-    <string name="global_actions_expanded_desktop_mode_off_status">禁用</string>
-    <string name="reboot_reboot">重新啟動</string>
-    <string name="reboot_recovery">Recovery</string>
+    <string name="profileGroupEmail">Correu</string>
+    <string name="profileGroupSMS">SMS</string>
+    <string name="wildcardProfile">Altres</string>
+    <string name="reboot_system" product="tablet">Reinicia tauleta</string>
+    <string name="reboot_system" product="default">Reinicia telèfon</string>
+    <string name="global_action_screenshot">Captura de pantalla</string>
+    <string name="global_actions_toggle_expanded_desktop_mode">Escriptori Extès</string>
+    <string name="global_actions_expanded_desktop_mode_on_status">Activat</string>
+    <string name="global_actions_expanded_desktop_mode_off_status">Desactivat</string>
+    <string name="reboot_reboot">Reinicia</string>
+    <string name="reboot_recovery">Recuperació</string>
     <string name="reboot_bootloader">Bootloader</string>
     <string name="reboot_bootmenu">Bootmenu</string>
     <string name="reboot_fastboot">Fastboot</string>
-    <string name="reboot_download">Download</string>
-    <string name="reboot_progress">正在重新啟動\u2026</string>
-    <string name="reboot_confirm" product="tablet">您的平板將會重新啟動。</string>
-    <string name="reboot_confirm" product="default">您的手機將會重新啟動。</string>
-    <string name="permlab_preventpower">防止使用電源鍵</string>
-    <string name="permdesc_preventpower">允許應用程式覆蓋電源鍵的功能。</string>
-    <string name="permlab_fm_radio_receiver">控制電台接收器</string>
-    <string name="permdesc_fm_radio_receiver">允許應用程式控制電台接收器。</string>
-    <string name="permlab_fm_radio_transmitter">控制電台發送器</string>
-    <string name="permdesc_fm_radio_transmitter">允許應用程式控制電台發送器。</string>
-    <string name="lockscreen_discharging">放電中, <xliff:g id="number">%d</xliff:g><xliff:g id="percent">%%</xliff:g></string>
-    <string name="storage_sd_dock_card">底座SD卡</string>
-    <string name="app_killed_message">應用程式已終止</string>
-    <string name="global_action_reboot">重新啟動</string>
-    <string name="global_action_choose_profile">設定檔</string>
-    <string name="toast_rotation_unlocked">顯示旋轉已解鎖</string>
-    <string name="toast_rotation_locked">顯示旋轉已鎖定</string>
-    <string name="stylus_app_not_installed">%s未安裝</string>
+    <string name="reboot_download">Descàrrega</string>
+    <string name="reboot_progress">Reiniciant\u2026</string>
+    <string name="reboot_confirm" product="tablet">La teva tauleta es reiniciarà.</string>
+    <string name="reboot_confirm" product="default">El teu telèfon es reiniciarà.</string>
+    <string name="permlab_preventpower">impedeix la tecla d\'engegada</string>
+    <string name="permdesc_preventpower">Permet que l\'app sobreescrigui la tecla d\'engegada</string>
+    <string name="permlab_fm_radio_receiver">controla el receptor FM</string>
+    <string name="permdesc_fm_radio_receiver">Permet a l\'app controlar el receptor FM.</string>
+    <string name="permlab_fm_radio_transmitter">controla el transmissor FM</string>
+    <string name="permdesc_fm_radio_transmitter">Permet a l\'app controlar el transmissor FM.</string>
+    <string name="lockscreen_discharging">Descarregant, <xliff:g id="number">%d</xliff:g><xliff:g id="percent">%%</xliff:g></string>
+    <string name="storage_sd_dock_card">Acopla targeta SD</string>
+    <string name="app_killed_message">App matada</string>
+    <string name="global_action_reboot">Reinicia</string>
+    <string name="global_action_choose_profile">Perfil</string>
+    <string name="toast_rotation_unlocked">Rotació de pantalla desbloquejada</string>
+    <string name="toast_rotation_locked">Rotació de pantalla bloquejada</string>
+    <string name="stylus_app_not_installed">%s no està instal\U00B7lada</string>
     <string name="symbol_picker_A">\u00C0\u00C1\u00C2\u00C4\u00C6\u00C3\u00C5\u0104\u0100</string>
     <string name="symbol_picker_C">\u00C7\u0106\u010C</string>
     <string name="symbol_picker_D">\u010E</string>
@@ -108,18 +107,18 @@
     <string name="symbol_picker_equal">\u2260\u2248\u221e</string>
     <string name="symbol_picker_lt">\u2264\u00ab\u2039</string>
     <string name="symbol_picker_gt">\u2265\u00bb\u203a</string>
-    <string name="permlab_changePrivacyGuardState">啟用或停用隱私防衛</string>
-    <string name="permdesc_changePrivacyGuardState">允許此應用程式向另一個與隱私防衛一起運行的應用程式作出更改。當應用程式與隱私防衛一起運行時，隱私防衛不會存取個人資料，如聯絡人，通話記錄，或簡訊。</string>
-    <string name="privacy_guard_notification">隱私防衛啟用中</string>
-    <string name="privacy_guard_notification_detail"><xliff:g id="app">%1$s</xliff:g> 將無法存取個人資料</string>
-    <string name="profile_picker_title">設定檔</string>
-    <string name="profile_none">無</string>
-    <string name="permlab_cancelNotifications">取消應用程式通知</string>
-    <string name="permdesc_cancelNotifications">允許此應用程式取消其他應用程式建立的通知。</string>
-    <string name="permlab_interceptSmsSent">攔截外撥簡訊</string>
-    <string name="permdesc_interceptSmsSent">允許此應用程式攔截外撥簡訊。惡意應用程式可能會利用此去防止發送外撥簡訊。</string>
-    <string name="policylab_enforceSelinux">強制執行 SELinux</string>
-    <string name="policydesc_enforceSelinux">切換 SELinux 政策強制執行模式或許可模式。</string>
-    <string name="policylab_enforceMmac">強制執行 MMAC</string>
-    <string name="policydesc_enforceMmac">切換 MMAC 政策強制執行模式或許可模式。</string>
+    <string name="permlab_changePrivacyGuardState">activa o desactiva el guarda de privacitat</string>
+    <string name="permdesc_changePrivacyGuardState">Permet a l\'app si una altra app s\'executa amb el guarda de privacitat. Quan una app s\'executa amb el guarda de privacitat, no tindrà accés a les dades personals com els contactes, registres de trucades, o missatges.</string>
+    <string name="privacy_guard_notification">Guarda de privacitat actiu</string>
+    <string name="privacy_guard_notification_detail"><xliff:g id="app">%1$s</xliff:g> no tindrà accés a dades personals</string>
+    <string name="profile_picker_title">Perfils</string>
+    <string name="profile_none">Cap</string>
+    <string name="permlab_cancelNotifications">cancel\U00B7la les notificacions de l\'aplicació</string>
+    <string name="permdesc_cancelNotifications">Permet a l\'app cancel\U00B7lar les notificacions creades per altres apps.</string>
+    <string name="permlab_interceptSmsSent">intercepta SMS sortints</string>
+    <string name="permdesc_interceptSmsSent">Permet a l\'app interceptar un SMS sortint. Apps malicioses podrien utilitzar això per evitar que que surtin missatges SMS.</string>
+    <string name="policylab_enforceSelinux">Imposa SELinux</string>
+    <string name="policydesc_enforceSelinux">Commuta la política SELinux entre el mode imposat o permissiu.</string>
+    <string name="policylab_enforceMmac">Imposa MMAC</string>
+    <string name="policydesc_enforceMmac">Commuta la política MMAC entre el mode imposat o permissiu.</string>
 </resources>
