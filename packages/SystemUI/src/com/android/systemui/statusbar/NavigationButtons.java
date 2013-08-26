@@ -168,8 +168,8 @@ public class NavigationButtons {
             R.drawable.ic_notify_quicksettings_normal, R.drawable.ic_notify_quicksettings_normal, DRAWER_STRING);
     public static final ButtonInfo VOLUME =  new ButtonInfo(
             R.string.quick_settings_volume,
-            R.string.quick_settings_volume, 0, R.drawable.stat_ring_on,
-            R.drawable.stat_ring_on, R.drawable.stat_ring_on, VOLUME_STRING);
+            R.string.quick_settings_volume, 0, R.drawable.ic_qs_ring_on,
+            R.drawable.ic_qs_ring_on, R.drawable.ic_qs_ring_on, VOLUME_STRING);
     public static final ButtonInfo EXPANDED =  new ButtonInfo(
             R.string.quick_settings_expanded_desktop,
             R.string.quick_settings_expanded_desktop, 0, R.drawable.ic_qs_expanded_desktop_off,

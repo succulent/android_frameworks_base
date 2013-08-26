@@ -46,10 +46,7 @@ public class FlashlightController implements CompoundButton.OnCheckedChangeListe
     }
 
     public void onCheckedChanged(CompoundButton view, boolean checked) {
-        boolean bright = Settings.System.getIntForUser(mContext.getContentResolver(),
-                Settings.System.EXPANDED_FLASH_MODE, 0, UserHandle.USER_CURRENT) == 1;
         Intent i = new Intent(TorchConstants.ACTION_TOGGLE_STATE);
-        i.putExtra(TorchConstants.EXTRA_BRIGHT_MODE, bright);
         mContext.sendBroadcast(i);
     }
 

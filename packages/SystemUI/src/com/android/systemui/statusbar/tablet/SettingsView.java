@@ -168,7 +168,7 @@ public class SettingsView extends LinearLayout implements View.OnClickListener,
                 ll.setId(WIFI);
                 ll.setOnLongClickListener(this);
             } else if (settingsRow[i].contains(BUTTON_BLUETOOTH)) {
-                icon.setImageResource(R.drawable.stat_sys_data_bluetooth);
+                icon.setImageResource(R.drawable.ic_qs_bluetooth_off);
                 ll.addView(icon, iconlp);
                 ll.addView(makeTextView(R.string.status_bar_settings_bluetooth_button), textlp);
                 Switch toggle = new Switch(context);
@@ -187,7 +187,7 @@ public class SettingsView extends LinearLayout implements View.OnClickListener,
                 ll.setId(BRIGHTNESS);
                 ll.setOnLongClickListener(this);
             } else if (settingsRow[i].contains(BUTTON_SOUND)) {
-                icon.setImageResource(R.drawable.stat_ring_on);
+                icon.setImageResource(R.drawable.ic_qs_ring_on);
                 ll.addView(icon, iconlp);
                 ToggleSlider toggle = new ToggleSlider(context);
                 toggle.setLabel(R.string.status_bar_settings_mute_label);
@@ -196,7 +196,7 @@ public class SettingsView extends LinearLayout implements View.OnClickListener,
                 ll.setId(MEDIA_VOLUME);
                 ll.setOnLongClickListener(this);
             } else if (settingsRow[i].contains(BUTTON_SLEEP)) {
-                icon.setImageResource(R.drawable.stat_screen_timeout_on);
+                icon.setImageResource(R.drawable.ic_qs_screen_timeout_off);
                 ll.addView(icon, iconlp);
                 mSleepText = makeTextView(0);
                 ll.addView(mSleepText, textlp);
@@ -254,35 +254,6 @@ public class SettingsView extends LinearLayout implements View.OnClickListener,
                 mAirplane = new AirplaneModeController(context, toggle);
                 mAirplaneInitialized = true;
                 ll.addView(toggle, switchlp);
-            } else if (settingsRow[i].contains(BUTTON_MEDIA)) {
-                LinearLayout.LayoutParams medialp = new LinearLayout.LayoutParams(
-                        0, ViewGroup.LayoutParams.MATCH_PARENT, 1f);
-                icon.setImageResource(R.drawable.stat_media_previous);
-                icon.setId(MEDIA_PREVIOUS);
-                icon.setOnClickListener(this);
-                icon.setBackgroundResource(R.drawable.expanded_settings_background);
-                ll.addView(icon, medialp);
-                ImageView iconTwo = new ImageView(context);
-                iconTwo.setScaleType(ImageView.ScaleType.CENTER);
-                iconTwo.setImageResource(R.drawable.stat_media_pause);
-                iconTwo.setId(MEDIA_PAUSE);
-                iconTwo.setOnClickListener(this);
-                iconTwo.setBackgroundResource(R.drawable.expanded_settings_background);
-                ll.addView(iconTwo, medialp);
-                ImageView iconThree = new ImageView(context);
-                iconThree.setScaleType(ImageView.ScaleType.CENTER);
-                iconThree.setImageResource(R.drawable.stat_media_play);
-                iconThree.setId(MEDIA_PLAY);
-                iconThree.setOnClickListener(this);
-                iconThree.setBackgroundResource(R.drawable.expanded_settings_background);
-                ll.addView(iconThree, medialp);
-                ImageView iconFour = new ImageView(context);
-                iconFour.setScaleType(ImageView.ScaleType.CENTER);
-                iconFour.setImageResource(R.drawable.stat_media_next);
-                iconFour.setId(MEDIA_NEXT);
-                iconFour.setOnClickListener(this);
-                iconFour.setBackgroundResource(R.drawable.expanded_settings_background);
-                ll.addView(iconFour, medialp);
             }
 
             addView(ll, lp);
