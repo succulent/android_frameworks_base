@@ -4,6 +4,7 @@ import android.app.ActivityManagerNative;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.StateListDrawable;
 import android.net.Uri;
@@ -37,7 +38,7 @@ public class QuickSettingsTile implements OnClickListener {
     protected String mLabel;
     protected PhoneStatusBar mStatusbarService;
     protected QuickSettingsController mQsc;
-
+    protected SharedPreferences mPrefs;
 
     public QuickSettingsTile(Context context, QuickSettingsController qsc) {
         this(context, qsc, R.layout.quick_settings_tile_basic);
@@ -50,10 +51,13 @@ public class QuickSettingsTile implements OnClickListener {
         mStatusbarService = qsc.mStatusBarService;
         mQsc = qsc;
         mTileLayout = layout;
+        mPrefs = mContext.getSharedPreferences("quicksettings", Context.MODE_PRIVATE);
     }
 
-    public void setupQuickSettingsTile(LayoutInflater inflater, QuickSettingsContainerView container) {
-        mTile = (QuickSettingsTileView) inflater.inflate(R.layout.quick_settings_tile, container, false);
+    public void setupQuickSettingsTile(LayoutInflater inflater,
+            QuickSettingsContainerView container) {
+        mTile = (QuickSettingsTileView) inflater.inflate(
+                R.layout.quick_settings_tile, container, false);
         mTile.setContent(mTileLayout, inflater);
         int color = Settings.System.getIntForUser(mContext.getContentResolver(),
                 Settings.System.SETTINGS_TILE_COLOR, 0xFF161616, UserHandle.USER_CURRENT);
@@ -71,7 +75,18 @@ public class QuickSettingsTile implements OnClickListener {
         mTile.setOnLongClickListener(mOnLongClick);
     }
 
-    void onPostCreate(){}
+    public void setLabelVisibility(boolean visible) {
+        TextView tv = (TextView) mTile.findViewById(R.id.text);
+        if (tv != null) {
+            tv.setVisibility(visible ? View.VISIBLE : View.GONE);
+        }
+        View sepPadding = mTile.findViewById(R.id.separator_padding);
+        if (sepPadding != null) {
+            sepPadding.setVisibility(visible ? View.VISIBLE : View.GONE);
+        }
+    }
+
+    void onPostCreate() {}
 
     public void onDestroy() {}
 
@@ -85,7 +100,7 @@ public class QuickSettingsTile implements OnClickListener {
         }
     }
 
-    void updateQuickSettings(){
+    void updateQuickSettings() {
         TextView tv = (TextView) mTile.findViewById(R.id.text);
         if (tv != null) {
             tv.setText(mLabel);
@@ -130,5 +145,4 @@ public class QuickSettingsTile implements OnClickListener {
             mQsc.mBar.collapseAllPanels(true);
         }
     }
-
 }
