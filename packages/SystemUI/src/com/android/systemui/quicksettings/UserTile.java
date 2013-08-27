@@ -40,7 +40,7 @@ public class UserTile extends QuickSettingsTile {
         mOnClick = new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mQsc.mBar.collapseAllPanels(true);
+                mQsc.collapseAllPanels(true);
                 final UserManager um =
                         (UserManager) mContext.getSystemService(Context.USER_SERVICE);
                 if (um.getUsers(true).size() > 1) {

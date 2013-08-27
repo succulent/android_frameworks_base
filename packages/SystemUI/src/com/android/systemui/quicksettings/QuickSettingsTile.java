@@ -25,6 +25,7 @@ import com.android.systemui.statusbar.phone.QuickSettingsController;
 import com.android.systemui.statusbar.phone.PhoneStatusBar;
 import com.android.systemui.statusbar.phone.QuickSettingsContainerView;
 import com.android.systemui.statusbar.phone.QuickSettingsTileView;
+import com.android.systemui.statusbar.tablet.TabletStatusBar;
 
 public class QuickSettingsTile implements OnClickListener {
 
@@ -37,6 +38,7 @@ public class QuickSettingsTile implements OnClickListener {
     protected int mDrawable;
     protected String mLabel;
     protected PhoneStatusBar mStatusbarService;
+    protected TabletStatusBar mTabletStatusbarService;
     protected QuickSettingsController mQsc;
     protected SharedPreferences mPrefs;
 
@@ -49,6 +51,7 @@ public class QuickSettingsTile implements OnClickListener {
         mDrawable = R.drawable.ic_notifications;
         mLabel = mContext.getString(R.string.quick_settings_label_enabled);
         mStatusbarService = qsc.mStatusBarService;
+        mTabletStatusbarService = qsc.mTabletStatusBarService;
         mQsc = qsc;
         mTileLayout = layout;
         mPrefs = mContext.getSharedPreferences("quicksettings", Context.MODE_PRIVATE);
@@ -121,7 +124,7 @@ public class QuickSettingsTile implements OnClickListener {
     }
 
     private void startSettingsActivity(Intent intent, boolean onlyProvisioned) {
-        if (onlyProvisioned && !mStatusbarService.isDeviceProvisioned()) return;
+        if (onlyProvisioned && (mStatusbarService != null ? !mStatusbarService.isDeviceProvisioned() : !mTabletStatusbarService.isDeviceProvisioned())) return;
         try {
             // Dismiss the lock screen when Settings starts.
             ActivityManagerNative.getDefault().dismissKeyguardOnNextActivity();
@@ -129,7 +132,11 @@ public class QuickSettingsTile implements OnClickListener {
         }
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         mContext.startActivityAsUser(intent, new UserHandle(UserHandle.USER_CURRENT));
-        mStatusbarService.animateCollapsePanels();
+        if (mStatusbarService != null){
+            mStatusbarService.animateCollapsePanels();
+        } else {
+            mTabletStatusbarService.animateCollapsePanels();
+        }
     }
 
     @Override
@@ -142,7 +149,7 @@ public class QuickSettingsTile implements OnClickListener {
         boolean shouldCollapse = Settings.System.getIntForUser(resolver,
                 Settings.System.QS_COLLAPSE_PANEL, 0, UserHandle.USER_CURRENT) == 1;
         if (shouldCollapse) {
-            mQsc.mBar.collapseAllPanels(true);
+            mQsc.collapseAllPanels(true);
         }
     }
 }

@@ -20,6 +20,7 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.graphics.Rect;
 import android.os.UserHandle;
@@ -32,6 +33,7 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewStub;
 import android.view.ViewTreeObserver;
 import android.view.animation.AccelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
@@ -41,6 +43,9 @@ import android.widget.RelativeLayout;
 import com.android.systemui.ExpandHelper;
 import com.android.systemui.R;
 import com.android.systemui.statusbar.policy.NotificationRowLayout;
+import com.android.systemui.statusbar.phone.QuickSettingsHorizontalScrollView;
+import com.android.systemui.statusbar.phone.QuickSettingsController;
+import com.android.systemui.statusbar.phone.QuickSettingsContainerView;
 
 public class NotificationPanel extends RelativeLayout implements StatusBarPanel,
         View.OnClickListener {
@@ -70,6 +75,12 @@ public class NotificationPanel extends RelativeLayout implements StatusBarPanel,
     boolean mHideSettings;
     boolean mSmall = false;
 
+    // Ribbon settings
+    private boolean mHasQuickAccessSettings;
+    private boolean mQuickAccessLayoutLinked = true;
+    private QuickSettingsHorizontalScrollView mRibbonView;
+    private QuickSettingsController mRibbonQS;
+
     // amount to slide mContentParent down by when mContentFrame is missing
     float mContentFrameMissingTranslation;
 
@@ -85,6 +96,41 @@ public class NotificationPanel extends RelativeLayout implements StatusBarPanel,
 
     public void setBar(TabletStatusBar b) {
         mBar = b;
+    }
+
+    private void cleanupRibbon() {
+        if (mRibbonView == null) {
+            return;
+        }
+        mRibbonView.setVisibility(View.GONE);
+        if (mRibbonQS == null) {
+            return;
+        }
+        mRibbonQS.shutdown();
+        mRibbonQS = null;
+    }
+
+    private void inflateRibbon() {
+        if (mRibbonView == null) {
+            ViewStub ribbon_stub = (ViewStub) findViewById(R.id.ribbon_settings_stub);
+            if (ribbon_stub != null) {
+                mRibbonView = (QuickSettingsHorizontalScrollView) ((ViewStub)ribbon_stub).inflate();
+                mRibbonView.setVisibility(View.VISIBLE);
+            }
+        }
+        if (mRibbonQS == null) {
+            QuickSettingsContainerView mRibbonContainer = (QuickSettingsContainerView)
+                    findViewById(R.id.quick_settings_ribbon_container);
+            if (mRibbonContainer != null) {
+                mRibbonQS = new QuickSettingsController(mContext, mRibbonContainer, mBar,
+                        mQuickAccessLayoutLinked ? Settings.System.QUICK_SETTINGS_TILES
+                            : Settings.System.QUICK_SETTINGS_RIBBON_TILES);
+                mRibbonQS.hideLiveTiles(true);
+                mRibbonQS.hideLiveTileLabels(true);
+                mRibbonQS.setTabletService(mBar);
+                mRibbonQS.setupQuickSettings();
+            }
+        }
     }
 
     @Override
@@ -134,6 +180,19 @@ public class NotificationPanel extends RelativeLayout implements StatusBarPanel,
     }
 
     public void show(boolean show, boolean animate) {
+    if (show) {
+            final ContentResolver resolver = mContext.getContentResolver();
+            mHasQuickAccessSettings = Settings.System.getIntForUser(resolver,
+                    Settings.System.QS_QUICK_ACCESS, 0, UserHandle.USER_CURRENT) == 1;
+            mQuickAccessLayoutLinked = Settings.System.getIntForUser(resolver,
+                    Settings.System.QS_QUICK_ACCESS_LINKED, 1, UserHandle.USER_CURRENT) == 1;
+            if (mHasQuickAccessSettings) {
+                inflateRibbon();
+                if (mRibbonView != null) mRibbonView.setVisibility(View.VISIBLE);
+            }
+        } else {
+        cleanupRibbon();
+        }
         if (animate) {
             if (mShowing != show) {
                 mShowing = show;
@@ -234,7 +293,7 @@ public class NotificationPanel extends RelativeLayout implements StatusBarPanel,
     @Override
     public void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
-        
+
         if (DEBUG) {
             Slog.d(TAG, String.format("PANEL: onSizeChanged: (%d -> %d, %d -> %d)",
                         oldw, w, oldh, h));
@@ -259,10 +318,12 @@ public class NotificationPanel extends RelativeLayout implements StatusBarPanel,
         if (mHideSettings) return;
         final View toShow, toHide;
         if (mSettingsView == null) {
+            if (mRibbonView != null) mRibbonView.setVisibility(View.GONE);
             addSettingsView();
             toShow = mSettingsView;
             toHide = mNotificationScroller;
         } else {
+            if (mRibbonView != null) mRibbonView.setVisibility(View.VISIBLE);
             toShow = mNotificationScroller;
             toHide = mSettingsView;
         }
@@ -290,10 +351,10 @@ public class NotificationPanel extends RelativeLayout implements StatusBarPanel,
         });
         a.start();
     }
- 
+
     public void updateClearButton() {
         if (mBar != null) {
-            final boolean showX 
+            final boolean showX
                 = (isShowing()
                         && mHasClearableNotifications
                         && mNotificationScroller.getVisibility() == View.VISIBLE);
@@ -364,7 +425,7 @@ public class NotificationPanel extends RelativeLayout implements StatusBarPanel,
 
         void createAnimation(boolean appearing) {
             // mVisible: previous state; appearing: new state
-            
+
             float start, end;
 
             // 0: on-screen

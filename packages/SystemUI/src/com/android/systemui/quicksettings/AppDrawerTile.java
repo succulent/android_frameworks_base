@@ -41,7 +41,7 @@ public class AppDrawerTile extends QuickSettingsTile {
 
             @Override
             public void onClick(View v) {
-                qsc.mBar.collapseAllPanels(true);
+                qsc.collapseAllPanels(true);
                 Intent intent = new Intent("android.intent.action.MAIN");
                 intent.addCategory("android.intent.category.HOME");
                 intent.addCategory("com.cyanogenmod.trebuchet.APP_DRAWER");
@@ -54,7 +54,7 @@ public class AppDrawerTile extends QuickSettingsTile {
 
             @Override
             public boolean onLongClick(View v) {
-                qsc.mBar.collapseAllPanels(true);
+                qsc.collapseAllPanels(true);
                 Intent launcherPreferencesIntent = new Intent();
                 launcherPreferencesIntent.setClassName("com.cyanogenmod.trebuchet",
                         "com.cyanogenmod.trebuchet.preference.Preferences");

@@ -97,6 +97,7 @@ import com.android.systemui.quicksettings.VolumeTile;
 import com.android.systemui.quicksettings.WiFiDisplayTile;
 import com.android.systemui.quicksettings.WiFiTile;
 import com.android.systemui.quicksettings.WifiAPTile;
+import com.android.systemui.statusbar.tablet.TabletStatusBar;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -123,6 +124,7 @@ public class QuickSettingsController {
     private BroadcastReceiver mReceiver;
     private ContentObserver mObserver;
     public PhoneStatusBar mStatusBarService;
+    public TabletStatusBar mTabletStatusBarService;
     private final String mSettingsString;
     private boolean mHideLiveTiles;
     private boolean mHideLiveTileLabels;
@@ -149,6 +151,34 @@ public class QuickSettingsController {
         mStatusBarService = statusBarService;
         mQuickSettingsTiles = new ArrayList<QuickSettingsTile>();
         mSettingsString = settings;
+    }
+
+    public QuickSettingsController(Context context, QuickSettingsContainerView container, TabletStatusBar statusBarService, String settings) {
+        mContext = context;
+        mContainerView = container;
+        mHandler = new Handler() {
+            @Override
+            public void handleMessage(Message msg) {
+                super.handleMessage(msg);
+
+                switch (msg.what) {
+                    case MSG_UPDATE_TILES:
+                        setupQuickSettings();
+                        break;
+                }
+            }
+        };
+        mTabletStatusBarService = statusBarService;
+        mQuickSettingsTiles = new ArrayList<QuickSettingsTile>();
+        mSettingsString = settings;
+    }
+
+    public void collapseAllPanels(boolean animate) {
+        if (mBar == null) {
+	    mTabletStatusBarService.animateCollapsePanels();
+        } else {
+	    mBar.collapseAllPanels(animate);
+        }
     }
 
     void loadTiles() {
@@ -194,15 +224,15 @@ public class QuickSettingsController {
             if (tile.equals(TILE_USER)) {
                 qs = new UserTile(mContext, this);
             } else if (tile.equals(TILE_BATTERY)) {
-                qs = new BatteryTile(mContext, this, mStatusBarService.mBatteryController);
+                qs = new BatteryTile(mContext, this, mStatusBarService != null ? mStatusBarService.mBatteryController : mTabletStatusBarService.mBatteryController);
             } else if (tile.equals(TILE_SETTINGS)) {
                 qs = new PreferencesTile(mContext, this);
             } else if (tile.equals(TILE_WIFI)) {
-                qs = new WiFiTile(mContext, this, mStatusBarService.mNetworkController);
+                qs = new WiFiTile(mContext, this, mStatusBarService != null ? mStatusBarService.mNetworkController : mTabletStatusBarService.mNetworkController);
             } else if (tile.equals(TILE_GPS)) {
                 qs = new GPSTile(mContext, this);
             } else if (tile.equals(TILE_BLUETOOTH) && bluetoothSupported) {
-                qs = new BluetoothTile(mContext, this, mStatusBarService.mBluetoothController);
+                qs = new BluetoothTile(mContext, this, mStatusBarService != null ? mStatusBarService.mBluetoothController : mTabletStatusBarService.mBluetoothController);
             } else if (tile.equals(TILE_BRIGHTNESS)) {
                 qs = new BrightnessTile(mContext, this);
             } else if (tile.equals(TILE_CAMERA) && cameraSupported) {
@@ -216,15 +246,15 @@ public class QuickSettingsController {
             } else if (tile.equals(TILE_SCREENTIMEOUT)) {
                 qs = new ScreenTimeoutTile(mContext, this);
             } else if (tile.equals(TILE_MOBILEDATA) && mobileDataSupported) {
-                qs = new MobileNetworkTile(mContext, this, mStatusBarService.mNetworkController);
+                qs = new MobileNetworkTile(mContext, this, mStatusBarService != null ? mStatusBarService.mNetworkController : mTabletStatusBarService.mNetworkController);
             } else if (tile.equals(TILE_LOCKSCREEN)) {
                 qs = new ToggleLockscreenTile(mContext, this);
             } else if (tile.equals(TILE_NETWORKMODE) && mobileDataSupported) {
-                qs = new MobileNetworkTypeTile(mContext, this, mStatusBarService.mNetworkController);
+                qs = new MobileNetworkTypeTile(mContext, this, mStatusBarService != null ? mStatusBarService.mNetworkController : mTabletStatusBarService.mNetworkController);
             } else if (tile.equals(TILE_AUTOROTATE)) {
                 qs = new AutoRotateTile(mContext, this, mHandler);
             } else if (tile.equals(TILE_AIRPLANE)) {
-                qs = new AirplaneModeTile(mContext, this, mStatusBarService.mNetworkController);
+                qs = new AirplaneModeTile(mContext, this, mStatusBarService != null ? mStatusBarService.mNetworkController : mTabletStatusBarService.mNetworkController);
             } else if (tile.equals(TILE_TORCH)) {
                 qs = new TorchTile(mContext, this, mHandler);
             } else if (tile.equals(TILE_SLEEP)) {
@@ -320,7 +350,7 @@ public class QuickSettingsController {
             return;
         }
 
-        QuickSettingsTile qs = new DockBatteryTile(mContext, this, mStatusBarService.mDockBatteryController);
+        QuickSettingsTile qs = new DockBatteryTile(mContext, this, mStatusBarService != null ? mStatusBarService.mDockBatteryController : null);
         qs.setupQuickSettingsTile(inflater, mContainerView);
         mQuickSettingsTiles.add(qs);
     }
@@ -339,7 +369,7 @@ public class QuickSettingsController {
         mContainerView.removeAllViews();
     }
 
-    protected void setupQuickSettings() {
+    public void setupQuickSettings() {
         shutdown();
         mReceiver = new QSBroadcastReceiver();
         mReceiverMap.clear();
@@ -434,6 +464,10 @@ public class QuickSettingsController {
 
     public void setService(PhoneStatusBar phoneStatusBar) {
         mStatusBarService = phoneStatusBar;
+    }
+
+    public void setTabletService(TabletStatusBar statusBar) {
+        mTabletStatusBarService = statusBar;
     }
 
     public void setImeWindowStatus(boolean visible) {

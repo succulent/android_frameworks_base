@@ -42,7 +42,7 @@ public class DaydreamTile extends QuickSettingsTile {
 
             @Override
             public void onClick(View v) {
-                qsc.mBar.collapseAllPanels(true);
+                qsc.collapseAllPanels(true);
                 try {
                     mDreamManager.dream();
                 } catch (RemoteException e) {
