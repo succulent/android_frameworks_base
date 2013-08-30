@@ -281,8 +281,11 @@ public class TabletStatusBar extends BaseStatusBar implements
         mNotificationPanel.setOnTouchListener(
                 new TouchOutsideListener(MSG_CLOSE_NOTIFICATION_PANEL, mNotificationPanel));
 
+        boolean showHalo = Settings.System.getIntForUser(context.getContentResolver(),
+                Settings.System.HALO_GONE, 0, UserHandle.USER_CURRENT) == 0;
+
         mHaloButton = (ImageView) mNotificationPanel.findViewById(R.id.halo_button);
-        if (mHaloButton != null) {
+        if (mHaloButton != null && showHalo) {
             mHaloButton.setOnClickListener(mHaloButtonListener);
             mHaloButtonVisible = true;
             updateHaloButton();

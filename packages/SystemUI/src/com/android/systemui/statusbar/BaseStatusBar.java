@@ -169,7 +169,7 @@ public abstract class BaseStatusBar extends SystemUI implements
     protected boolean mHaloActive;
     protected boolean mHaloTaskerActive = false;
     protected ImageView mHaloButton;
-    protected boolean mHaloButtonVisible = true;
+    protected boolean mHaloButtonVisible = false;
 
     private Runnable mPanelCollapseRunnable = new Runnable() {
         @Override
@@ -439,7 +439,7 @@ public abstract class BaseStatusBar extends SystemUI implements
         mContext.getContentResolver().registerContentObserver(
                 Settings.System.getUriFor(Settings.System.HALO_SIZE), false, new ContentObserver(new Handler()) {
             @Override
-            public void onChange(boolean selfChange) {                
+            public void onChange(boolean selfChange) {
                 restartHalo();
             }});
 
@@ -1313,7 +1313,7 @@ public abstract class BaseStatusBar extends SystemUI implements
             } catch (Exception e) {
                 // NameNotFoundException
             }
-        }        
+        }
         entry.roundIcon = roundIcon;
     }
 
@@ -1720,6 +1720,8 @@ public abstract class BaseStatusBar extends SystemUI implements
                     Settings.System.HALO_PING_COLOR), false, this, UserHandle.USER_ALL);
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.STATUS_BAR_COLLAPSE_ON_DISMISS), false, this, UserHandle.USER_ALL);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.HALO_GONE), false, this, UserHandle.USER_ALL);
         }
 
         @Override
