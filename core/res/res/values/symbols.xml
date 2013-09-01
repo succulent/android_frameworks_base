@@ -833,8 +833,6 @@
   <java-symbol type="string" name="time_picker_separator" />
   <java-symbol type="string" name="time_wday" />
   <java-symbol type="string" name="time_wday_date" />
-  <java-symbol type="string" name="twelve_hour_time_format" />
-  <java-symbol type="string" name="twenty_four_hour_time_format" />
   <java-symbol type="string" name="upload_file" />
   <java-symbol type="string" name="user_switched" />
   <java-symbol type="string" name="volume_alarm" />
@@ -1199,8 +1197,6 @@
   <java-symbol type="style" name="Theme.DeviceDefault.Dialog.NoFrame" />
   <java-symbol type="style" name="Theme.IconMenu" />
   <java-symbol type="style" name="Theme.Panel.Volume" />
-  <java-symbol type="style" name="Theme.DeviceDefault.FloatingWindow" />
-  <java-symbol type="style" name="Theme.DeviceDefault.FloatingWindowLight" />
 
   <java-symbol type="attr" name="mediaRouteButtonStyle" />
   <java-symbol type="attr" name="externalRouteEnabledDrawable" />
@@ -2050,6 +2046,9 @@
   <!-- Irda Service -->
   <java-symbol type="bool" name="config_enableIrdaManagerService" />
 
+  <!-- Package Manager -->
+  <java-symbol type="array" name="config_disabledComponents" />
+
   <!-- Hide Navbar -->
   <java-symbol type="layout" name="global_actions_navbar_mode" />
   <java-symbol type="id" name="navbarrecent" />
@@ -2059,5 +2058,4 @@
 
   <java-symbol type="dimen" name="thumbnail_height_large" />
   <java-symbol type="dimen" name="thumbnail_width_large" />
-
 </resources>
