@@ -829,6 +829,10 @@ public abstract class BaseStatusBar extends SystemUI implements
                     float recentsItemTopPadding = statusBarHeight;
                     statusBarHeight = (tabletMode || getExpandedDesktopMode() == 2) ? 0 : statusBarHeight;
 
+                    if (getExpandedDesktopMode() == 2) {
+                        statusBarHeight = 0;
+                    }
+
                     float height = thumbTopMargin
                             + thumbHeight
                             + 2 * thumbBgPadding + textPadding + labelTextHeight
