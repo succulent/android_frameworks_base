@@ -67,7 +67,6 @@ public class StorageNotification extends StorageEventListener {
     private Notification   mMediaStorageNotification;
     private boolean        mUmsAvailable;
     private StorageManager mStorageManager;
-    private NotificationManager mNotificationManager;
 
     private Handler        mAsyncEventHandler;
 
@@ -313,27 +312,17 @@ public class StorageNotification extends StorageEventListener {
     private synchronized void setUsbStorageNotification(int titleId, int messageId, int icon,
             boolean sound, boolean visible, PendingIntent pi) {
 
+        if (!visible && mUsbStorageNotification == null) {
+            return;
+        }
+
         NotificationManager notificationManager = (NotificationManager) mContext
                 .getSystemService(Context.NOTIFICATION_SERVICE);
 
         if (notificationManager == null) {
             return;
         }
-
-        if (Settings.System.getIntForUser(mContext.getContentResolver(),
-                Settings.System.HIDE_USB_NOTIFICATION, 0, UserHandle.USER_CURRENT_OR_SELF) == 1) {
-            if (mUsbStorageNotification != null) {
-                notificationManager.cancelAsUser(null, mUsbStorageNotification.icon,
-                        UserHandle.ALL);
-                mUsbStorageNotification = null;
-            }
-            return;
-        }
-
-        if (!visible && mUsbStorageNotification == null) {
-            return;
-        }
-
+        
         if (visible) {
             Resources r = Resources.getSystem();
             CharSequence title = r.getText(titleId);
