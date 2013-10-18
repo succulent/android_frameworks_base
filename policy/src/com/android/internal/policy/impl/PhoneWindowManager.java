@@ -1546,8 +1546,9 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             updateRotation(true);
         } else if (mFocusedWindow != null) {
             if (updateDisplayMetrics && (mFocusedWindow.getSystemUiVisibility() &
-                        View.SYSTEM_UI_FLAG_LOW_PROFILE) == 0) {
-            updateDisplayMetrics();
+                    View.SYSTEM_UI_FLAG_LOW_PROFILE) == 0) {
+                updateDisplayMetrics();
+            }
         }
 
         boolean tabletModeOverride = Settings.System.getIntForUser(resolver,
