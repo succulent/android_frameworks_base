@@ -88,9 +88,9 @@ public class RecentsActivity extends Activity {
 
     @Override
     public void onPause() {
-        overridePendingTransition(
-                R.anim.recents_return_to_launcher_enter,
-                R.anim.recents_return_to_launcher_exit);
+        //overridePendingTransition(
+        //        R.anim.recents_return_to_launcher_enter,
+        //        R.anim.recents_return_to_launcher_exit);
         mForeground = false;
         super.onPause();
     }
