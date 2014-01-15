@@ -3352,37 +3352,7 @@ public final class Settings {
         public static final String PERFORMANCE_PROFILE = "performance_profile";
 
         /**
-         * Setting to force show navigation bar.
-         * @hide
-         */
-        public static final String SHOW_NAVIGATION = "show_navigation";
-
-        /**
-         * @hide
-         */
-        public static final String DUAL_PANE_PREFS = "dual_pane_prefs";
-
-        /**
-         * @hide
-         */
-        public static final String LARGE_RECENT_THUMBS = "large_recent_thumbs";
-
-        /**
-         * @hide
-         */
-        public static final String RECENTS_PANEL_COLOR = "recents_panel_color";
-
-        /**
-         * @hide
-         */
-        public static final String NOTIFICATION_PANEL_COLOR = "notification_panel_color";
-
-        /**
-         * @hide
-         */
-        public static final String SETTINGS_TILE_COLOR = "settings_tile_color";
-
-        /* Whether to unlock the screen with the home key.  The value is boolean (1 or 0).
+         * Whether to unlock the screen with the home key.  The value is boolean (1 or 0).
          * @hide
          */
         public static final String HOME_UNLOCK_SCREEN = "home_unlock_screen";
