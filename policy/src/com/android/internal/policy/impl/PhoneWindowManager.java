@@ -155,6 +155,10 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     static final boolean ENABLE_CAR_DOCK_HOME_CAPTURE = true;
     static final boolean ENABLE_DESK_DOCK_HOME_CAPTURE = false;
 
+    // QuickBoot time settings
+    static final int DEFAULT_LONG_PRESS_POWERON_TIME = 500;
+    static final int QUICKBOOT_LAUNCH_TIMEOUT = 2000;
+
     static final int LONG_PRESS_POWER_NOTHING = 0;
     static final int LONG_PRESS_POWER_GLOBAL_ACTIONS = 1;
     static final int LONG_PRESS_POWER_SHUT_OFF = 2;
@@ -237,6 +241,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
      * where the window manager is calling in with its own lock held.)
      */
     private final Object mLock = new Object();
+    private final Object mQuickBootLock = new Object();
 
     Context mContext;
     Context mUiContext;
@@ -346,6 +351,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
     int mCurrentUser = 0;
 
+    int mLongPressPoweronTime = DEFAULT_LONG_PRESS_POWERON_TIME;
+
     // The last window we were told about in focusChanged.
     WindowState mFocusedWindow;
     IApplicationToken mFocusedApp;
@@ -454,6 +461,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     int mForcingShowNavBarLayer;
 
     int mExpandedDesktopStyle = -1;
+    boolean mDevForceNavbar = false;
 
     // States of keyguard dismiss.
     private static final int DISMISS_KEYGUARD_NONE = 0; // Keyguard not being dismissed.
@@ -530,10 +538,10 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     private boolean mScreenRecordChordEnabled = true;
     private boolean mVolumeDownKeyTriggered;
     private long mVolumeDownKeyTime;
+    private long mVolumeUpKeyTime;
     private boolean mVolumeDownKeyConsumedByChord;
     private boolean mVolumeUpKeyConsumedByChord;
     private boolean mVolumeUpKeyTriggered;
-    private long mVolumeUpKeyTime;
     private boolean mVolumeUpKeyConsumedByScreenRecordChord;
     private boolean mPowerKeyTriggered;
     private long mPowerKeyTime;
@@ -545,6 +553,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     SettingsObserver mSettingsObserver;
     ShortcutManager mShortcutManager;
     PowerManager.WakeLock mBroadcastWakeLock;
+    PowerManager.WakeLock mQuickBootWakeLock;
     boolean mHavePendingMediaKeyRepeatWithWakeLock;
 
     private int mCurrentUserId;
@@ -690,8 +699,9 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     Settings.System.USE_EDGE_SERVICE_FOR_GESTURES), false, this,
                     UserHandle.USER_ALL);
             resolver.registerContentObserver(Settings.System.getUriFor(
-                    Settings.System.SHOW_NAVIGATION), false, this,
+                    Settings.System.DEV_FORCE_SHOW_NAVBAR), false, this,
                     UserHandle.USER_ALL);
+
             updateSettings();
         }
 
@@ -1236,6 +1246,10 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         mPowerManager = (PowerManager)context.getSystemService(Context.POWER_SERVICE);
         mBroadcastWakeLock = mPowerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,
                 "PhoneWindowManager.mBroadcastWakeLock");
+        mQuickBootWakeLock = mPowerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,
+                "PhoneWindowManager.mQuickBootWakeLock");
+        mLongPressPoweronTime = SystemProperties.getInt("ro.quickboot.press_duration",
+                DEFAULT_LONG_PRESS_POWERON_TIME);
         mEnableShiftMenuBugReports = "1".equals(SystemProperties.get("ro.debuggable"));
         mLidOpenRotation = readRotation(
                 com.android.internal.R.integer.config_lidOpenRotation);
@@ -1522,11 +1536,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         // Allow the navigation bar to move on small devices (phones).
         mNavigationBarCanMove = shortSizeDp < 600;
 
-        mHasNavigationBar = Settings.System.getIntForUser(mContext.getContentResolver(),
-                Settings.System.SHOW_NAVIGATION,
-                res.getBoolean(com.android.internal.R.bool.config_showNavigationBar) ? 1 : 0,
-                UserHandle.USER_CURRENT) == 1;
-
+        mHasNavigationBar = res.getBoolean(com.android.internal.R.bool.config_showNavigationBar);
         // Allow a system property to override this. Used by the emulator.
         // See also hasNavigationBar().
         String navBarOverride = SystemProperties.get("qemu.hw.mainkeys");
@@ -1560,7 +1570,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
      *         navigation bar and touch exploration is not enabled
      */
     private boolean canHideNavigationBar() {
-        return mHasNavigationBar && !mTouchExplorationEnabled;
+        return hasNavigationBar() && !mTouchExplorationEnabled;
     }
 
     @Override
@@ -1636,6 +1646,12 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 updateEdgeGestureListenerState();
             }
 
+            boolean devForceNavbar = Settings.System.getIntForUser(resolver,
+                    Settings.System.DEV_FORCE_SHOW_NAVBAR, 0, UserHandle.USER_CURRENT) == 1;
+            if (devForceNavbar != mDevForceNavbar) {
+                mDevForceNavbar = devForceNavbar;
+            }
+
             updateKeyAssignments();
 
             // Configure rotation lock.
@@ -1683,21 +1699,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             if (mImmersiveModeConfirmation != null) {
                 mImmersiveModeConfirmation.loadSetting();
             }
-        }
-
-        mHasNavigationBar = Settings.System.getIntForUser(mContext.getContentResolver(),
-                Settings.System.SHOW_NAVIGATION,
-                mContext.getResources().getBoolean(
-                com.android.internal.R.bool.config_showNavigationBar) ? 1 : 0,
-                UserHandle.USER_CURRENT) == 1;
-
-        // Allow a system property to override this. Used by the emulator.
-        // See also hasNavigationBar().
-        String navBarOverride = SystemProperties.get("qemu.hw.mainkeys");
-        if ("1".equals(navBarOverride)) {
-            mHasNavigationBar = false;
-        } else if ("0".equals(navBarOverride)) {
-            mHasNavigationBar = true;
         }
 
         if (updateRotation) {
@@ -2044,7 +2045,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     }
 
     public int getNonDecorDisplayWidth(int fullWidth, int fullHeight, int rotation) {
-        if (mHasNavigationBar) {
+        if (hasNavigationBar()) {
             // For a basic navigation bar, when we are in landscape mode we place
             // the navigation bar to the side.
             if (mNavigationBarCanMove && fullWidth > fullHeight) {
@@ -2055,7 +2056,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     }
 
     public int getNonDecorDisplayHeight(int fullWidth, int fullHeight, int rotation) {
-        if (mHasNavigationBar) {
+        if (hasNavigationBar()) {
             // For a basic navigation bar, when we are in portrait mode we place
             // the navigation bar to the bottom.
             if (!mNavigationBarCanMove || fullWidth < fullHeight) {
@@ -4574,6 +4575,57 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         mContext.sendBroadcast(recordIntent, Manifest.permission.RECORD_SCREEN);
     }
 
+    private final Runnable mQuickBootPowerLongPress = new Runnable() {
+
+        public void run() {
+
+            Intent intent = new Intent("org.codeaurora.action.QUICKBOOT");
+            intent.putExtra("mode", 1);
+            try {
+                mContext.startActivityAsUser(intent,UserHandle.CURRENT);
+            } catch (ActivityNotFoundException e) {
+                e.printStackTrace();
+                releaseQuickBootWakeLock();
+                return;
+            }
+
+            BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
+
+                public void onReceive(Context context, Intent intent) {
+
+                    synchronized (mQuickBootLock) {
+                        mQuickBootLock.notifyAll();
+                    }
+                }
+            };
+
+            IntentFilter filter = new IntentFilter("org.codeaurora.quickboot.poweron_start");
+            mContext.registerReceiver(broadcastReceiver,filter,
+                    "android.permission.DEVICE_POWER",null);
+
+            synchronized (mQuickBootLock) {
+                try {
+                    mQuickBootLock.wait(QUICKBOOT_LAUNCH_TIMEOUT);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            releaseQuickBootWakeLock();
+        }
+    };
+
+    private void acquireQuickBootWakeLock() {
+        if (!mQuickBootWakeLock.isHeld())  {
+            mQuickBootWakeLock.acquire();
+        }
+    }
+
+    private void releaseQuickBootWakeLock() {
+        if (mQuickBootWakeLock.isHeld()) {
+            mQuickBootWakeLock.release();
+        }
+    }
 
     /** {@inheritDoc} */
     @Override
@@ -4586,6 +4638,22 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         final boolean down = event.getAction() == KeyEvent.ACTION_DOWN;
         final boolean canceled = event.isCanceled();
         int keyCode = event.getKeyCode();
+        int scanCode = event.getScanCode();
+
+        if (SystemProperties.getInt("sys.quickboot.enable", 0) == 1) {
+
+            if (keyCode == KeyEvent.KEYCODE_POWER && !isScreenOn) {
+                if(down){
+                    acquireQuickBootWakeLock();
+                    mHandler.postDelayed(mQuickBootPowerLongPress, mLongPressPoweronTime);
+                } else {
+                    releaseQuickBootWakeLock();
+                    mHandler.removeCallbacks(mQuickBootPowerLongPress);
+                }
+            }
+            // ignore this event
+            return 0;
+        }
 
         final boolean isInjected = (policyFlags & WindowManagerPolicy.FLAG_INJECTED) != 0;
 
@@ -5152,6 +5220,12 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         }
     }
 
+    private void disableQbCharger() {
+        if (SystemProperties.getInt("sys.quickboot.enable", 0) == 1) {
+            SystemProperties.set("sys.qbcharger.enable", "false");
+        }
+    }
+
     @Override
     public void screenTurnedOff(int why) {
         EventLog.writeEvent(70000, 0);
@@ -5176,6 +5250,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             here.fillInStackTrace();
             Slog.i(TAG, "Screen turning on...", here);
         }
+        // To disable native charger when under QuickBoot mode
+        disableQbCharger();
 
         synchronized (mLock) {
             // since the screen turned on, assume we don't enable play-pause again
@@ -6214,6 +6290,10 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     // overridden by qemu.hw.mainkeys in the emulator.
     @Override
     public boolean hasNavigationBar() {
+        return mHasNavigationBar || mDevForceNavbar;
+    }
+
+    public boolean needsNavigationBar() {
         return mHasNavigationBar;
     }
 
