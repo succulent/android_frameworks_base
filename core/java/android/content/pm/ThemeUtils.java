@@ -28,7 +28,10 @@ import android.net.Uri;
 import android.os.FileUtils;
 import android.os.SystemProperties;
 import android.provider.MediaStore;
+import android.provider.Settings;
+import android.text.TextUtils;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.WindowManager;
 
 import java.io.BufferedInputStream;
@@ -46,17 +49,24 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
+import static android.content.res.CustomTheme.HOLO_DEFAULT;
+
 /**
  * @hide
  */
 public class ThemeUtils {
+    private static final String TAG = "ThemeUtils";
+
     /* Path inside a theme APK to the overlay folder */
     public static final String OVERLAY_PATH = "assets/overlays/";
     public static final String ICONS_PATH = "assets/icons/";
+    public static final String COMMON_RES_PATH = "assets/overlays/common/";
     public static final String FONT_XML = "fonts.xml";
     public static final String RESTABLE_EXTENSION = ".arsc";
     public static final String IDMAP_PREFIX = "/data/resource-cache/";
     public static final String IDMAP_SUFFIX = "@idmap";
+    public static final String COMMON_RES_SUFFIX = ".common";
+    public static final String COMMON_RES_TARGET = "common";
 
     // path to external theme resources, i.e. bootanimation.zip
     public static final String SYSTEM_THEME_PATH = "/data/system/theme";
@@ -81,6 +91,20 @@ public class ThemeUtils {
     private static final String MEDIA_CONTENT_URI = "content://media/internal/audio/media";
 
     public static final String ACTION_THEME_CHANGED = "org.cyanogenmod.intent.action.THEME_CHANGED";
+
+    // Actions in manifests which identify legacy icon packs
+    public static final String[] sSupportedActions = new String[] {
+            "org.adw.launcher.THEMES",
+            "com.gau.go.launcherex.theme"
+    };
+
+    // Categories in manifests which identify legacy icon packs
+    public static final String[] sSupportedCategories = new String[] {
+            "com.fede.launcher.THEME_ICONPACK",
+            "com.anddoes.launcher.THEME",
+            "com.teslacoilsw.launcher.THEME"
+    };
+
 
     /*
      * Retrieve the path to a resource table (ie resource.arsc)
@@ -139,6 +163,12 @@ public class ThemeUtils {
         sb.append(targetPkgName);
         sb.append('/');
         return sb.toString();
+    }
+
+    public static String getCommonPackageName(String themePackageName) {
+        if (TextUtils.isEmpty(themePackageName)) return null;
+
+        return COMMON_RES_TARGET;
     }
 
     public static void createCacheDirIfNotExists() throws IOException {
@@ -476,6 +506,24 @@ public class ThemeUtils {
             }
         }
         return null;
+    }
+
+    public static String getDefaultThemePackageName(Context context) {
+        final String defaultThemePkg = Settings.Secure.getString(context.getContentResolver(),
+                Settings.Secure.DEFAULT_THEME_PACKAGE);
+        if (!TextUtils.isEmpty(defaultThemePkg)) {
+            PackageManager pm = context.getPackageManager();
+            try {
+                if (pm.getPackageInfo(defaultThemePkg, 0) != null) {
+                    return defaultThemePkg;
+                }
+            } catch (PackageManager.NameNotFoundException e) {
+                // doesn't exist so holo will be default
+                Log.w(TAG, "Default theme " + defaultThemePkg + " not found", e);
+            }
+        }
+
+        return HOLO_DEFAULT;
     }
 
     private static class ThemedUiContext extends ContextWrapper {

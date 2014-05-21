@@ -20,6 +20,7 @@ import android.app.ActivityManager;
 import android.app.ActivityManagerNative;
 import android.app.IActivityManager;
 import android.app.WallpaperManager;
+import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
@@ -34,8 +35,6 @@ import android.content.res.CustomTheme;
 import android.content.res.IThemeChangeListener;
 import android.content.res.IThemeService;
 import android.database.Cursor;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Binder;
@@ -49,24 +48,25 @@ import android.os.RemoteException;
 import android.os.SystemProperties;
 import android.provider.Settings;
 import android.provider.ThemesContract;
+import android.text.TextUtils;
 import android.util.Log;
 import android.webkit.URLUtil;
 
 import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import static android.content.pm.ThemeUtils.SYSTEM_THEME_PATH;
 import static android.content.pm.ThemeUtils.THEME_BOOTANIMATION_PATH;
+import static android.content.res.CustomTheme.HOLO_DEFAULT;
 
 import java.util.List;
-
-import com.android.internal.util.cm.LockscreenBackgroundUtil;
 
 /**
  * {@hide}
@@ -130,6 +130,9 @@ public class ThemeService extends IThemeService.Stub {
         ThemeUtils.createRingtoneDirIfNotExists();
     }
 
+    public void systemRunning() {
+    }
+
     private void doApplyTheme(String pkgName, List<String> components) {
         synchronized(this) {
             mPkgName = pkgName;
@@ -165,7 +168,7 @@ public class ThemeService extends IThemeService.Stub {
 
         PackageInfo pi = null;
         try {
-            if (!"default".equals(pkgName))
+            if (!HOLO_DEFAULT.equals(pkgName))
                 pi = mContext.getPackageManager().getPackageInfo(pkgName, 0);
         } catch (PackageManager.NameNotFoundException e) {
             // don't care
@@ -219,7 +222,7 @@ public class ThemeService extends IThemeService.Stub {
 
     private void updateIcons() {
         PackageManager pm = mContext.getPackageManager();
-        if (mPkgName.equals("default")) {
+        if (mPkgName.equals(HOLO_DEFAULT)) {
             pm.updateIconMaps(null);
         } else {
             pm.updateIconMaps(mPkgName);
@@ -230,7 +233,7 @@ public class ThemeService extends IThemeService.Stub {
         //Clear the font dir
         ThemeUtils.deleteFilesInDir(ThemeUtils.SYSTEM_THEME_FONT_PATH);
 
-        if (!mPkgName.equals("default")) {
+        if (!mPkgName.equals(HOLO_DEFAULT)) {
             //Get Font Assets
             Context themeCtx;
             String[] assetList;
@@ -273,7 +276,7 @@ public class ThemeService extends IThemeService.Stub {
 
     private void updateBootAnim() {
         clearBootAnimation();
-        if ("default".equals(mPkgName)) return;
+        if (HOLO_DEFAULT.equals(mPkgName)) return;
 
         PackageManager pm = mContext.getPackageManager();
         try {
@@ -302,7 +305,7 @@ public class ThemeService extends IThemeService.Stub {
     private boolean updateAudible(String dirPath, String assetPath, int type, PackageInfo pi) {
         //Clear the dir
         ThemeUtils.clearAudibles(mContext, dirPath);
-        if (mPkgName.equals("default")) {
+        if (mPkgName.equals(HOLO_DEFAULT)) {
             if (!ThemeUtils.setDefaultAudible(mContext, type)) {
                 Log.e(TAG, "There was an error installing the default audio file");
                 return false;
@@ -402,9 +405,8 @@ public class ThemeService extends IThemeService.Stub {
 
     private boolean updateLockscreen() {
         boolean success = false;
-        if ("default".equals(mPkgName)) {
-            Settings.System.putInt(mContext.getContentResolver(), Settings.System.LOCKSCREEN_BACKGROUND_STYLE,
-                    LockscreenBackgroundUtil.LOCKSCREEN_STYLE_DEFAULT);
+        if (HOLO_DEFAULT.equals(mPkgName)) {
+            WallpaperManager.getInstance(mContext).clearKeyguardWallpaper();
             success = true;
         } else {
             success = setCustomLockScreenWallpaper();
@@ -428,22 +430,11 @@ public class ThemeService extends IThemeService.Stub {
             }
             InputStream is = ThemeUtils.getInputStreamFromAsset(themeCtx, "file:///android_asset/" + wpPath);
 
-            //Get outgoing wp path from settings
-            File wallpaperFile = LockscreenBackgroundUtil.getWallpaperFile(mContext);
-            wallpaperFile.createNewFile();
-            wallpaperFile.setReadable(true, false);
-            FileOutputStream out = new FileOutputStream(wallpaperFile);
-
-            //Decode bitmap to check it is ok and copy it over
-            Bitmap bitmap = BitmapFactory.decodeStream(is);
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 90, out);
+            WallpaperManager.getInstance(mContext).setKeyguardStream(is);
         } catch (Exception e) {
             Log.e(TAG, "There was an error setting lockscreen wp for pkg " + mPkgName, e);
             return false;
         }
-
-        Settings.System.putInt(mContext.getContentResolver(), Settings.System.LOCKSCREEN_BACKGROUND_STYLE,
-                LockscreenBackgroundUtil.LOCKSCREEN_STYLE_IMAGE);
         return true;
     }
 
@@ -454,7 +445,7 @@ public class ThemeService extends IThemeService.Stub {
                 selectionArgs, null);
         c.moveToFirst();
 
-        if ("default".equals(mPkgName)) {
+        if (HOLO_DEFAULT.equals(mPkgName)) {
             try {
                 WallpaperManager.getInstance(mContext).clear();
             } catch (IOException e) {
@@ -520,6 +511,7 @@ public class ThemeService extends IThemeService.Stub {
 
         if (components.contains(ThemesContract.ThemesColumns.MODIFIES_OVERLAYS)) {
             builder.overlay(mPkgName);
+            builder.systemUi(mPkgName);
         }
 
         if (components.contains(ThemesContract.ThemesColumns.MODIFIES_FONTS)) {
@@ -667,5 +659,43 @@ public class ThemeService extends IThemeService.Stub {
         File anim = new File(SYSTEM_THEME_PATH + File.separator + "bootanimation.zip");
         if (anim.exists())
             anim.delete();
+    }
+
+    public void applyDefaultTheme() {
+        mContext.enforceCallingOrSelfPermission(
+                Manifest.permission.ACCESS_THEME_MANAGER, null);
+        final ContentResolver resolver = mContext.getContentResolver();
+        final String defaultThemePkg = Settings.Secure.getString(resolver,
+                Settings.Secure.DEFAULT_THEME_PACKAGE);
+        final boolean shouldApply = !TextUtils.isEmpty(defaultThemePkg) &&
+                Settings.Secure.getInt(resolver,
+                        Settings.Secure.DEFAULT_THEME_APPLIED_ON_FIRST_BOOT, 0) == 0;
+        if (shouldApply) {
+            String defaultThemeComponents = Settings.Secure.getString(resolver,
+                    Settings.Secure.DEFAULT_THEME_COMPONENTS);
+            List<String> components;
+            if (TextUtils.isEmpty(defaultThemeComponents)) {
+                components = new ArrayList<String>(9);
+                components.add(ThemesContract.ThemesColumns.MODIFIES_FONTS);
+                components.add(ThemesContract.ThemesColumns.MODIFIES_LAUNCHER);
+                components.add(ThemesContract.ThemesColumns.MODIFIES_ALARMS);
+                components.add(ThemesContract.ThemesColumns.MODIFIES_BOOT_ANIM);
+                components.add(ThemesContract.ThemesColumns.MODIFIES_ICONS);
+                components.add(ThemesContract.ThemesColumns.MODIFIES_LOCKSCREEN);
+                components.add(ThemesContract.ThemesColumns.MODIFIES_NOTIFICATIONS);
+                components.add(ThemesContract.ThemesColumns.MODIFIES_OVERLAYS);
+                components.add(ThemesContract.ThemesColumns.MODIFIES_RINGTONES);
+            } else {
+                components = new ArrayList<String>(
+                        Arrays.asList(defaultThemeComponents.split("\\|")));
+            }
+            try {
+                requestThemeChange(defaultThemePkg, components);
+                Settings.Secure.putInt(resolver,
+                        Settings.Secure.DEFAULT_THEME_APPLIED_ON_FIRST_BOOT, 1);
+            } catch (RemoteException e) {
+                Log.w(TAG, "Unable to set default theme", e);
+            }
+        }
     }
 }

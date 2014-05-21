@@ -30,6 +30,8 @@ import android.text.TextUtils;
 public final class CustomTheme implements Cloneable, Parcelable, Comparable<CustomTheme> {
     private final String SYSTEMUI_PKG_NAME = "com.android.systemui";
 
+    public static final String HOLO_DEFAULT = "holo";
+
     protected final String mThemePackageName;
     protected final String mIconPackPkgName;
     protected final String mSystemUiThemePkgName;
@@ -153,19 +155,22 @@ public final class CustomTheme implements Cloneable, Parcelable, Comparable<Cust
      * preference until the theme is switched at runtime.
      */
     public static CustomTheme getBootTheme(ContentResolver resolver) {
-        String themePkgName = Settings.Secure.getString(resolver, Configuration.THEME_PACKAGE_NAME_PERSISTENCE_PROPERTY);
-        if (themePkgName == null) themePkgName = "";
+        try {
+            String themePkgName = Settings.Secure.getString(resolver, Configuration.THEME_PACKAGE_NAME_PERSISTENCE_PROPERTY);
+            if (themePkgName == null) themePkgName = "";
 
-        String systemUiPkgName = Settings.Secure.getString(resolver, Configuration.THEME_SYSTEMUI_PACKAGE_NAME_PERSISTENCE_PROPERTY);
-        if (systemUiPkgName == null) systemUiPkgName = "";
+            String systemUiPkgName = Settings.Secure.getString(resolver, Configuration.THEME_SYSTEMUI_PACKAGE_NAME_PERSISTENCE_PROPERTY);
+            if (systemUiPkgName == null) systemUiPkgName = "";
 
-        String iconPackPkgName = Settings.Secure.getString(resolver, Configuration.THEME_ICONPACK_PACKAGE_NAME_PERSISTENCE_PROPERTY);
-        if (iconPackPkgName == null) iconPackPkgName = "";
+            String iconPackPkgName = Settings.Secure.getString(resolver, Configuration.THEME_ICONPACK_PACKAGE_NAME_PERSISTENCE_PROPERTY);
+            if (iconPackPkgName == null) iconPackPkgName = "";
 
-        String fontPkgName = Settings.Secure.getString(resolver, Configuration.THEME_FONT_PACKAGE_NAME_PERSISTENCE_PROPERTY);
-        if (fontPkgName == null) fontPkgName = "";
-
-        return new CustomTheme(themePkgName, systemUiPkgName, iconPackPkgName, fontPkgName);
+            String fontPkgName = Settings.Secure.getString(resolver, Configuration.THEME_FONT_PACKAGE_NAME_PERSISTENCE_PROPERTY);
+            if (fontPkgName == null) fontPkgName = "";
+            return new CustomTheme(themePkgName, systemUiPkgName, iconPackPkgName, fontPkgName);
+        } catch (SecurityException e) {
+            return sSystemTheme;
+        }
     }
 
     /**
@@ -226,27 +231,27 @@ public final class CustomTheme implements Cloneable, Parcelable, Comparable<Cust
             if (theme == null) return;
             mIconPkgName = theme.mIconPackPkgName;
             mThemePkgName = theme.mThemePackageName;
-            mSystemUiPkgName = theme.mIconPackPkgName;
+            mSystemUiPkgName = theme.mThemePackageName;
             mFontPkgName = theme.mFontPkgName;
         }
 
         public Builder overlay(String pkgName) {
-            this.mThemePkgName = pkgName.equals("default") ? "" : pkgName;
+            this.mThemePkgName = pkgName.equals(HOLO_DEFAULT) ? "" : pkgName;
             return this;
         }
 
         public Builder systemUi(String pkgName) {
-            this.mSystemUiPkgName = pkgName.equals("default") ? "" : pkgName;
+            this.mSystemUiPkgName = pkgName.equals(HOLO_DEFAULT) ? "" : pkgName;
             return this;
         }
 
         public Builder icons(String pkgName) {
-            this.mIconPkgName = pkgName.equals("default") ? "" : pkgName;
+            this.mIconPkgName = pkgName.equals(HOLO_DEFAULT) ? "" : pkgName;
             return this;
         }
 
         public Builder fonts(String pkgName) {
-            this.mFontPkgName = pkgName.equals("default") ? "" : pkgName;
+            this.mFontPkgName = pkgName.equals(HOLO_DEFAULT) ? "" : pkgName;
             return this;
         }
 
