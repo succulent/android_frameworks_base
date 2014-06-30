@@ -3339,12 +3339,6 @@ public final class Settings {
         public static final String SYSTEM_PROFILES_ENABLED = "system_profiles_enabled";
 
         /**
-         * Whether power menu screen record is enabled
-         * @hide
-         */
-        public static final String POWER_MENU_SCREENRECORD_ENABLED = "power_menu_screenrecord_enabled";
-
-        /**
          * Whether the power menu reboot menu is enabled
          * @hide
          */
