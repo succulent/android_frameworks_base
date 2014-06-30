@@ -952,11 +952,10 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     }
 
     private void interceptScreenRecordChord() {
-        if (mScreenRecordChordEnabled
-                && mVolumeUpKeyTriggered && mPowerKeyTriggered && !mVolumeDownKeyTriggered) {
+        if (mScreenRecordChordEnabled && mVolumeUpKeyTriggered && mVolumeDownKeyTriggered) {
             final long now = SystemClock.uptimeMillis();
-            if (now <= mVolumeUpKeyTime + SCREENSHOT_CHORD_DEBOUNCE_DELAY_MILLIS
-                    && now <= mPowerKeyTime + SCREENSHOT_CHORD_DEBOUNCE_DELAY_MILLIS) {
+            if (now <= mVolumeUpKeyTime + ACTION_CHORD_DEBOUNCE_DELAY_MILLIS
+                    && now <= mVolumeDownKeyTime + ACTION_CHORD_DEBOUNCE_DELAY_MILLIS) {
                 mVolumeUpKeyConsumedByScreenRecordChord = true;
                 cancelPendingPowerKeyAction();
 
@@ -2533,7 +2532,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         // but we're not sure, then tell the dispatcher to wait a little while and
         // try again later before dispatching.
         if (mScreenRecordChordEnabled && (flags & KeyEvent.FLAG_FALLBACK) == 0) {
-            if (mVolumeUpKeyTriggered && !mPowerKeyTriggered) {
+            if (mVolumeUpKeyTriggered && !mVolumeDownKeyTriggered) {
                 final long now = SystemClock.uptimeMillis();
                 final long timeoutTime = mVolumeUpKeyTime + SCREENSHOT_CHORD_DEBOUNCE_DELAY_MILLIS;
                 if (now < timeoutTime) {
@@ -4816,12 +4815,14 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                             mVolumeDownKeyConsumedByChord = false;
                             cancelPendingPowerKeyAction();
                             cancelPendingScreencastChordAction();
+                            interceptScreenRecordChord();
                             interceptScreenshotChord();
                             interceptRingerChord();
                         }
                     } else {
                         mVolumeDownKeyTriggered = false;
                         cancelPendingScreenshotChordAction();
+                        cancelPendingScreenRecordChordAction();
                         cancelPendingRingerChordAction();
                         cancelPendingScreencastChordAction();
                     }
